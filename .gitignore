@@ -1,0 +1,53 @@
+# Private configuration; only an empty example may be published.
+.env
+# Deployment-specific tunnel and reverse-proxy configuration
+frpc*.toml
+frps*.toml
+Caddyfile
+network-private/
+.env.*
+!.env.example
+.npmrc
+*.local
+# Every runtime database, file upload, log and backup stays on the deploying machine.
+server/data/
+server/uploads/
+server/backups/
+server/logs/
+_platform_backups/
+backups/
+logs/
+data/
+uploads/
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.log
+*.pid
+*.bak
+*.bak-*
+*.zip
+*.7z
+*.csv
+*.xlsx
+*.docx
+*.pdf
+*.pem
+*.key
+*.pfx
+*.p12
+# Dependencies, generated bundles, old snapshots and local test artifacts.
+node_modules/
+dist/
+work/
+outputs/
+coverage/
+.cache/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.tmp

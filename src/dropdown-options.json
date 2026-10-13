@@ -1,0 +1,36 @@
+{
+  "testNames": [],
+  "testUnits": [],
+  "processingNames": [],
+  "processingUnits": [],
+  "billingMethods": [
+    "样品",
+    "小时",
+    "次"
+  ],
+  "purchaseItems": [],
+  "purchaseSuppliers": {
+    "试剂原料": [],
+    "耗材": []
+  },
+  "purchaseUnits": [
+    "g",
+    "kg",
+    "mg",
+    "mL",
+    "L",
+    "个",
+    "件",
+    "支",
+    "包",
+    "块",
+    "盒",
+    "卷",
+    "箱",
+    "袋",
+    "对",
+    "副",
+    "套"
+  ],
+  "purchaseNameAliases": {}
+}

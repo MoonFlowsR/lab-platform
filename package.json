@@ -1,0 +1,43 @@
+{
+  "name": "lab-platform",
+  "private": true,
+  "version": "1.0.4",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "server": "node server/index.cjs",
+    "local": "npm run build && node server/index.cjs",
+    "setup": "node scripts/setup.cjs",
+    "check": "node scripts/check.cjs",
+    "backup": "node scripts/backup.cjs",
+    "privacy:check": "node scripts/privacy-check.cjs",
+    "test": "node --test server/security/*.test.cjs && node scripts/smoke-test.cjs",
+    "lint": "eslint src server scripts"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.9.0",
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.4.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.1.2",
+    "eslint": "^10.2.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.5.0",
+    "vite": "^8.3.4"
+  },
+  "description": "本地部署的实验室申请、审核与库存管理平台",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,14 @@
+.platform-account-settings { width:min(680px,calc(100% - 32px)); }
+.platform-account-identity { color:#475569; margin:6px 0 16px; font-size:15px; }
+.platform-account-identity strong { color:#1e40af; }
+.platform-account-required { color:#b91c1c; font-size:16px; font-weight:700; margin:8px 0 20px; }
+.platform-account-tabs { display:flex; gap:6px; border-bottom:1px solid #e2e8f0; padding-bottom:12px; margin-bottom:18px; }
+.platform-account-tabs button { padding:8px 16px; border:1px solid transparent; border-radius:9px; background:#f1f5f9; color:#475569; font-size:15px; font-weight:600; }
+.platform-account-tabs button[aria-selected="true"] { background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+.platform-account-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px 16px; }
+.platform-account-fields>label:last-of-type { grid-column:1/-1; }
+.platform-account-password { display:grid; gap:14px; }
+.platform-account-settings fieldset { border:0; padding:0; margin:0; min-width:0; }
+.platform-account-settings label { font-size:15px; font-weight:600; }
+.platform-account-settings input { font-size:16px; }
+@media(max-width:640px) { .platform-account-fields { grid-template-columns:1fr; gap:14px; } .platform-account-settings { width:calc(100% - 24px); } }

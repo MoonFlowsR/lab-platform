@@ -1,0 +1,21 @@
+.platform-dialog{position:fixed;inset:0;margin:auto;width:min(560px,calc(100vw - 32px));max-height:calc(100dvh - 32px);box-sizing:border-box;padding:24px;border:1px solid #cbd5e1;border-radius:18px;background:#fff;color:#0f172a;box-shadow:0 24px 80px #0f172a40;overflow:auto;font-family:Arial,"Microsoft YaHei",sans-serif;font-size:17px;line-height:1.65}
+.platform-dialog::backdrop{background:#0f172a66}
+.platform-dialog *{box-sizing:border-box;min-width:0}
+.platform-dialog-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px}
+.platform-dialog h2{margin:0;font-size:23px;line-height:1.4;font-weight:750}
+.platform-dialog-close{border:0!important;background:transparent!important;color:#64748b!important;font-size:26px!important;line-height:1;padding:4px 8px!important;cursor:pointer}
+.platform-dialog-message p{margin:0 0 12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.platform-dialog-message.is-error{color:#b91c1c;font-weight:650}.platform-dialog-message.is-success{color:#1e40af;font-weight:650}
+.platform-dialog-critical,.platform-dialog-error{color:#b91c1c;font-weight:750}
+.platform-dialog-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 16px;padding:12px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;font-size:16px}
+.platform-dialog-details dt{font-size:14px;color:#64748b}.platform-dialog-details dd{margin:0;overflow-wrap:anywhere}
+.platform-dialog-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:14px}
+.platform-dialog-fields label{display:grid;gap:7px;font-size:16px}.platform-dialog-fields label.is-wide{grid-column:1/-1}
+.platform-dialog-fields :is(input,textarea){width:100%;padding:10px 12px;border:1px solid #94a3b8;border-radius:10px;background:#fff;color:#0f172a;font:inherit;font-size:17px;line-height:1.5}
+.platform-dialog-fields textarea{min-height:116px;resize:vertical}
+.platform-dialog-fields small{font-size:14px;color:#64748b}.platform-dialog-error{margin:14px 0 0;font-size:16px}
+.platform-dialog-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:16px;margin-top:22px}
+.platform-dialog-actions button{min-height:44px;padding:9px 18px;border:1px solid #cbd5e1;border-radius:10px;font:inherit;font-size:16px;font-weight:650;background:#f8fafc;color:#334155;cursor:pointer}
+.platform-dialog-actions button.is-primary{background:#1d4ed8;border-color:#1d4ed8;color:white}.platform-dialog-actions button.is-danger{background:#b91c1c;border-color:#b91c1c;color:white}
+.platform-dialog :is(input,textarea,button):focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+@media(max-width:640px){.platform-dialog{padding:18px;width:calc(100vw - 24px);max-height:calc(100dvh - 24px);font-size:16px}.platform-dialog h2{font-size:21px}.platform-dialog-fields :is(input,textarea){font-size:16px}.platform-dialog-actions{gap:14px}.platform-dialog-details{grid-template-columns:minmax(0,1fr)}}
