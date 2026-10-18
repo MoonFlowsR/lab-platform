@@ -120,7 +120,7 @@ function WorkRequestForm({ workHistory = [], teacherAccounts = [], fixedType, on
       <p style={styles.requiredHint}><span style={styles.requiredStar}>*</span> 为必填项</p>
       <form style={styles.formGrid} onSubmit={async (e) => {
         e.preventDefault();
-        if (![form.work_content, form.external_unit, form.workload_unit].every(value => String(value || "").trim() && !["其它", "其他", "__custom_option__"].includes(String(value).trim()))) return showAlert("请完整选择或填写名称、渠道和计费方式。");
+        if (![form.work_content, form.external_unit, form.workload_unit].every(value => String(value || "").trim() && !["其它", "其他", "__custom_option__"].includes(String(value).trim()))) return showAlert("请完整选择或填写名称、渠道和计量单位。");
         if (!teacherAccounts.some(teacher => teacher.username === form.review_teacher_username)) return showAlert("请选择已启用的审核教师。");
         if (busy) return;
         setBusy(true);
@@ -135,15 +135,15 @@ function WorkRequestForm({ workHistory = [], teacherAccounts = [], fixedType, on
       }}>
         <CustomOptionFields required label={fixedType + "名称"} customLabel={"其它" + fixedType + "名称"} value={form.work_content} onChange={value => set("work_content", value)} options={choices.names} placeholder={"选择" + fixedType + "名称或搜索“其它”"} customPlaceholder={"请填写具体" + fixedType + "名称"} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
         <CustomOptionFields required label={fixedType + "渠道"} customLabel={"其它" + fixedType + "渠道"} value={form.external_unit} onChange={value => set("external_unit", value)} options={choices.channels} placeholder="选择渠道或搜索“其它”" customPlaceholder="请填写具体执行单位或渠道" Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
-        <Field required label="数量">
+        <Field required label="工作量">
           <input required type="number" min="0" step="any" style={styles.input} value={form.workload_quantity} onChange={(e) => set("workload_quantity", Number(e.target.value))} />
         </Field>
-        <CustomOptionFields required label="计费方式" customLabel="其它计费方式" value={form.workload_unit} onChange={value => set("workload_unit", value)} options={choices.billing} placeholder="选择计费方式或搜索“其它”" customPlaceholder="请填写具体计费方式" maxLength={60} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
+        <CustomOptionFields required label="计量单位" customLabel="其它计量单位" value={form.workload_unit} onChange={value => set("workload_unit", value)} options={choices.billing} placeholder="选择计量单位或搜索“其它”" customPlaceholder="请填写具体计量单位" maxLength={60} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
         <Field required label={"预计总" + fixedType + "费 / 元"}>
           <input required type="number" min="0" step="0.01" style={styles.input} value={fixedType === "测试" ? form.cost_test : form.cost_processing} onChange={(e) => set(fixedType === "测试" ? "cost_test" : "cost_processing", e.target.value)} />
         </Field>
         <ReviewTeacherField teachers={teacherAccounts} value={form.review_teacher_username} onChange={value => set("review_teacher_username", value)} />
-        <Field wide label="安全注意事项（可选）">
+        <Field wide label="安全事项（可选）">
           <textarea style={styles.textarea} value={form.safety_notes} onChange={(e) => set("safety_notes", e.target.value)} placeholder="如有特殊安全要求请填写" />
         </Field>
         <Field wide label="备注（可选）">

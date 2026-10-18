@@ -66,7 +66,7 @@ const HOST = process.env.HOST || "127.0.0.1";
 function requiredSecret(name, minLength) {
   const value = String(process.env[name] || '').trim();
   if (value.length < minLength || /(?:change.?me|replace.?with|example|your.secret)/i.test(value)) {
-    throw new Error(name + ' 未配置或不安全，请先运行 node scripts/setup.cjs。');
+    throw new Error(name + ' 未配置或不安全，请检查本机 .env 配置。');
   }
   return value;
 }

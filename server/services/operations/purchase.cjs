@@ -165,7 +165,7 @@ if (action === "reviewPurchaseRequest") {
     const reviewerTeacherName = String(account.display_name || account.username || "").trim();
 
     if (!["已通过", "已驳回"].includes(nextStatus)) throw new Error("采购审核只能选择同意或驳回。");
-    if (nextStatus === "已驳回" && !note) throw new Error("驳回时必须填写审核意见。");
+    if (nextStatus === "已驳回" && !note) throw new Error("驳回时必须填写审批意见。");
 
     const finalStatus = nextStatus === "已通过" ? "待入库" : nextStatus;
     const after = updateRecord("lab_purchase_requests", payload.id, {

@@ -49,7 +49,6 @@ function PurchasesPage({ registeredTeacherAccounts = [], teacherAccounts = [], r
         <Info label="数量" value={`${p.quantity} ${p.unit}`} />
         <Info label="采购渠道" value={p.preferred_supplier} />
         <Info label="预计金额" value={money(p.estimated_price)} />
-        {p.reviewed_by && <Info label="审批人" value={p.reviewed_by} />}
         <Info label="使用目的" value={p.purchase_purpose || "未标注"} />
         {p.received_status === "已入库" && <Info label="有效期" value={p.expiry_date || "未填写"} />}
         <Info label="入库状态" value={p.received_status || (p.status === "已完成" ? "已入库" : "-")} />
@@ -58,7 +57,6 @@ function PurchasesPage({ registeredTeacherAccounts = [], teacherAccounts = [], r
       </div>
       {p.safety_notes && <p><b>安全事项：</b>{p.safety_notes}</p>}
       {p.remark && <p><b>备注：</b>{p.remark}</p>}
-      {p.review_note && <p style={styles.note}><b>审核意见：</b>{p.review_note}{p.reviewed_by && <>（审批人：<strong className="platform-identity">{p.reviewed_by}</strong>）</>}</p>}
       <ReviewHistory row={p} logs={logs} />
       {p.status === "待入库" && <div style={styles.securityBox}><b>下一步：</b>物品到货后，原申请人上传照片并确认入库，采购才标记为“已完成”。</div>}
       {p.status === "已关闭" && <ClosureInfo row={p} />}
@@ -241,7 +239,7 @@ function PurchaseForm({ teacherAccounts = [], materialCatalog = [], onSubmit, pu
         <SpecificationFields key={`${initialData?._id || 'new'}:${purchaseCategory}:${customMaterial ? 'custom' : form.material_name}`} value={form.specification} onChange={value => set("specification", value)} options={specificationOptions} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
         <Field required label="数量"><input required type="number" min="0" step="any" style={styles.input} value={form.quantity} onChange={(e) => set("quantity", Number(e.target.value))} /></Field>
         <CustomOptionFields key={`unit:${initialData?._id || 'new'}:${form.material_name}`} required label="单位" customLabel="其它单位" value={form.unit} onChange={value => set("unit", value)} options={uniqueNonEmpty([...purchaseUnits, ...catalogItems.flatMap(item => item.units || []), initialData?.unit])} placeholder="选择单位或搜索“其它”" customPlaceholder="请填写具体计量单位" maxLength={30} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
-        <CustomOptionFields key={`supplier:${initialData?._id || 'new'}:${form.material_name}`} required label="采购渠道 / 供应商" customLabel="其它采购渠道 / 供应商" value={form.preferred_supplier} onChange={value => set("preferred_supplier", value)} options={supplierNames} placeholder="选择渠道或搜索“其它”" customPlaceholder="请填写具体采购渠道或供应商" Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
+        <CustomOptionFields key={`supplier:${initialData?._id || 'new'}:${form.material_name}`} required label="采购渠道" customLabel="其它采购渠道" value={form.preferred_supplier} onChange={value => set("preferred_supplier", value)} options={supplierNames} placeholder="选择渠道或搜索“其它”" customPlaceholder="请填写具体采购渠道" Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
         <Field required label="使用目的"><SearchableSelect required value={form.purchase_purpose} onChange={value => set("purchase_purpose", value)} options={[{ value: "私用/项目用（出库需采购人审批）", label: "私用/项目用（出库需采购人审批）" }, "公用"]} placeholder="搜索或选择使用目的" /></Field>
         <ReviewTeacherField teachers={teacherAccounts} value={form.review_teacher_username} onChange={value => set("review_teacher_username", value)} />
         <Field required label="预计金额 / 元"><input required type="number" min="0" step="any" style={styles.input} value={form.estimated_price} onChange={(e) => set("estimated_price", Number(e.target.value))} /></Field>

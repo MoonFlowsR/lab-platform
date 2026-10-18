@@ -10,7 +10,7 @@ export default function RecentRecords({ rows = [], children, preserveOrder = fal
   const [expanded, setExpanded] = useState(false);
   const ordered = useMemo(() => preserveOrder ? rows : newestRecords(rows), [rows, preserveOrder]);
   return <>
-    {rows.length > 3 && <div className="platform-record-limit"><span>{expanded ? `共 ${rows.length} 条` : `${preserveOrder ? "优先" : "最近"} 3 条 / 共 ${rows.length} 条`}</span><button type="button" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>{expanded ? `仅显示${preserveOrder ? '优先' : '最近'}3条` : '查看全部'}</button></div>}
-    {children(expanded ? ordered : ordered.slice(0, 3))}
+    {rows.length > 1 && <div className="platform-record-limit"><span>{expanded ? `共 ${rows.length} 条` : `${preserveOrder ? "优先" : "最近"} 1 条 / 共 ${rows.length} 条`}</span><button type="button" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>{expanded ? `仅显示${preserveOrder ? '优先' : '最近'}1条` : '查看全部'}</button></div>}
+    {children(expanded ? ordered : ordered.slice(0, 1))}
   </>;
 }

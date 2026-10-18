@@ -59,7 +59,7 @@ const port=server.address().port,origin=`http://127.0.0.1:${port}`;
 const browser=await chromium.launch({...(process.env.PLAYWRIGHT_CHANNEL ? {channel:process.env.PLAYWRIGHT_CHANNEL}:{}),headless:true}),results=[];
 
 Object.assign(batch,{purchase_category:'试剂原料',supplier:'示例供应商',purchase_purpose:'私用/项目用（出库需采购人审批）',inbound_by_name:studentA.display_name,inbound_by_username:studentA.username,safety_notes:'保持密封，使用时佩戴防护用品。',remark:'示例备注：使用后归还原位。',storage_detail:'示例柜上层左侧',storage_location:'A102 · 示例柜上层左侧',inbound_photo_attachment_id:101,spec:'50-100nm，纯度99.9%'});
-Object.assign(purchase,{status:'待入库',specification:'50-100nm',preferred_supplier:'示例供应商',purchase_purpose:'公用'});
+Object.assign(purchase,{reviewed_at:at,reviewed_by:teachers[1].display_name,review_note:'示例唯一审批意见',status:'待入库',specification:'50-100nm',preferred_supplier:'示例供应商',purchase_purpose:'公用'});
 snapshot.lab_work_requests.push({...work,_id:74,request_type:'加工',work_content:'示例加工',cost_processing:20,cost_test:0});
 snapshot.lab_work_requests.push({...work,_id:75,status:'已完成',work_content:'示例已完成测试',completed_at:at});
 snapshot.lab_work_requests.push({...work,_id:76,status:'已完成',work_content:'示例审批后修改测试',completion_modified:true,completed_at:at});
@@ -74,7 +74,7 @@ try {
    const u=new URL(route.request().url());if(u.origin!==origin)return route.abort();
    if(!u.pathname.startsWith('/api/'))return route.continue();
    if(u.pathname==='/api/auth/me')return route.fulfill({json:{ok:true,account,teachers}});
-   if(u.pathname==='/api/ops/listAudit')return route.fulfill({json:{ok:true,rows:auditLogs.slice(0,3).map(row=>({...row,object_label:'示例对象'})),total:auditLogs.length}});
+   if(u.pathname==='/api/ops/listAudit')return route.fulfill({json:{ok:true,rows:auditLogs.slice(0,route.request().postDataJSON()?.limit || auditLogs.length).map(row=>({...row,object_label:'示例对象'})),total:auditLogs.length}});
    if(u.pathname==='/api/ops/listAll')return route.fulfill({json:{ok:true,data:{...snapshot,current_account:account},revision:'synthetic-review'}});
    if(u.pathname==='/api/events')return route.fulfill({contentType:'text/event-stream',body:': fixture\n\n'});
    if(u.pathname==='/api/help-comments/session')return route.fulfill({json:{ok:true,account,student_name_labels:nameLabels}});
@@ -88,6 +88,44 @@ try {
    await page.screenshot({path:path.join(out,role+'-'+width+'-'+i+'.png'),fullPage:true});
    const geometry=await page.evaluate(()=>({viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,bodyHeight:document.body.scrollHeight,mainTop:document.querySelector('main')?.getBoundingClientRect().top,heading:document.querySelector('main h2')?.textContent}));
    results.push({role,width,tab:tabs[i],...geometry,errors:[...errors]});
+   if(role==='admin' && width===1440){
+    if(tabs[i]==='测试记录'){
+     const pending=page.locator('main > section').filter({has:page.getByRole('heading',{name:/^待审核测试/})});
+     assert.equal(await pending.locator('h3').count(),1);
+     await pending.getByRole('button',{name:'查看全部',exact:true}).click();assert.equal(await pending.locator('h3').count(),3);
+     await pending.getByRole('button',{name:'仅显示最近1条',exact:true}).click();assert.equal(await pending.locator('h3').count(),1);
+     const downloaded=page.waitForEvent('download');await page.getByRole('button',{name:/导出.*CSV/}).first().click();
+     const csv=await fs.readFile(await (await downloaded).path(),'utf8');
+     for(const name of ['直接指定教师甲测试','仅导师关系对照测试','教师甲本人申请测试'])assert(csv.includes(name),'CSV must include hidden matching records');
+     results.push({latestOneAndExpand:true,exportNotTruncated:true});
+    }
+    if(tabs[i]==='采购记录'){
+     assert.equal(await page.getByText('示例唯一审批意见',{exact:true}).filter({visible:true}).count(),1);
+     assert.equal(await page.locator('main').getByText('系统责任教师',{exact:true}).count(),0);
+     results.push({approvalOpinionShownOnce:true});
+    }
+    if(tabs[i]==='库存'){
+     const groups=page.locator('main > section').filter({has:page.getByRole('heading',{name:'材料批次库存',exact:true})});
+     assert.equal(await groups.locator('.platform-stock-group').count(),1);
+     await groups.getByRole('button',{name:'查看全部',exact:true}).click();assert.equal(await groups.locator('.platform-stock-group').count(),2);
+     await groups.getByRole('button',{name:'仅显示最近1条',exact:true}).click();
+     results.push({inventoryLatestOne:true});
+    }
+    if(tabs[i]==='数据报表'){
+     const panel=page.locator('#report-detail-panel');assert.equal(await panel.locator('tbody tr').count(),1);
+     await panel.getByRole('button',{name:'查看全部',exact:true}).click();assert.equal(await panel.locator('tbody tr').count(),5);
+     await panel.getByRole('button',{name:'仅显示最近1条',exact:true}).click();
+     await page.getByRole('tab',{name:/^采购/}).click();assert.equal(await panel.getByText('系统责任教师',{exact:true}).count(),0);
+     results.push({reportsLatestOne:true,reportTeacherDuplicationRemoved:true});
+    }
+    if(tabs[i]==='账号管理'){
+     const accountsSection=page.locator('main > section').filter({has:page.getByRole('heading',{name:'账号列表',exact:true})});
+     assert.equal(await accountsSection.locator('tbody tr').count(),1);
+     const audit=page.getByRole('region',{name:'最近操作日志'});await audit.locator('tbody tr').waitFor();
+     assert.equal(await audit.locator('tbody tr').count(),1);
+     results.push({accountsAndAuditLatestOne:true});
+    }
+   }
    if(tabs[i]==='账号管理'&&width===390){
     await page.getByRole('button',{name:'导出账号CSV',exact:true}).click();
     assert.match(await page.locator('.platform-sync-status').innerText(),/同步完成/);
@@ -114,6 +152,11 @@ try {
   await page.goto(origin+'/help');await page.locator('.help-page').waitFor();await page.screenshot({path:path.join(out,role+'-'+width+'-help.png'),fullPage:true});
   results.push({role,width,help:true,overflow:await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),errors});await page.close();
  }
+ const anonymous=await browser.newPage({viewport:{width:390,height:850}});let deniedReads=0;
+ await anonymous.route('**/*',route=>{const u=new URL(route.request().url());if(u.origin!==origin)return route.abort();if(!u.pathname.startsWith('/api/'))return route.continue();if(u.pathname==='/api/help-comments'){deniedReads++;return route.fulfill({status:401,json:{ok:false,message:'请先登录。'}});}return route.fulfill({json:{ok:true,comments:[]}});});
+ await anonymous.goto(origin+'/help');await anonymous.getByText('后查看留言和评论。',{exact:false}).waitFor();
+ assert.equal(await anonymous.locator('.help-composer-error').count(),0);await anonymous.waitForTimeout(10500);assert.equal(deniedReads,1,'Anonymous authorization failure must not keep polling');
+ results.push({anonymousHelpNoError:true,anonymousRequests:deniedReads});await anonymous.close();
  assert.equal(results.filter(r=>r.scrollWidth>r.viewport||r.overflow).length,0,'page must fit the viewport');assert.deepEqual(results.flatMap(r=>r.errors||[]),[],'no browser errors');
  await fs.writeFile(path.join(out,'results.json'),JSON.stringify(results,null,2));console.log(JSON.stringify({cases:results.length,overflow:results.filter(r=>r.scrollWidth>r.viewport||r.overflow),errors:results.flatMap(r=>r.errors||[]),out},null,2));
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

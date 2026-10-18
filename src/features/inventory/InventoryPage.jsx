@@ -24,7 +24,7 @@ function InventoryPage({ canInitialize = false, materialCatalog = [], isAdmin = 
   const showRemarks = batches.some(batch => batch.remark);
   const showAssociatedTeachers = batches.some(batch => batch.associated_teacher_names);
   const batchGroups = useMemo(() => groupMaterialBatches(batches).map(group => ({ ...group, created_at: group.latest_created_at })), [batches]);
-  const batchColumns = ["批次", "材料", "材料类别", "采购人", "入库人", "供应商", "规格", "使用目的", "当前库存", "位置", "有效期", ...(showSafetyNotes ? ["安全事项"] : []), ...(showRemarks ? ["备注"] : []), ...(showAssociatedTeachers ? ["关联教师"] : []), "建立时间", "入库证明", ...((canManageStock || canEditBatchInformation) ? ["操作"] : [])];
+  const batchColumns = ["批次", "材料", "材料类别", "采购人", "入库人", "采购渠道", "规格", "使用目的", "当前库存", "位置", "有效期", ...(showSafetyNotes ? ["安全事项"] : []), ...(showRemarks ? ["备注"] : []), ...(showAssociatedTeachers ? ["关联教师"] : []), "建立时间", "入库证明", ...((canManageStock || canEditBatchInformation) ? ["操作"] : [])];
   const batchRow = (b) => [
     b.batch_code,
     b.material_name,

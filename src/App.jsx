@@ -315,7 +315,7 @@ function App() {
         <div className="platform-header-actions" style={styles.headerRight}>
           <button style={styles.secondaryButton} disabled={syncing} onClick={loadAll}>{syncing ? "同步中…" : "手动同步"}</button>
           <a href="/help" style={{ ...styles.lightButton, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>帮助文档</a>
-          <button style={styles.lightButton} onClick={() => setAccountSettingsOpen(true)}>个人信息与密码</button>
+          <button style={styles.lightButton} onClick={() => setAccountSettingsOpen(true)}>账户设置</button>
           <button style={styles.lightButton} onClick={logoutAccount}>退出登录</button>
         </div>
       </header>

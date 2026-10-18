@@ -11,7 +11,7 @@ export async function commentRequest(path, token, options = {}) {
     ...options, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
   const json = await response.json();
-  if (!response.ok || !json.ok) throw new Error(json.message || '评论操作失败，请重试。');
+  if (!response.ok || !json.ok) { const error = new Error(json.message || '评论操作失败，请重试。'); error.status = response.status; throw error; }
   return json;
 }
 
