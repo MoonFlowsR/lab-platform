@@ -22,3 +22,7 @@
  .platform-filter-panel .platform-student-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.platform-filter-panel .platform-student-filter-grid>label{grid-column:auto!important}
  .platform-action-notice{bottom:10px;padding:10px 12px;font-size:13px}
 }
+
+.platform-action-notice.is-login-success{animation:platform-login-notice-out .4s ease 5s forwards}
+@keyframes platform-login-notice-out{from{opacity:1}to{opacity:0}}
+@media(prefers-reduced-motion:reduce){.platform-action-notice.is-login-success{animation-duration:1ms}}
