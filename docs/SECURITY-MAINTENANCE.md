@@ -18,7 +18,7 @@
 
 正式环境前端和API同源；开发环境由Vite代理 `/api`，后端端口可通过 `API_PORT` 设置。未开放通用跨域访问。
 
-Tailwind构建依赖已移除，原有浏览器基础样式保留在 `src/base.css`，页面继续使用自定义样式。搜索使用标准Custom Highlight API，并保留回退显示。
+Tailwind构建依赖已移除，原有浏览器基础样式保留在 `src/styles/base.css`，页面继续使用自定义样式。搜索使用标准Custom Highlight API，并保留回退显示。
 
 ## 仓库维护
 

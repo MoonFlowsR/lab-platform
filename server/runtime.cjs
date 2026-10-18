@@ -1,24 +1,26 @@
 // Runtime dependencies are built once; route installers share these exact instances.
-module.exports = function createRuntime() {
-const createDeletionService = require("./admin-record-deletion.cjs");
+module.exports = function createRuntime({ clock = () => new Date().toISOString() } = {}) {
+require('./config.cjs');
+const createDeletionService = require("./services/admin-record-deletion.cjs");
 
-const recordChanges = require("./record-changes.cjs")();
+const recordChanges = require("./services/record-changes.cjs")();
+const studentNameLabels = require("./features/accounts/student-name-labels.cjs");
 
 const retiredLocationPhotoIds = require("./legacy/retired-location-photos.cjs");
 
 const express = require("express");
 
-const initializeMaterialStock = require("./material-initialization.cjs");
+const initializeMaterialStock = require("./features/inventory/material-initialization.cjs");
 
-const updateBatchInformation = require("./batch-information.cjs");
+const updateBatchInformation = require("./features/inventory/batch-information.cjs");
 
-const storageDetails = require("./storage-details.cjs");
+const storageDetails = require("./features/inventory/storage-details.cjs");
 
-const completeWorkValues = require("./work-completion.cjs");
+const completeWorkValues = require("./features/work/work-completion.cjs");
 
-const closeRejectedRequest = require("./request-closure.cjs");
+const closeRejectedRequest = require("./features/work/request-closure.cjs");
 
-const createStockOutService = require("./stock-out-approval.cjs");
+const createStockOutService = require("./features/stock/stock-out-approval.cjs");
 
 const path = require("path");
 
@@ -54,8 +56,6 @@ const Database = require("better-sqlite3");
 const bcrypt = require("bcryptjs");
 
 const jwt = require("jsonwebtoken");
-
-
 
 const multer = require("multer");
 
@@ -126,20 +126,26 @@ db.pragma("secure_delete = ON");
 require('./db/schema.cjs')(db);
 
 function nowISO() {
-  return new Date().toISOString();
+  return clock();
 }
 
 db.prepare("INSERT OR IGNORE INTO id_counters (id, value, updated_at) VALUES (1, 0, ?)").run(nowISO());
-
-
 
 require('./migrations/accounts-admin.cjs')({ db, nowISO });
 
 const accountSessions = require('./security/account-sessions.cjs')({ db, nowISO });
 
-const studentProfiles = require("./student-profiles.cjs")({ db, nowISO, addAudit });
+const { nextPublicId, insertRecord, getRecord, updateRecord, listRecords, addAudit } = require("./db/records.cjs")({ db, nowISO, dateStampCN, padSerial });
+
+const studentProfiles = require("./features/accounts/student-profiles.cjs")({ db, nowISO, addAudit });
+
+const graduationExpiry = require('./security/student-graduation-expiry.cjs')({ db, nowISO, accountSessions, addAudit, recordChanges });
+graduationExpiry.start();
+const closeDatabase = db.close.bind(db);
+db.close = function close() { graduationExpiry.stop(); return closeDatabase(); };
 
 require("./migrations/purpose-migration.cjs")({ db, nowISO, addAudit });
+
 
 const app = express();
 
@@ -148,7 +154,8 @@ app.set("json replacer", (key, value) => key === "storage_photo_attachment_id" ?
 const authAttempts = require("./security/auth-rate-limit.cjs")();
 app.use(authAttempts.byIp);
 
-app.use(express.json({ limit: "50mb" }));
+const requestJson = require('./security/request-json.cjs')(express);
+app.use(requestJson.ordinary);
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -176,8 +183,10 @@ function padSerial(value, width = 6) {
   return String(value).padStart(width, "0");
 }
 
-function isChineseName(value) {
-  return /^[\u4e00-\u9fa5·]{2,12}$/.test(String(value || "").trim());
+function isValidLoginId(value) {
+  const settings = require('../src/config/platform-settings.json');
+  const text = String(value || '').trim();
+  return settings.loginIdentifier === 'identifier' ? /^[\p{L}\p{N}_.-]{2,32}$/u.test(text) : /^[\u4e00-\u9fa5·]{2,12}$/.test(text);
 }
 
 function pickFields(source, fields) {
@@ -283,7 +292,7 @@ function saveWorkWithAttachments(account, attachmentIds, save) {
   })();
 }
 
-const { purchaseNameAliases = {} } = require('../src/dropdown-options.json');
+const { purchaseNameAliases = {} } = require('../src/config/dropdown-options.json');
 
 const nameKey = value => String(value || '').normalize('NFKC').trim().toLowerCase().replace(/\s+/gu, '');
 
@@ -298,61 +307,7 @@ function isImageAttachmentRecord(attachment) {
   return mime.startsWith("image/") || [".png", ".jpg", ".jpeg"].some((ext) => name.endsWith(ext));
 }
 
-function getPreviousPurchases(materialName, excludeId = "") {
-  const key = normalizeItemName(materialName);
-  if (!key) return [];
-  return listRecords("lab_purchase_requests", (row) =>
-    String(row._id) !== String(excludeId || "") &&
-    !["已撤回", "已驳回", "已关闭"].includes(row.status) &&
-    normalizeItemName(row.material_name) === key
-  );
-}
-
-const buildMaterialCatalog = require('./material-catalog.cjs');
-
-function buildPurchaseCatalog() {
-  const rows = listRecords("lab_purchase_requests", (row) => !["已撤回", "已驳回", "已关闭"].includes(row.status));
-  const map = new Map();
-  for (const row of rows) {
-    const key = normalizeItemName(row.material_name);
-    if (!key) continue;
-    if (!map.has(key)) {
-      map.set(key, {
-        normalized_name: key,
-        material_name: row.material_name,
-        count: 0,
-        last_public_id: row.public_id,
-        last_status: row.status,
-        last_quantity: row.quantity,
-        last_unit: row.unit,
-        last_safety_notes: row.safety_notes || "",
-        last_created_at: row.created_at,
-      });
-    }
-    const item = map.get(key);
-    item.count += 1;
-  }
-  return [...map.values()];
-}
-
-function buildFundSummary() {
-  const purchases = listRecords("lab_purchase_requests", (row) => !["已撤回", "已驳回", "已关闭"].includes(row.status));
-  const work = listRecords("lab_work_requests", (row) => ["已完成", "已归档"].includes(row.status));
-  const materialCommitted = purchases.reduce((sum, row) => sum + num(row.estimated_price), 0);
-  const testCommitted = work.filter((row) => row.request_type === "测试").reduce((sum, row) => sum + num(row.cost_test), 0);
-  const processingCommitted = work.filter((row) => row.request_type === "加工").reduce((sum, row) => sum + num(row.cost_processing ?? (num(row.cost_test) + num(row.cost_material))), 0);
-
-  return {
-    material_total: Number.isFinite(MATERIAL_FUND_TOTAL) ? MATERIAL_FUND_TOTAL : null,
-    material_committed: materialCommitted,
-    material_balance: Number.isFinite(MATERIAL_FUND_TOTAL) ? MATERIAL_FUND_TOTAL - materialCommitted : null,
-    test_total: Number.isFinite(TEST_FUND_TOTAL) ? TEST_FUND_TOTAL : null,
-    test_committed: testCommitted,
-    processing_committed: processingCommitted,
-    test_balance: Number.isFinite(TEST_FUND_TOTAL) ? TEST_FUND_TOTAL - testCommitted : null,
-    note: "测试、加工仅统计已完成工单的最终金额；采购按申请记录金额统计。",
-  };
-}
+const buildMaterialCatalog = require('./features/inventory/material-catalog.cjs');
 
 function publicAccount(account) {
   const student_profile = studentProfiles.read(account);
@@ -378,10 +333,6 @@ function signToken(account) {
   );
 }
 
-
-
-
-
 db.exec(`
   CREATE TABLE IF NOT EXISTS lab_user_hidden_records (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -395,10 +346,6 @@ db.exec(`
   );
 `);
 
-
-
-
-
 function requireTeacherOrAdmin(account) {
   if (!["teacher", "admin"].includes(account.account_type)) {
     throw new Error("只有教师或管理员账号可以执行此操作。");
@@ -409,112 +356,6 @@ function requireStudentSubmission(account) {
   if (account.account_type !== "student") throw new Error("只有学生账号可以提交申请或新建出入退库记录。");
 }
 
-function nextPublicId(typeCode) {
-  const tx = db.transaction(() => {
-    const current = db.prepare("SELECT value FROM id_counters WHERE id = 1").get();
-    const next = Number(current?.value || 0) + 1;
-    db.prepare("UPDATE id_counters SET value = ?, updated_at = ? WHERE id = 1").run(next, nowISO());
-    return next;
-  });
-
-  const globalSeq = tx();
-  const date = dateStampCN();
-  return {
-    public_id: `${typeCode}-${date}-${padSerial(globalSeq)}`,
-    global_seq: globalSeq,
-    date_stamp: date,
-    id_type: typeCode,
-  };
-}
-
-function rowToRecord(row) {
-  if (!row) return null;
-  const data = JSON.parse(row.data_json);
-  return {
-    ...data,
-    _id: String(row.id),
-    id: row.id,
-    public_id: row.public_id || data.public_id || "",
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-  };
-}
-
-function insertRecord(collection, data, meta = {}) {
-  const createdAt = data.created_at || nowISO();
-  const updatedAt = data.updated_at || createdAt;
-  const record = { ...data, created_at: createdAt, updated_at: updatedAt };
-
-  const result = db.prepare(`
-    INSERT INTO records
-    (collection, public_id, applicant_username, operator_username, created_at, updated_at, data_json)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    collection,
-    record.public_id || null,
-    meta.applicant_username || record.applicant_username || null,
-    meta.operator_username || record.operator_username || null,
-    createdAt,
-    updatedAt,
-    JSON.stringify(record)
-  );
-
-  return getRecord(collection, result.lastInsertRowid);
-}
-
-function getRecord(collection, id) {
-  const row = db.prepare("SELECT * FROM records WHERE collection = ? AND id = ? AND deleted_at IS NULL").get(collection, Number(id));
-  return rowToRecord(row);
-}
-
-function updateRecord(collection, id, patch) {
-  const existing = getRecord(collection, id);
-  if (!existing) throw new Error("未找到记录。");
-
-  const updated = { ...existing, ...patch, _id: undefined, id: undefined, updated_at: nowISO() };
-
-  db.prepare(`
-    UPDATE records
-    SET public_id = ?, applicant_username = ?, operator_username = ?, updated_at = ?, data_json = ?
-    WHERE collection = ? AND id = ?
-  `).run(
-    updated.public_id || null,
-    updated.applicant_username || null,
-    updated.operator_username || null,
-    updated.updated_at,
-    JSON.stringify(updated),
-    collection,
-    Number(id)
-  );
-
-  return getRecord(collection, id);
-}
-
-function listRecords(collection, filterFn = null) {
-  const rows = db.prepare("SELECT * FROM records WHERE collection = ? AND deleted_at IS NULL ORDER BY datetime(created_at) DESC, id DESC").all(collection);
-  const records = rows.map(rowToRecord);
-  return filterFn ? records.filter(filterFn) : records;
-}
-
-function addAudit(req, account, action, targetType, targetId, beforeData, afterData) {
-  db.prepare(`
-    INSERT INTO audit_logs
-    (operator_username, operator_role, action, target_type, target_id, before_json, after_json, ip_address, user_agent, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    account?.username || "",
-    account?.account_type || "",
-    action,
-    targetType || "",
-    String(targetId || ""),
-    beforeData ? JSON.stringify(beforeData) : "",
-    afterData ? JSON.stringify(afterData) : "",
-    req.ip || "",
-    req.headers["user-agent"] || "",
-    nowISO()
-  );
-}
-
 function authMiddleware(req, res, next) {
   try {
     const header = req.headers.authorization || "";
@@ -522,7 +363,7 @@ function authMiddleware(req, res, next) {
     if (!token) throw new Error("缺少登录 token，请重新登录。");
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    const account = db.prepare("SELECT * FROM accounts WHERE username = ?").get(decoded.username);
+    const account = graduationExpiry.enforceAccount(db.prepare("SELECT * FROM accounts WHERE username = ?").get(decoded.username));
 
     if (!account) throw new Error("账号不存在。");
     if (account.status !== "active") throw new Error("账号未启用，请联系管理员。");
@@ -531,7 +372,7 @@ function authMiddleware(req, res, next) {
     if (!accountSessions.matches(decoded, account)) throw new Error("登录状态已失效，请重新登录。");
 
     req.account = publicAccount(account);
-    if (req.account.profile_required && !["/api/auth/me", "/api/profile/get", "/api/profile/save"].includes(req.path)) return res.status(403).json({ ok: false, code: "PROFILE_REQUIRED", message: "请先完善责任教师、指导教师和毕业年份。" });
+    if (req.account.profile_required && !["/api/auth/me", "/api/profile/get", "/api/profile/save"].includes(req.path)) return res.status(403).json({ ok: false, code: "PROFILE_REQUIRED", message: "请先完善系统责任教师、实际指导教师和毕业年份。" });
     next();
   } catch (error) {
     res.status(401).json({ ok: false, code: "SESSION_EXPIRED", message: error.message || "登录状态无效，请重新登录。" });
@@ -605,95 +446,6 @@ function validatePersonalHiddenCollection(collection) {
   return collection;
 }
 
-function listAll(account) {
-  const isAdmin = account.account_type === "admin";
-  const isTeacher = account.account_type === "teacher";
-
-  // Signed-in members share work progress; mutations remain restricted to owners/reviewers.
-  const workRequests = listRecords("lab_work_requests");
-
-  // All signed-in users can read purchase records; mutations retain their own authorization.
-  const purchases = listRecords("lab_purchase_requests");
-
-  // Saved stock movements and their evidence photos are visible to all signed-in users.
-  const stockTransactions = listRecords("lab_stock_transactions");
-  const stockOutRequests = listRecords("lab_stock_out_requests");
-  const inventoryPurchases = listRecords("lab_purchase_requests");
-  const purchaseById = new Map(inventoryPurchases.map(row => [String(row._id), row]));
-  const purchaseByPublicId = new Map(inventoryPurchases.map(row => [row.public_id, row]));
-  const linkInventoryProfile = require("./inventory-profile.cjs")(db);
-  const materialBatches = listRecords("lab_material_batches").map(batch => {
-    const source = purchaseById.get(String(batch.related_purchase_record_id)) || purchaseByPublicId.get(batch.related_purchase_id);
-    return linkInventoryProfile({ ...batch,
-      purchaser_name: batch.purchaser_name || source?.applicant_name || source?.applicant_username || "",
-      purchaser_username: batch.purchaser_username || source?.applicant_username || "",
-      inbound_by_name: batch.inbound_by_name || batch.created_by_name || batch.created_by_username || "",
-      inbound_by_username: batch.inbound_by_username || batch.created_by_username || "",
-    });
-  });
-
-  const visibleTargetPublicIds = new Set([
-    ...workRequests.map((r) => r.public_id),
-    ...purchases.map((r) => r.public_id),
-    ...stockTransactions.map((r) => r.public_id),
-    ...stockOutRequests.map((r) => r.public_id),
-  ].filter(Boolean));
-
-  const visibleTargetIds = new Set([
-    ...workRequests.map((r) => String(r._id)),
-    ...purchases.map((r) => String(r._id)),
-    ...stockTransactions.map((r) => String(r._id)),
-    ...stockOutRequests.map((r) => String(r._id)),
-  ].filter(Boolean));
-
-  const allLogs = listRecords("lab_review_logs");
-  const reviewLogs = isAdmin || isTeacher ? allLogs : allLogs.filter((log) =>
-    visibleTargetPublicIds.has(log.target_public_id) ||
-    visibleTargetIds.has(String(log.target_id))
-  );
-
-  const retiredPhotoIds = retiredLocationPhotoIds([...purchases, ...stockTransactions, ...materialBatches]);
-  const attachmentRows = isAdmin
-    ? listRecords("lab_attachments", (r) => !r.deleted_at)
-    : listRecords("lab_attachments", (r) =>
-      !r.deleted_at && (
-        isSharedStockEvidence(r, stockTransactions, materialBatches) ||
-        r.uploaded_by_username === account.username ||
-        visibleTargetPublicIds.has(r.target_public_id) ||
-        visibleTargetIds.has(String(r.target_id))
-      )
-    );
-
-  const base = {
-    current_account: publicAccount(db.prepare("SELECT * FROM accounts WHERE username=?").get(account.username)),
-    lab_work_requests: workRequests,
-    lab_review_logs: reviewLogs,
-    lab_materials: listRecords("lab_materials"),
-    lab_material_batches: materialBatches,
-    lab_purchase_requests: purchases,
-    lab_stock_transactions: stockTransactions,
-    lab_stock_out_requests: stockOutRequests,
-    lab_expense_records: listRecords("lab_expense_records"),
-    lab_test_processing_units: listRecords("lab_test_processing_units"),
-    lab_attachments: attachmentRows.filter(row => !retiredPhotoIds.has(String(row._id))),
-    lab_accounts: getPublicTeacherAccountsForDropdown(),
-    lab_registered_teacher_accounts: getRegisteredTeacherAccountsForDropdown(),
-    ...(isAdmin ? { lab_teacher_accounts: db.prepare("SELECT username, display_name FROM accounts WHERE account_type = 'teacher' ORDER BY username").all() } : {}),
-    lab_student_accounts: isTeacher || isAdmin ? db.prepare("SELECT username, display_name FROM accounts WHERE account_type = 'student' ORDER BY username").all() : [],
-    lab_user_hidden_records: listHiddenRecordsForAccount(account),
-    lab_fund_summary: buildFundSummary(),
-    lab_purchase_catalog: buildPurchaseCatalog(),
-    lab_material_catalog: buildMaterialCatalog(listRecords),
-  };
-
-  if (isAdmin) {
-    base.accounts = listAccountsForAdmin();
-    base.audit_logs = db.prepare("SELECT * FROM audit_logs ORDER BY id DESC").all();
-  }
-
-  return base;
-}
-
 function requireOwner(row, account) {
   if (account.account_type !== "admin" && row.applicant_username !== account.username) throw new Error("只能操作本人提交的申请。");
 }
@@ -715,19 +467,13 @@ function addReviewLog(row, account, action, beforeStatus, afterStatus, note, tar
   });
 }
 
-
-
 function getAccountDisplayNameForAcl(account) {
   return String(account?.display_name || account?.username || "").trim();
 }
 
-
-
 function isStudentAccountForAcl(account) {
   return account?.account_type === "student";
 }
-
-
 
 function isOwnerStudentForAcl(row, account) {
   if (!isStudentAccountForAcl(account)) return true;
@@ -736,16 +482,6 @@ function isOwnerStudentForAcl(row, account) {
   return String(row?.applicant_username || "").trim() === username ||
     String(row?.applicant_name || "").trim() === displayName;
 }
-
-
-
-
-
-
-
-
-
-
 
 function getPublicTeacherAccountsForDropdown() {
   try {
@@ -787,8 +523,6 @@ function selectedReviewTeacher(payload) {
 function requireAssignedReviewer(row, account) {
   if (account.account_type !== "teacher" || !row.review_teacher_username || row.review_teacher_username !== account.username) throw new Error("仅被指定的审核教师可以审核此工单，其他教师和管理员不能审核。");
 }
-
-
 
 function ensureCanAccessAttachmentTarget(account, targetCollection, targetId, { readOnly = false } = {}) {
   if (!targetCollection || !targetId) throw new Error("缺少附件关联对象。");
@@ -852,10 +586,12 @@ function ensureCanDownloadAttachment(account, attachment) {
   throw new Error("无权下载该附件。");
 }
 
-const syncResponse = require("./sync-response.cjs")({ db, listAll });
+const { getPreviousPurchases, listAll } = require("./queries/snapshot.cjs")({ normalizeItemName, listRecords, num, MATERIAL_FUND_TOTAL, TEST_FUND_TOTAL, db, retiredLocationPhotoIds, isSharedStockEvidence, publicAccount, getPublicTeacherAccountsForDropdown, getRegisteredTeacherAccountsForDropdown, studentNameLabels, listHiddenRecordsForAccount, buildMaterialCatalog, listAccountsForAdmin });
+
+const syncResponse = require("./services/sync-response.cjs")({ db, listAll });
 
 const deletionService = createDeletionService({ db, uploadDir: UPLOAD_DIR, nowISO, addAudit });
 
 const stockOutService = createStockOutService({ db, getRecord, listRecords, insertRecord, updateRecord, nextPublicId, addAudit, nowISO, storageDetails, requireItemPhoto, bindStockEvidence, batchPurchasePurpose, selectedStockTeachers });
-return { accountSessions, authAttempts, ADMIN_INVITE_CODE, BACKUP_DIR, DB_PATH, DIST_DIR, HOST, PORT, PURCHASE_EDIT_FIELDS, STUDENT_INVITE_CODE, TEACHER_INVITE_CODE, UPLOAD_DIR, WORK_REQUEST_EDIT_FIELDS, addAudit, addReviewLog, app, asyncHandler, authMiddleware, batchPurchasePurpose, bcrypt, bindStockEvidence, closeRejectedRequest, completeWorkValues, db, deletionService, ensureCanAccessAttachmentTarget, ensureCanDownloadAttachment, express, fs, getInitialAccountStatus, getMonthFolder, getPreviousPurchases, getRecord, getRegisteredTeacherAccountsForDropdown, initializeMaterialStock, insertRecord, isChineseName, isImageAttachmentRecord, listRecords, nextPublicId, normalizeItemName, nowISO, num, path, pickFields, publicAccount, publicAccountForAdmin, purchaseCategory, purchasePurpose, recordChanges, requireAdmin, requireAssignedReviewer, requireItemPhoto, requireOwner, requireStockEvidence, requireStudentSubmission, requireTeacherOrAdmin, requiredPurchaseExpiryDate, retiredLocationPhotoIds, safeCollectionName, safeFileName, saveWorkWithAttachments, selectedReviewTeacher, selectedStockTeachers, signToken, stockOutService, storageDetails, studentProfiles, syncResponse, updateBatchInformation, updateRecord, upload, validatePersonalHiddenCollection, workRequestCosts };
+return { graduationExpiry, accountSessions, authAttempts, ADMIN_INVITE_CODE, BACKUP_DIR, DB_PATH, DIST_DIR, HOST, PORT, PURCHASE_EDIT_FIELDS, STUDENT_INVITE_CODE, TEACHER_INVITE_CODE, UPLOAD_DIR, WORK_REQUEST_EDIT_FIELDS, addAudit, addReviewLog, app, asyncHandler, authMiddleware, batchPurchasePurpose, bcrypt, bindStockEvidence, closeRejectedRequest, completeWorkValues, db, deletionService, ensureCanAccessAttachmentTarget, ensureCanDownloadAttachment, express, fs, getInitialAccountStatus, getMonthFolder, getPreviousPurchases, getRecord, getRegisteredTeacherAccountsForDropdown, initializeMaterialStock, insertRecord, isValidLoginId, isImageAttachmentRecord, listRecords, nextPublicId, normalizeItemName, nowISO, num, path, pickFields, publicAccount, publicAccountForAdmin, purchaseCategory, purchasePurpose, recordChanges, requestJson, requireAdmin, requireAssignedReviewer, requireItemPhoto, requireOwner, requireStockEvidence, requireStudentSubmission, requireTeacherOrAdmin, requiredPurchaseExpiryDate, retiredLocationPhotoIds, safeCollectionName, safeFileName, saveWorkWithAttachments, selectedReviewTeacher, selectedStockTeachers, signToken, stockOutService, storageDetails, studentProfiles, syncResponse, updateBatchInformation, updateRecord, upload, validatePersonalHiddenCollection, workRequestCosts };
 };

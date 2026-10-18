@@ -1,13 +1,22 @@
 module.exports = function createAdminOperations(context) {
-const { accountSessions, addAudit, bcrypt, db, deletionService, insertRecord, nextPublicId, nowISO, publicAccountForAdmin, recordChanges, requireAdmin, requireTeacherOrAdmin } = context;
+const { studentProfiles, accountSessions, addAudit, bcrypt, db, deletionService, graduationExpiry, insertRecord, nextPublicId, nowISO, publicAccountForAdmin, recordChanges, requireAdmin, requireTeacherOrAdmin } = context;
 return {
-operation1(req, res, action, payload, account) {
+adminUpdateStudentProfile(req, res, action, payload, account) {
+  requireAdmin(account);
+  const target = db.prepare("SELECT * FROM accounts WHERE id=? AND account_type='student'").get(Number(payload.id));
+  if (!target) throw new Error("未找到学生账号。");
+  studentProfiles.save(req, target, payload, account);
+  const updated = graduationExpiry.enforceAccount(db.prepare("SELECT * FROM accounts WHERE id=?").get(target.id));
+  recordChanges.notify();
+  return res.json({ok:true, account:publicAccountForAdmin(updated)});
+},
+adminDeletePreview(req, res, action, payload, account) {
 if (action === "adminDeletePreview") {
     requireAdmin(account);
     return res.json({ ok: true, preview: deletionService.preview(payload.collection, payload.id) });
   }
 },
-operation2(req, res, action, payload, account) {
+adminDeleteRecord(req, res, action, payload, account) {
 if (action === "adminDeleteRecord") {
     requireAdmin(account);
     const result = deletionService.execute(req, account, payload);
@@ -15,7 +24,7 @@ if (action === "adminDeleteRecord") {
     return res.json({ ok: true, ...result });
   }
 },
-operation4(req, res, action, payload, account) {
+changeMyPassword(req, res, action, payload, account) {
 if (action === "changeMyPassword") {
     const oldPassword = String(payload.old_password || "").trim();
     const newPassword = String(payload.new_password || "").trim();
@@ -36,7 +45,7 @@ if (action === "changeMyPassword") {
     return res.json({ ok: true });
   }
 },
-operation5(req, res, action, payload, account) {
+adminSetAccountStatus(req, res, action, payload, account) {
 if (action === "adminSetAccountStatus") {
     requireAdmin(account);
     const id = Number(payload.id);
@@ -49,6 +58,8 @@ if (action === "adminSetAccountStatus") {
     const before = db.prepare("SELECT * FROM accounts WHERE id = ?").get(id);
     if (!before) throw new Error("未找到账号。");
 
+    if (status === 'active') graduationExpiry.assertMayActivate(before);
+
     const revoked = accountSessions.changeStatus(id, status, () => {
       const after = db.prepare("SELECT * FROM accounts WHERE id = ?").get(id);
       addAudit(req, account, action, "accounts", String(id), publicAccountForAdmin(before), publicAccountForAdmin(after));
@@ -58,7 +69,7 @@ if (action === "adminSetAccountStatus") {
     return res.json({ ok: true, account: publicAccountForAdmin(after) });
   }
 },
-operation6(req, res, action, payload, account) {
+adminResetPassword(req, res, action, payload, account) {
 if (action === "adminResetPassword") {
     requireAdmin(account);
     const id = Number(payload.id);
@@ -77,7 +88,7 @@ if (action === "adminResetPassword") {
     return res.json({ ok: true });
   }
 },
-operation25(req, res, action, payload, account) {
+addUnit(req, res, action, payload, account) {
 if (action === "addUnit") {
     requireTeacherOrAdmin(account);
     const idInfo = nextPublicId("UNIT");

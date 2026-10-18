@@ -1,0 +1,11 @@
+.platform-batch-editor{width:min(960px,calc(100vw - 32px))}
+.platform-batch-editor-context{font-size:15px;line-height:1.65;margin:0 0 16px;color:#475569;overflow-wrap:anywhere}
+.platform-batch-editor fieldset{border:0;margin:0;padding:0;min-width:0}
+.platform-batch-editor-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:start}
+.platform-batch-editor-grid label{display:grid;gap:6px;font-size:15px}
+.platform-batch-editor-grid :is(input,textarea){font-size:16px}
+.platform-batch-editor-grid .platform-batch-half{grid-column:span 2}
+.platform-batch-editor-grid .platform-batch-wide{grid-column:1/-1}
+.platform-batch-editor-grid .platform-expiry-field input[type=checkbox]{width:16px;padding:0;min-height:16px}
+@media(max-width:800px){.platform-batch-editor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.platform-batch-editor-grid .platform-batch-half,.platform-batch-editor-grid .platform-batch-mobile-wide,.platform-batch-editor-grid>.platform-initialization-cell{grid-column:1/-1}}
+@media(max-width:400px){.platform-batch-editor-grid{gap:12px 10px}.platform-batch-editor{padding:16px}.platform-batch-editor-grid label{font-size:14px}}

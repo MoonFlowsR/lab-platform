@@ -42,7 +42,7 @@ uploads/
 # Dependencies, generated bundles, old snapshots and local test artifacts.
 node_modules/
 dist/
-work/
+/work/
 outputs/
 coverage/
 .cache/
@@ -51,3 +51,8 @@ coverage/
 .DS_Store
 Thumbs.db
 *.tmp
+
+# Local validation output
+test-results/
+.build-*/
+.tmp-*/

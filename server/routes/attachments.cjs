@@ -1,5 +1,6 @@
 module.exports = function installAttachments(context) {
-const { UPLOAD_DIR, addAudit, app, asyncHandler, authMiddleware, ensureCanAccessAttachmentTarget, ensureCanDownloadAttachment, fs, getMonthFolder, getRecord, insertRecord, listRecords, nowISO, path, retiredLocationPhotoIds, safeCollectionName, safeFileName, updateRecord, upload } = context;
+const { UPLOAD_DIR, addAudit, app, asyncHandler, authMiddleware, ensureCanAccessAttachmentTarget, ensureCanDownloadAttachment, fs, getMonthFolder, getRecord, insertRecord, listRecords, nowISO, path, requestJson, retiredLocationPhotoIds, safeCollectionName, safeFileName, updateRecord, upload } = context;
+const isStockEvidence = require('../security/stock-evidence.cjs');
 app.post("/api/attachments/upload", authMiddleware, upload.single("file"), asyncHandler(async (req, res) => {
   const account = req.account;
   const file = req.file;
@@ -46,7 +47,7 @@ app.post("/api/attachments/upload", authMiddleware, upload.single("file"), async
   res.json({ ok: true, attachment: record });
 }));
 
-app.post("/api/attachments/uploadJson", authMiddleware, asyncHandler(async (req, res) => {
+app.post("/api/attachments/uploadJson", authMiddleware, requestJson.attachment, asyncHandler(async (req, res) => {
   const account = req.account;
 
   const targetCollection = String(req.body.target_collection || "").trim();
@@ -99,7 +100,7 @@ app.post("/api/attachments/uploadJson", authMiddleware, asyncHandler(async (req,
   res.json({ ok: true, attachment: record });
 }));
 
-app.post("/api/attachments/uploadDraftJson", authMiddleware, asyncHandler(async (req, res) => {
+app.post("/api/attachments/uploadDraftJson", authMiddleware, requestJson.attachment, asyncHandler(async (req, res) => {
   const account = req.account;
   const draftId = String(req.body.draft_id || "").trim();
   if (!draftId) throw new Error("缺少临时附件编号。");
@@ -190,6 +191,10 @@ app.post("/api/attachments/delete", authMiddleware, asyncHandler(async (req, res
 
   if (account.account_type !== "admin" && attachment.uploaded_by_username !== account.username) {
     throw new Error("无权删除该附件。");
+  }
+
+  if (isStockEvidence(attachment, listRecords)) {
+    throw new Error("该附件已作为库存凭证，不能单独删除。请从关联记录管理；管理员可使用记录永久删除功能处理。");
   }
 
   if (attachment.storage_path) {

@@ -1,6 +1,7 @@
-import { materialKey, uniqueOptions } from "./../dropdown-normalize.js";
-import { recordMatchesSearch } from "./../teacher-filter.js";
-import { completedWorkFee } from "./../work-values.js";
+import { isValidLoginId } from '../shared/lib/platform-settings.js';
+import { materialKey, uniqueOptions } from "../shared/lib/dropdown-normalize.js";
+import { recordMatchesSearch } from "../shared/lib/teacher-filter.js";
+import { completedWorkFee } from "../features/work/work-values.js";
 
 function uniqueNonEmpty(values) {
   return uniqueOptions(values);
@@ -52,7 +53,5 @@ function countBy(rows, key) {
 function sumCosts(row) {
   return completedWorkFee(row);
 }
-function isChineseName(value) {
-  return /^[一-龥·]{2,12}$/.test(value.trim());
-}
-export { containsQuery, countBy, formatDate, formatFileSize, isChineseName, money, normalizeItemName, num, sortByCreatedAt, sumCosts, toDateInputValue, uniqueNonEmpty };
+
+export { containsQuery, countBy, formatDate, formatFileSize, isValidLoginId, money, normalizeItemName, num, sortByCreatedAt, sumCosts, toDateInputValue, uniqueNonEmpty };

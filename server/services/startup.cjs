@@ -1,26 +1,15 @@
 module.exports = function startPlatform(context) {
 const { BACKUP_DIR, DB_PATH, DIST_DIR, HOST, PORT, app, db, express, fs, path } = context;
-function backupDatabase() {
-  try {
-    db.pragma("wal_checkpoint(FULL)");
-    const stamp = new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14);
-    const target = path.join(BACKUP_DIR, `lab_platform_${stamp}.db`);
-    fs.copyFileSync(DB_PATH, target);
+const backupDatabase = require('./database-backup.cjs')({ db, backupDir: BACKUP_DIR });
+const runBackup = () => backupDatabase().then(target => console.log('[backup] ' + target)).catch(error => console.error('[backup failed]', error.message || error));
+runBackup();
+const backupTimer = setInterval(runBackup, 60 * 60 * 1000);
+backupTimer.unref();
 
-    const backups = fs.readdirSync(BACKUP_DIR).filter((name) => name.endsWith(".db")).sort().reverse();
-    backups.slice(72).forEach((name) => {
-      try { fs.unlinkSync(path.join(BACKUP_DIR, name)); } catch { /* Retention cleanup must not interrupt a successful backup. */ }
-    });
-
-    console.log(`[backup] ${target}`);
-  } catch (error) {
-    console.error("[backup failed]", error.message || error);
-  }
-}
-
-backupDatabase();
-
-setInterval(backupDatabase, 60 * 60 * 1000);
+app.get('/api/health', (req, res) => {
+  try { db.prepare('SELECT 1').get(); return res.json({ ok: true, service: 'lab-platform', database: 'ok' }); }
+  catch { return res.status(503).json({ ok: false, service: 'lab-platform', database: 'unavailable' }); }
+});
 
 if (fs.existsSync(DIST_DIR)) {
   app.use(express.static(DIST_DIR));

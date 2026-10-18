@@ -1,8 +1,8 @@
-import { requestJson } from "./../api-request.js";
+import { requestJson } from "../shared/api/api-request.js";
 import { ACCOUNT_STORAGE_KEY, API_BASE } from "./config.js";
 import { validateAttachmentFile } from "./attachment-validation.js";
-import { compressUploadPhoto } from "./../photo-compression.js";
-import { downloadAttachmentBlob } from "./../attachment-download.js";
+import { compressUploadPhoto } from "../shared/api/photo-compression.js";
+import { downloadAttachmentBlob } from "../shared/api/attachment-download.js";
 
 async function apiPost(path, data = {}, token = "", options = {}) {
   try { return await requestJson(`${API_BASE}/api/${path}`, data, token, options); }

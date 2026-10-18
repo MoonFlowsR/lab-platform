@@ -1,10 +1,10 @@
 module.exports = function createRecordsOperations(context) {
 const { addAudit, db, nowISO, syncResponse, validatePersonalHiddenCollection } = context;
 return {
-operation0(req, res, action, payload, account) {
+listAll(req, res, action, payload, account) {
 if (action === "listAll") return syncResponse(req, res, account, payload);
 },
-operation3(req, res, action, payload, account) {
+hideRecordForMe(req, res, action, payload, account) {
 if (action === "hideRecordForMe") {
     const collection = validatePersonalHiddenCollection(String(payload.collection || "").trim());
     const targetId = String(payload.id || "").trim();
