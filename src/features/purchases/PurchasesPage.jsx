@@ -45,11 +45,9 @@ function PurchasesPage({ registeredTeacherAccounts = [], teacherAccounts = [], r
       </div>
       <div className="platform-detail-grid" style={styles.detailGrid4}>
         <Info label="采购类别" value={p.purchase_category || "未填写"} />
-        <Info label="系统责任教师" value={p.responsible_teacher_name || "未填写"} />
-        <Info label="实际指导教师" value={p.guiding_teacher_name || "未填写"} />
         <Info label="规格" value={p.specification} />
         <Info label="数量" value={`${p.quantity} ${p.unit}`} />
-        <Info label="采购单位" value={p.preferred_supplier} />
+        <Info label="采购渠道" value={p.preferred_supplier} />
         <Info label="预计金额" value={money(p.estimated_price)} />
         {p.reviewed_by && <Info label="审批人" value={p.reviewed_by} />}
         <Info label="使用目的" value={p.purchase_purpose || "未标注"} />

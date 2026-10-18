@@ -61,7 +61,9 @@ export function recordSearchText(row) {
   const displayed = Object.entries(labels).filter(([key]) => row[key] != null && row[key] !== '').map(([key, label]) => `${label}：${row[key]}`);
   displayed.push(...materialModelTerms(row.material_name || row.name_cn || row.name,
     [row.spec, row.specification, ...(row.stock_by_spec || []).map(item => item.spec)]));
+  if (row.preferred_supplier) displayed.push(`采购渠道：${row.preferred_supplier}`);
   if (['测试','加工'].includes(row.request_type)) {
+    displayed.push(`${row.request_type}渠道：${row.external_unit || '-'}`);
     displayed.push(`${row.request_type}单位：${row.external_unit || '-'}`,`机时/工作量 工作量：${row.workload_quantity ?? '-'} ${row.workload_unit || ''}`,`预计总${row.request_type}费`);
     if (['已完成','已归档'].includes(row.status)) displayed.push(`最终总${row.request_type}费`);
   }
