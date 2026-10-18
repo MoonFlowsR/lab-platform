@@ -320,7 +320,7 @@ function App() {
         </div>
       </header>
 
-      {message && <div className="platform-action-notice" role="status"><span>{message}</span><button type="button" aria-label="关闭操作提示" onClick={() => setMessage("")}>×</button></div>}
+      {message && <div key={message} className={`platform-action-notice${message.startsWith("登录成功，") ? " is-login-success" : ""}`} role="status" onAnimationEnd={event => { if (event.target === event.currentTarget && event.animationName === "platform-login-notice-out") setMessage(current => current === message ? "" : current); }}><span>{message}</span><button type="button" aria-label="关闭操作提示" onClick={() => setMessage("")}>×</button></div>}
       <nav className="platform-nav" style={styles.nav}>{tabs.map(([key, label]) => <button key={key} style={tabStyle(activeTab === key)} onClick={() => setActiveTab(key)}>{label}</button>)}</nav>
 
       {<section className={`platform-filter-bar${activeTab === "materials" ? " has-inventory-category" : ""}`} style={styles.filterBar}>
