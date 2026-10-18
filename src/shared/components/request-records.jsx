@@ -22,7 +22,7 @@ function PurchaseSummaryCard({ row }) {
     <div className="platform-detail-grid" style={styles.detailGrid4}>
       <Info label="规格" value={row.specification} />
       <Info label="数量" value={`${row.quantity || "-"} ${row.unit || ""}`} />
-      <Info label="采购单位" value={row.preferred_supplier} />
+      <Info label="采购渠道" value={row.preferred_supplier} />
       <Info label="使用目的" value={row.purchase_purpose || "未标注"} />
       {row.received_status === "已入库" && <Info label="有效期" value={row.expiry_date || "未填写"} />}
       <Info label="预计金额" value={money(row.estimated_price)} />
@@ -65,8 +65,8 @@ function WorkRequestCard({ row, logs = [], compact = false, completionDetailsOpe
       </div>
     </div>
     <div className="platform-detail-grid" style={styles.detailGrid4}>
-      <Info label={`${row.request_type || "测试/加工"}单位`} value={row.external_unit} />
-      <Info label="机时/工作量" value={`${row.workload_quantity || "-"} ${row.workload_unit || ""}`} />
+      <Info label={`${row.request_type || "测试/加工"}渠道`} value={row.external_unit} />
+      <Info label="工作量" value={`${row.workload_quantity || "-"} ${row.workload_unit || ""}`} />
       <Info label={(isCompletedWork(row) ? "最终总" : row.status === "已关闭" ? "原预计总" : "预计总") + row.request_type + "费"} value={money(workFee(row))} />
     </div>
     {row.status === "已关闭" && <ClosureInfo row={row} />}
