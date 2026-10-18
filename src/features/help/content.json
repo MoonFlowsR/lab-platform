@@ -800,7 +800,7 @@
     {
       "id": "maintenance-auto-backup",
       "role": "maintenance",
-      "title": "04 自动数据库备份",
+      "title": "04 自动备份",
       "blocks": [
         {
           "type": "history",
@@ -819,7 +819,7 @@
           "text": ""
         },
         {
-          "type": "paragraph",
+          "type": "history",
           "text": "自动备份仅含数据库。定期核对备份时间、错误日志和磁盘空间。"
         },
         {
@@ -827,8 +827,12 @@
           "text": "完整备份另存到实验室保管的其他磁盘或私有存储。"
         },
         {
-          "type": "paragraph",
+          "type": "history",
           "text": "服务启动时及每小时生成SQLite在线备份，校验后保存到server/backups，保留最新72份。备份期间可正常使用平台。"
+        },
+        {
+          "type": "paragraph",
+          "text": "服务启动时及每小时备份数据库和平台配置，保存于server/backups，成套保留最新72份。配置包括.env与src/config下的JSON文件；照片不纳入自动备份。备份期间可正常使用平台。"
         }
       ]
     },

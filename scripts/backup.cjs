@@ -8,8 +8,9 @@ const ROOT=path.resolve(__dirname,'..');
   const live=new Database(dbPath,{readonly:true});try{await live.backup(path.join(target,'project/server/data/lab_platform.db'));}finally{live.close();}
   for(const name of fs.readdirSync(ROOT)){if(name.startsWith('.build-') || name.startsWith('.tmp-') || ['node_modules','server','_platform_backups','.git','test-results'].includes(name))continue;fs.cpSync(path.join(ROOT,name),path.join(target,'project',name),{recursive:true});}
   for(const name of fs.readdirSync(path.join(ROOT,'server'))){if(['data','backups','logs'].includes(name))continue;fs.cpSync(path.join(ROOT,'server',name),path.join(target,'project/server',name),{recursive:true});}
-  const copy=new Database(path.join(target,'project/server/data/lab_platform.db'),{readonly:true});
+  const copy=new Database(path.join(target,'project/server/data/lab_platform.db'),{fileMustExist:true});
   let attachments=0;try{
+    if(copy.pragma('journal_mode=DELETE',{simple:true})!=='delete')throw Error('数据库备份日志整理失败。');
     if(copy.pragma('integrity_check',{simple:true})!=='ok')throw Error('数据库备份校验失败。');
     const base=path.resolve(target,'project/server/uploads');
     for(const row of copy.prepare("SELECT data_json FROM records WHERE collection='lab_attachments'").all()){

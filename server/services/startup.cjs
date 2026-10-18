@@ -1,6 +1,6 @@
 module.exports = function startPlatform(context) {
 const { BACKUP_DIR, DB_PATH, DIST_DIR, HOST, PORT, app, db, express, fs, path } = context;
-const backupDatabase = require('./database-backup.cjs')({ db, backupDir: BACKUP_DIR });
+const backupDatabase = require('./database-backup.cjs')({ db, backupDir: BACKUP_DIR, projectRoot: path.resolve(__dirname, '../..') });
 const runBackup = () => backupDatabase().then(target => console.log('[backup] ' + target)).catch(error => console.error('[backup failed]', error.message || error));
 runBackup();
 const backupTimer = setInterval(runBackup, 60 * 60 * 1000);

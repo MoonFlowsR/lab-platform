@@ -4,7 +4,7 @@ const root=path.resolve(__dirname,'..'),args=process.argv.slice(2),rollback=args
 const flag=rollback?'--rollback':'--from',source=path.resolve(args[args.indexOf(flag)+1]||'');
 const logs=path.join(root,'server/logs'),lock=path.join(logs,'maintenance.json');
 const childOptions={cwd:root,windowsHide:true,encoding:'utf8'};
-const readPackage=directory=>JSON.parse(fs.readFileSync(path.join(directory,'package.json'),'utf8'));
+const assertCompatibleRuntime=require('./runtime-dependencies.cjs');
 const appFiles=directory=>{
   const result=[];
   for(const top of ['src','server','scripts','docs','public','tests']){
@@ -43,7 +43,7 @@ async function start(){
 (async()=>{
   if(process.platform!=='win32')throw Error('此更新工具用于Windows；其它系统请按维护说明操作。');
   if(args.indexOf(flag)<0 || source===root || !fs.existsSync(path.join(source,'package.json')))throw Error('用法：npm run update -- --from <已验证的新版本目录>；回滚：npm run update -- --rollback <备份中的project目录>');
-  if(JSON.stringify(readPackage(root).dependencies)!==JSON.stringify(readPackage(source).dependencies))throw Error('运行依赖有变化，请先按维护文档完成依赖升级，再使用此更新工具。当前服务未变。');
+  assertCompatibleRuntime(root,source);
   const settings='src/config/platform-settings.json';
   if(fs.existsSync(path.join(root,settings))&&fs.readFileSync(path.join(root,settings),'utf8')!==fs.readFileSync(path.join(source,settings),'utf8'))throw Error('两个目录的平台配置不同。先将当前配置复制到新版本，重新构建后再更新。');
   for(const file of ['src/config/dropdown-options.json']) if(fs.existsSync(path.join(root,file)) && fs.readFileSync(path.join(root,file),'utf8')!==fs.readFileSync(path.join(source,file),'utf8'))throw Error('材料目录配置不同，请在候选版本保留或确认该配置后再更新。');
