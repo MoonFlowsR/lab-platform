@@ -42,7 +42,7 @@ uploads/
 # Dependencies, generated bundles, old snapshots and local test artifacts.
 node_modules/
 dist/
-work/
+/work/
 outputs/
 coverage/
 .cache/

@@ -4,7 +4,7 @@ const root=path.resolve(__dirname,'..');
 let files;
 try{files=execFileSync('git',['ls-files','-z'],{cwd:root,encoding:'utf8',windowsHide:true}).split('\0').filter(Boolean);}catch{console.error('请先在独立源码目录运行 git init 和 git add，然后重新检查。');process.exit(1);}
 if(!files.length){console.error('没有已暂存或跟踪的文件。请先 git add，再运行检查。');process.exit(1);}
-const blocked=/(?:^|\/)(?:node_modules|dist|data|uploads|backups|logs|_platform_backups|work|outputs)(?:\/|$)|(?:^|\/)\.env(?:\.|$)|\.(?:db(?:-.+)?|sqlite3?(?:-.+)?|bak(?:-.+)?|pem|key|pfx|p12|log|csv|xlsx|docx|pdf|zip|7z)$/i;
+const blocked=/^work(?:\/|$)|(?:^|\/)(?:node_modules|dist|data|uploads|backups|logs|_platform_backups|outputs)(?:\/|$)|(?:^|\/)\.env(?:\.|$)|\.(?:db(?:-.+)?|sqlite3?(?:-.+)?|bak(?:-.+)?|pem|key|pfx|p12|log|csv|xlsx|docx|pdf|zip|7z)$/i;
 const findings=[];
 for(const rel of files){
   if((blocked.test(rel)&&rel!=='.env.example') || /(?:^|\/)(?:\.git\/|network-private\/|frp[cs][^/]*\.toml$|Caddyfile$)/i.test(rel)){findings.push(rel+': forbidden runtime/private file');continue;}
