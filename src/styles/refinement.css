@@ -1,0 +1,24 @@
+/* Shared layout: compact controls, readable records, consistent detail disclosure. */
+.platform-action-notice{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:1000;max-width:min(640px,calc(100% - 24px));display:flex;align-items:center;gap:16px;padding:12px 16px;border:1px solid #93c5fd;border-radius:12px;background:#eff6ff;color:#1e3a8a;box-shadow:0 8px 26px #0f172a20;font-size:14px;line-height:1.6}
+.platform-action-notice button{border:0;background:transparent;color:inherit;font-size:24px;min-width:32px;min-height:32px;cursor:pointer}
+.platform-filter-panel{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:14px 18px;margin-bottom:16px;min-width:0}
+.platform-filter-panel-heading{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.platform-filter-panel-heading h2{margin:0;font-size:16px}.platform-filter-reset{margin-left:auto;border:0;background:transparent;color:#2563eb;padding:6px 0;cursor:pointer;font-size:13px}.platform-filter-toggle{display:none}.platform-filter-summary{margin:4px 0 12px;font-size:12px;line-height:1.6;color:#64748b;overflow-wrap:anywhere}
+.platform-filter-panel .platform-filter-caption{font-size:12px;color:#64748b;margin:10px 0 0}
+.platform-table-details summary{color:#2563eb;cursor:pointer;white-space:nowrap;min-height:30px;display:flex;align-items:center;gap:6px}.platform-table-details summary::after{content:'＋'}.platform-table-details[open] summary::after{content:'−'}
+.platform-table-details dl{display:grid;grid-template-columns:minmax(120px,1fr);min-width:180px;max-width:280px;gap:10px;margin:10px 0;white-space:normal}.platform-table-details dt{color:#64748b;font-size:12px}.platform-table-details dd{margin:3px 0 0;overflow-wrap:anywhere;line-height:1.6}
+.platform-data-table td{vertical-align:top}.platform-table-desktop .platform-data-table{min-width:600px!important}.platform-table-desktop td[data-label="材料"],.platform-table-desktop td[data-label="物品"],.platform-table-desktop td[data-label="名称"],.platform-table-desktop td[data-label="对象"],.platform-table-desktop td[data-label="位置"]{white-space:normal!important;min-width:100px;max-width:240px;overflow-wrap:anywhere}
+@media(max-width:640px){
+ .platform-shell:not(.platform-login) .platform-header{padding:12px!important;gap:10px!important;margin-bottom:10px!important}
+ .platform-shell:not(.platform-login) .platform-header h1{font-size:20px!important;line-height:1.4!important}
+ .platform-header-actions{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px!important;width:100%!important}
+ .platform-header-actions>*{font-size:12px!important;padding:7px 4px!important;justify-content:center;min-height:36px!important;border-radius:8px!important;text-align:center}
+ .platform-sync-status{font-size:12px!important}.platform-sync-guidance{font-size:13px!important;line-height:1.5}
+ .platform-nav{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important;margin-bottom:10px!important;overflow:visible!important}
+ .platform-nav:has(>button:nth-child(7)){grid-template-columns:repeat(4,minmax(0,1fr))!important}
+ .platform-nav:not(:has(>button:nth-child(7))){grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ .platform-nav button{min-height:36px!important;font-size:13px!important;padding:7px 3px!important;border-radius:8px!important}
+ .platform-filter-bar{padding:10px!important;margin-bottom:10px!important;gap:8px!important}
+ .platform-filter-panel{padding:10px 12px;margin-bottom:12px;border-radius:12px}.platform-filter-panel-heading h2{font-size:14px}.platform-filter-toggle{display:block;margin-left:auto;border:0;background:transparent;color:#334155;padding:6px 0;font-size:13px;cursor:pointer}.platform-filter-reset{margin-left:0}.platform-filter-summary{margin:2px 0 0}.platform-filter-panel-body{display:none;padding-top:10px}.platform-filter-panel-body.is-open{display:block}
+ .platform-filter-panel .platform-student-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.platform-filter-panel .platform-student-filter-grid>label{grid-column:auto!important}
+ .platform-action-notice{bottom:10px;padding:10px 12px;font-size:13px}
+}

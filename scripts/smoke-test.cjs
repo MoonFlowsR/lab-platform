@@ -9,7 +9,8 @@ async function post(route,body={},token,ok=true){const response=await fetch(base
 (async()=>{
   fs.mkdirSync(path.join(testRoot,'server'));fs.mkdirSync(path.join(testRoot,'src'));
   fs.cpSync(path.join(root,'server'),path.join(testRoot,'server'),{recursive:true,filter:file=>! /^(?:data|uploads|backups|logs)(?:[\\/]|$)/.test(path.relative(path.join(root,'server'),file))});
-  for(const file of ['help-content.json','dropdown-options.json'])fs.copyFileSync(path.join(root,'src',file),path.join(testRoot,'src',file));
+  fs.cpSync(path.join(root,'src'),path.join(testRoot,'src'),{recursive:true});
+  fs.copyFileSync(path.join(root,'package.json'),path.join(testRoot,'package.json'));
   fs.symlinkSync(path.join(root,'node_modules'),path.join(testRoot,'node_modules'),process.platform==='win32'?'junction':'dir');
   const selectedPort=await port();base='http://127.0.0.1:'+selectedPort+'/api/';
   child=spawn(process.execPath,[path.join(testRoot,'server/index.cjs')],{cwd:testRoot,windowsHide:true,env:{...process.env,...configuration,PORT:String(selectedPort),HOST:'127.0.0.1'},stdio:['ignore','pipe','pipe']});

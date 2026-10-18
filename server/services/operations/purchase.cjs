@@ -1,7 +1,7 @@
 module.exports = function createPurchaseOperations(context) {
-const { PURCHASE_EDIT_FIELDS, addAudit, addReviewLog, db, getPreviousPurchases, getRecord, insertRecord, isImageAttachmentRecord, listRecords, nextPublicId, normalizeItemName, nowISO, num, pickFields, purchaseCategory, purchasePurpose, requireAssignedReviewer, requireOwner, requireStudentSubmission, requireTeacherOrAdmin, requiredPurchaseExpiryDate, selectedReviewTeacher, selectedStockTeachers, storageDetails, updateRecord } = context;
+const { PURCHASE_EDIT_FIELDS, addAudit, addReviewLog, db, getPreviousPurchases, getRecord, insertRecord, isImageAttachmentRecord, listRecords, nextPublicId, normalizeItemName, nowISO, num, pickFields, purchaseCategory, purchasePurpose, recordChanges, requireAssignedReviewer, requireOwner, requireStudentSubmission, requireTeacherOrAdmin, requiredPurchaseExpiryDate, selectedReviewTeacher, selectedStockTeachers, storageDetails, updateRecord } = context;
 return {
-operation18(req, res, action, payload, account) {
+submitPurchaseRequest(req, res, action, payload, account) {
 if (action === "submitPurchaseRequest") {
     requireStudentSubmission(account);
     const reviewTeacher = selectedReviewTeacher(payload);
@@ -66,7 +66,7 @@ if (action === "submitPurchaseRequest") {
     return res.json({ ok: true, record });
   }
 },
-operation19(req, res, action, payload, account) {
+withdrawPurchaseRequest(req, res, action, payload, account) {
 if (action === "withdrawPurchaseRequest") {
     if (account.account_type !== "student") throw new Error("只有学生申请人可以撤回本人待审核申请。教师和管理员请使用同意或驳回。");
     const before = getRecord("lab_purchase_requests", payload.id);
@@ -83,7 +83,7 @@ if (action === "withdrawPurchaseRequest") {
     return res.json({ ok: true });
   }
 },
-operation20(req, res, action, payload, account) {
+resubmitPurchaseRequest(req, res, action, payload, account) {
 if (action === "resubmitPurchaseRequest") {
     requireStudentSubmission(account);
     const before = getRecord("lab_purchase_requests", payload.id);
@@ -151,8 +151,9 @@ if (action === "resubmitPurchaseRequest") {
     return res.json({ ok: true, record: after });
   }
 },
-operation21(req, res, action, payload, account) {
+reviewPurchaseRequest(req, res, action, payload, account) {
 if (action === "reviewPurchaseRequest") {
+    const result = db.transaction(() => {
     requireTeacherOrAdmin(account);
     const before = getRecord("lab_purchase_requests", payload.id);
     if (!before) throw new Error("未找到采购申请。");
@@ -179,11 +180,15 @@ if (action === "reviewPurchaseRequest") {
 
     addReviewLog(before, account, nextStatus, before.status, finalStatus, note, "lab_purchase_requests");
     addAudit(req, account, action, "lab_purchase_requests", payload.id, before, after);
-    return res.json({ ok: true, record: after });
+    return after;
+    }).immediate();
+    recordChanges.notify();
+    return res.json({ ok: true, record: result });
   }
 },
-operation22(req, res, action, payload, account) {
+completePurchaseInbound(req, res, action, payload, account) {
 if (action === "completePurchaseInbound") {
+    const result = db.transaction(() => {
     const before = getRecord("lab_purchase_requests", payload.id);
     if (!before) throw new Error("未找到采购申请。");
 
@@ -245,8 +250,8 @@ if (action === "completePurchaseInbound") {
     }
 
     const batchIdInfo = nextPublicId("BATCH");
-    const requestedQty = num(before.quantity);
-    const unitPrice = requestedQty > 0 ? num(before.estimated_price) / requestedQty : 0;
+    const totalPrice = num(before.estimated_price);
+    const unitPrice = totalPrice / actualQty;
     const batch = insertRecord("lab_material_batches", {
       ...batchIdInfo,
       batch_code: batchIdInfo.public_id,
@@ -265,7 +270,7 @@ if (action === "completePurchaseInbound") {
       current_qty: actualQty,
       unit,
       unit_price: unitPrice,
-      total_price: actualQty * unitPrice,
+      total_price: totalPrice,
       storage_location: storageLocation,
       ...storage,
       min_qty: num(material.min_stock || 0),
@@ -334,8 +339,14 @@ if (action === "completePurchaseInbound") {
       ...storage,
     });
 
+    updateRecord("lab_attachments", photoAttachment._id, {
+      attachment_state: "bound",
+      bound_at: nowISO(),
+    });
     addAudit(req, account, action, "lab_purchase_requests", before._id, before, after);
-    return res.json({ ok: true, record: after, material, batch, transaction });
+    return { record: after, material, batch, transaction };
+    }).immediate();
+    return res.json({ ok: true, ...result });
   }
 },
 };

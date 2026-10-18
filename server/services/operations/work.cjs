@@ -1,7 +1,7 @@
 module.exports = function createWorkOperations(context) {
 const { WORK_REQUEST_EDIT_FIELDS, addAudit, addReviewLog, closeRejectedRequest, completeWorkValues, db, getRecord, insertRecord, nextPublicId, nowISO, num, pickFields, recordChanges, requireAssignedReviewer, requireOwner, requireStudentSubmission, requireTeacherOrAdmin, saveWorkWithAttachments, selectedReviewTeacher, studentProfiles, updateRecord, workRequestCosts } = context;
 return {
-operation7(req, res, action, payload, account) {
+submitWorkRequest(req, res, action, payload, account) {
 if (action === "submitWorkRequest") {
     requireStudentSubmission(account);
     const reviewTeacher = selectedReviewTeacher(payload);
@@ -48,7 +48,7 @@ if (action === "submitWorkRequest") {
     return res.json({ ok: true, record });
   }
 },
-operation8(req, res, action, payload, account) {
+withdrawWorkRequest(req, res, action, payload, account) {
 if (action === "withdrawWorkRequest") {
     if (account.account_type !== "student") throw new Error("只有学生申请人可以撤回本人待审核申请。教师和管理员请使用同意或驳回。");
     const before = getRecord("lab_work_requests", payload.id);
@@ -66,7 +66,7 @@ if (action === "withdrawWorkRequest") {
     return res.json({ ok: true });
   }
 },
-operation9(req, res, action, payload, account) {
+resubmitWorkRequest(req, res, action, payload, account) {
 if (action === "resubmitWorkRequest") {
     requireStudentSubmission(account);
     const before = getRecord("lab_work_requests", payload.id);
@@ -114,8 +114,9 @@ if (action === "resubmitWorkRequest") {
     return res.json({ ok: true, record: after });
   }
 },
-operation10(req, res, action, payload, account) {
+reviewWorkRequest(req, res, action, payload, account) {
 if (action === "reviewWorkRequest") {
+    const result = db.transaction(() => {
     requireTeacherOrAdmin(account);
     const before = getRecord("lab_work_requests", payload.id);
     if (!before) throw new Error("未找到测试/加工申请。");
@@ -146,10 +147,13 @@ if (action === "reviewWorkRequest") {
     const after = updateRecord("lab_work_requests", payload.id, patch);
     addReviewLog(before, account, nextStatus, before.status, nextStatus, note, "lab_work_requests");
     addAudit(req, account, action, "lab_work_requests", payload.id, before, after);
-    return res.json({ ok: true, record: after });
+    return after;
+    }).immediate();
+    recordChanges.notify();
+    return res.json({ ok: true, record: result });
   }
 },
-operation11(req, res, action, payload, account) {
+closeRejectedRequest(req, res, action, payload, account) {
 if (action === "closeRejectedRequest") {
     if (!["lab_work_requests", "lab_purchase_requests"].includes(payload.collection)) throw new Error("仅测试、加工或采购工单支持关闭。");
     const after = db.transaction(() => {
@@ -164,11 +168,11 @@ if (action === "closeRejectedRequest") {
     return res.json({ ok: true, record: after });
   }
 },
-operation12(req, res, action, payload, account) {
+completeWorkRequest(req, res, action, payload, account) {
 if (action === "completeWorkRequest") {
     const before = getRecord("lab_work_requests", payload.id);
     if (!before) throw new Error("未找到测试/加工申请。");
-    const patch = completeWorkValues(before, payload, account, require('../../../src/dropdown-options.json').billingMethods, nowISO());
+    const patch = completeWorkValues(before, payload, account, require('../../../src/config/dropdown-options.json').billingMethods, nowISO());
     const after = db.transaction(() => {
       const record = updateRecord("lab_work_requests", payload.id, patch);
       addAudit(req, account, action, "lab_work_requests", payload.id, before, record);

@@ -1,0 +1,10 @@
+{
+  "title": "实验室管理平台",
+  "rooms": [
+    "A101",
+    "A102"
+  ],
+  "graduationYearStart": 2026,
+  "graduationYearEnd": 2050,
+  "loginIdentifier": "name"
+}

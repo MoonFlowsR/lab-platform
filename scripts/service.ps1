@@ -27,10 +27,14 @@ function Healthy($port) {
     $request=[Net.HttpWebRequest]::Create('http://127.0.0.1:'+$port+'/api/health')
     $request.Proxy=$null; $request.Timeout=3000
     $response=$request.GetResponse()
-    try {$reader=New-Object IO.StreamReader($response.GetResponseStream()); try {$result=$reader.ReadToEnd() | ConvertFrom-Json} finally {$reader.Dispose()}; return $result.ok -and $result.service -eq 'lab-platform'} finally {$response.Dispose()}
+    try {$reader=New-Object IO.StreamReader($response.GetResponseStream()); try {$result=$reader.ReadToEnd() | ConvertFrom-Json} finally {$reader.Dispose()}; return $result.ok -and $result.service -eq 'lab-platform' -and $result.database -eq 'ok'} finally {$response.Dispose()}
   } catch {return $false}
 }
 try {
+  $maintenance=Join-Path $logDir 'maintenance.json'
+  if(Test-Path -LiteralPath $maintenance){
+    try {$state=Get-Content -LiteralPath $maintenance -Raw | ConvertFrom-Json; $owner=Get-CimInstance Win32_Process -Filter ('ProcessId='+[int]$state.pid) -ErrorAction SilentlyContinue; if($owner.Name -eq 'node.exe' -and $owner.CommandLine -match 'update\.cjs'){exit 0}} catch {}
+  }
   if ($Action -eq 'Remove') {
     $existing=Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
     if ($existing) {Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue; Unregister-ScheduledTask -TaskName $taskName -Confirm:$false}
@@ -51,12 +55,12 @@ try {
     $taskCommand='-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "'+$PSCommandPath+'" -Action Check'
     $taskAction=New-ScheduledTaskAction -Execute (Join-Path $PSHOME 'powershell.exe') -Argument $taskCommand -WorkingDirectory $platformRoot
     $currentIdentity=[Security.Principal.WindowsIdentity]::GetCurrent().Name
-    $triggers=@((New-ScheduledTaskTrigger -AtLogOn -User $currentIdentity),(New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 1)))
-    $principal=New-ScheduledTaskPrincipal -UserId $currentIdentity -LogonType Interactive -RunLevel Limited
+    $triggers=@((New-ScheduledTaskTrigger -AtStartup),(New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 1)))
+    $principal=New-ScheduledTaskPrincipal -UserId $currentIdentity -LogonType S4U -RunLevel Limited
     $taskSettings=New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 1)
     Register-ScheduledTask -TaskName $taskName -Action $taskAction -Trigger $triggers -Principal $principal -Settings $taskSettings -Force | Out-Null
     Start-ScheduledTask -TaskName $taskName
-    Write-Output '已安装本目录的静默后台任务；每分钟检查，登录后自动运行。'
+    Write-Output '已安装本目录的静默后台任务；开机运行，每分钟检查，注销桌面后仍运行。'
     exit 0
   }
   if ($Action -eq 'Start') {
@@ -66,6 +70,7 @@ try {
   }
   [IO.Directory]::CreateDirectory($logDir) | Out-Null
   if ($listener -and (Healthy $port)) {
+    $listener.OwningProcess | Set-Content -LiteralPath $pidFile -Encoding ASCII
     @{checked_at=(Get-Date).ToString('o');state='healthy';failures=0} | ConvertTo-Json -Compress | Set-Content -LiteralPath $stateFile -Encoding UTF8
     exit 0
   }

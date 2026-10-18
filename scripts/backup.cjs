@@ -1,19 +1,23 @@
 const fs=require('node:fs'),path=require('node:path'),Database=require('better-sqlite3');
-const root=path.resolve(__dirname,'..'),dbPath=path.join(root,'server/data/lab_platform.db');
+const ROOT=path.resolve(__dirname,'..');
 (async()=>{
-  if(!fs.existsSync(dbPath))throw Error('尚未创建数据库，请先启动平台。');
+  const dbPath=path.join(ROOT,'server/data/lab_platform.db');if(!fs.existsSync(dbPath))throw Error('未找到数据库。');
   const stamp=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date()).replace(/\D/g,'');
-  const target=path.join(root,'server/backups','full-'+stamp);fs.mkdirSync(target,{recursive:true});
-  const db=new Database(dbPath,{readonly:true});try{await db.backup(path.join(target,'lab_platform.db'));}finally{db.close();}
-  const uploads=path.join(root,'server/uploads');if(fs.existsSync(uploads))fs.cpSync(uploads,path.join(target,'uploads'),{recursive:true});
-  fs.copyFileSync(path.join(root,'.env'),path.join(target,'.env'));
-  const copy=new Database(path.join(target,'lab_platform.db'),{readonly:true});try{
+  const target=path.join(path.dirname(ROOT),path.basename(ROOT)+'-backups','full-'+stamp);
+  fs.mkdirSync(path.join(target,'project/server/data'),{recursive:true});
+  const live=new Database(dbPath,{readonly:true});try{await live.backup(path.join(target,'project/server/data/lab_platform.db'));}finally{live.close();}
+  for(const name of fs.readdirSync(ROOT)){if(name.startsWith('.build-') || name.startsWith('.tmp-') || ['node_modules','server','_platform_backups','.git','test-results'].includes(name))continue;fs.cpSync(path.join(ROOT,name),path.join(target,'project',name),{recursive:true});}
+  for(const name of fs.readdirSync(path.join(ROOT,'server'))){if(['data','backups','logs'].includes(name))continue;fs.cpSync(path.join(ROOT,'server',name),path.join(target,'project/server',name),{recursive:true});}
+  const copy=new Database(path.join(target,'project/server/data/lab_platform.db'),{readonly:true});
+  let attachments=0;try{
     if(copy.pragma('integrity_check',{simple:true})!=='ok')throw Error('数据库备份校验失败。');
+    const base=path.resolve(target,'project/server/uploads');
     for(const row of copy.prepare("SELECT data_json FROM records WHERE collection='lab_attachments'").all()){
       const file=JSON.parse(row.data_json);if(file.deleted_at || !file.storage_path)continue;
-      const destination=path.resolve(target,'uploads',file.storage_path),base=path.resolve(target,'uploads');
-      if(!destination.startsWith(base+path.sep) || !fs.existsSync(destination))throw Error('备份缺少附件，请暂停上传及删除后重新备份。');
+      const destination=path.resolve(base,file.storage_path);if(!destination.startsWith(base+path.sep) || !fs.existsSync(destination))throw Error('备份缺少有效附件，请在附件操作结束后重新备份。');attachments++;
     }
   }finally{copy.close();}
-  console.log('完整备份已保存至 '+target+'。包含账号、记录、照片和私密配置，请勿上传到 GitHub。');
+  fs.writeFileSync(path.join(target,'backup-manifest.json'),JSON.stringify({created_at:new Date().toISOString(),database_integrity:'ok',active_attachments_verified:attachments,private_backup:true},null,2));
+  fs.writeFileSync(path.join(target,'恢复说明.txt'),'私有备份，不得上传GitHub。恢复前停止平台服务；project包含源码、配置、构建、数据库和附件。先移开当前server/data中的DB/WAL/SHM文件，再恢复project下对应文件。node_modules按锁文件重新安装；不要覆盖其它新的备份。');
+  console.log(process.env.PLATFORM_BACKUP_JSON === '1' ? JSON.stringify({backup:target,attachments}) : '完整备份已完成：'+target);
 })().catch(error=>{console.error(error.message);process.exitCode=1;});

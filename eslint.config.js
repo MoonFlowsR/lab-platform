@@ -12,6 +12,6 @@ export default defineConfig([
     plugins: { 'react-hooks': reactHooks },
     rules: { 'no-unused-vars': ['error', { ignoreRestSiblings: true }], 'react-hooks/rules-of-hooks': 'error', 'react-hooks/exhaustive-deps': 'warn' },
   },
-  { files: ['server/**/*.cjs', 'scripts/**/*.cjs'], extends: [js.configs.recommended], languageOptions: { sourceType: 'commonjs', globals: globals.node }, rules: { 'no-unused-vars': ['error', { args: 'after-used', ignoreRestSiblings: true }] } },
+  { files: ['server/**/*.cjs', 'scripts/**/*.cjs', 'tests/**/*.cjs'], extends: [js.configs.recommended], languageOptions: { sourceType: 'commonjs', globals: globals.node }, rules: { 'no-unused-vars': ['error', { args: 'after-used', ignoreRestSiblings: true }] } },
   { files: ['*.js'], extends: [js.configs.recommended], languageOptions: { globals: globals.node } },
 ]);

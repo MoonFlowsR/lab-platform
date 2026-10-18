@@ -74,7 +74,7 @@ const styles = {
   barLabel: { display: "flex", justifyContent: "space-between", color: "#334155", fontSize: 14, fontWeight: 700, marginBottom: 5, gap: 8 },
   barTrack: { height: 8, background: "#e5e7eb", borderRadius: 999, overflow: "hidden" },
   barFill: { height: 8, background: "#111827", borderRadius: 999 },
-  empty: { border: "1px dashed #cbd5e1", color: "#64748b", borderRadius: 16, padding: "clamp(18px, 5vw, 24px)", textAlign: "center" },
+  empty: { border: "1px dashed #cbd5e1", color: "#64748b", borderRadius: 16, padding: "12px 16px", textAlign: "left" },
   loginCard: { background: "white", border: "1px solid #e5e7eb", borderRadius: "clamp(16px, 4vw, 22px)", padding: "clamp(16px, 4vw, 28px)", maxWidth: 720, margin: "clamp(12px, 8vh, 60px) auto", boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)" },
   loginSwitch: { display: "flex", gap: 10, margin: "20px 0", flexWrap: "wrap" },
   accountPill: { display: "inline-block", background: "#111827", color: "white", borderRadius: 999, padding: "8px 12px", fontSize: 13, fontWeight: 800 },

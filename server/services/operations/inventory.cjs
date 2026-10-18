@@ -1,7 +1,13 @@
 module.exports = function createInventoryOperations(context) {
 const { addAudit, batchPurchasePurpose, bindStockEvidence, db, getRecord, insertRecord, listRecords, nextPublicId, nowISO, num, requireItemPhoto, requireStockEvidence, requireTeacherOrAdmin, requiredPurchaseExpiryDate, storageDetails, updateBatchInformation, updateRecord } = context;
+const stockNumber = (value, label) => {
+  if (!["number", "string"].includes(typeof value) || String(value).trim() === "" || !Number.isFinite(Number(value))) {
+    throw new Error(label + "必须填写有效数字。");
+  }
+  return Number(value);
+};
 return {
-operation14(req, res, action, payload, account) {
+addMaterial(req, res, action, payload, account) {
 if (action === "addMaterial") {
     const idInfo = nextPublicId("MAT");
     const record = insertRecord("lab_materials", {
@@ -17,17 +23,20 @@ if (action === "addMaterial") {
     return res.json({ ok: true });
   }
 },
-operation15(req, res, action, payload, account) {
+addMaterialBatch(req, res, action, payload, account) {
 if (action === "addMaterialBatch") {
+    const initialQty = stockNumber(payload.initial_qty, "入库数量");
+    const unitPrice = payload.unit_price == null || (typeof payload.unit_price === "string" && payload.unit_price.trim() === "")
+      ? 0 : stockNumber(payload.unit_price, "单价");
+    if (initialQty <= 0) throw new Error("入库数量必须大于 0。");
+    if (unitPrice < 0) throw new Error("单价不能小于 0。");
+    const totalPrice = initialQty * unitPrice;
+    if (!Number.isFinite(totalPrice)) throw new Error("入库总价超出有效数字范围。");
+
+    const result = db.transaction(() => {
     const material = getRecord("lab_materials", payload.material_id);
     if (!material) throw new Error("未找到材料主数据。");
-
-    const initialQty = num(payload.initial_qty);
-    const unitPrice = num(payload.unit_price);
-    if (initialQty <= 0) throw new Error("入库数量必须大于 0。");
-
     const evidence = requireStockEvidence(account, payload.photo_attachment_id, "入库");
-    return db.transaction(() => {
     const idInfo = nextPublicId("BATCH");
     const record = insertRecord("lab_material_batches", {
       ...payload,
@@ -39,7 +48,8 @@ if (action === "addMaterialBatch") {
       direction: material.direction || "",
       initial_qty: initialQty,
       current_qty: initialQty,
-      total_price: initialQty * unitPrice,
+      unit_price: unitPrice,
+      total_price: totalPrice,
       created_by_username: account.username,
       created_by_name: account.display_name,
       created_at: nowISO(),
@@ -57,30 +67,35 @@ if (action === "addMaterialBatch") {
     }, { operator_username: account.username });
     bindStockEvidence(evidence, transaction);
     addAudit(req, account, action, "lab_stock_transactions", transaction._id, null, transaction);
-    return res.json({ ok: true, batch: record, transaction });
-    })();
+    return { batch: record, transaction };
+    }).immediate();
+    return res.json({ ok: true, ...result });
   }
 },
-operation16(req, res, action, payload, account) {
+updateMaterialBatchInformation(req, res, action, payload, account) {
 if (action === "updateMaterialBatchInformation") {
     if (!["student", "admin"].includes(account.account_type)) throw new Error("只有学生或管理员账号可以修改物品信息。");
     const result = updateBatchInformation({ db, req, account, payload, getRecord, listRecords, insertRecord, updateRecord, nextPublicId, addAudit, nowISO, requiredPurchaseExpiryDate, storageDetails, requireItemPhoto, bindStockEvidence });
     return res.json({ ok: true, ...result });
   }
 },
-operation17(req, res, action, payload, account) {
+updateMaterialBatch(req, res, action, payload, account) {
 if (action === "updateMaterialBatch") {
     requireTeacherOrAdmin(account);
-    const before = getRecord("lab_material_batches", payload.id);
-    if (!before) throw new Error("未找到材料批次。");
-
     const reason = String(payload.reason || "").trim();
     if (!reason) throw new Error("库存修改必须填写原因。");
 
-    const nextQty = num(payload.current_qty);
-    const minQty = num(payload.min_qty);
+    const nextQty = stockNumber(payload.current_qty, "库存数量");
+    const minQty = stockNumber(payload.min_qty, "最低预警数量");
     if (nextQty < 0) throw new Error("库存数量不能小于 0。");
     if (minQty < 0) throw new Error("最低预警数量不能小于 0。");
+
+    const result = db.transaction(() => {
+    const before = getRecord("lab_material_batches", payload.id);
+    if (!before) throw new Error("未找到材料批次。");
+    if (!payload.expected_updated_at || payload.expected_updated_at !== before.updated_at) {
+      throw new Error("该批次库存或信息已被更新，本次修改未保存。请刷新库存，核对最新数量后重新修改。");
+    }
 
     const after = updateRecord("lab_material_batches", payload.id, {
       current_qty: nextQty,
@@ -118,7 +133,9 @@ if (action === "updateMaterialBatch") {
 
     addAudit(req, account, action, "lab_material_batches", payload.id, before, after);
     addAudit(req, account, action, "lab_stock_transactions", txRecord._id, null, txRecord);
-    return res.json({ ok: true, record: after, transaction: txRecord });
+    return { record: after, transaction: txRecord };
+    }).immediate();
+    return res.json({ ok: true, ...result });
   }
 },
 };

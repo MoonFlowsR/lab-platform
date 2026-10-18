@@ -1,0 +1,44 @@
+# 代码导航
+
+`src` 是浏览器端，`server` 是接口与数据库端。先按业务找到文件夹，再沿“页面 → 操作 → 服务 → 数据”修改。
+
+| 业务 | 页面与前端操作 | 服务端实现 |
+| --- | --- | --- |
+| 账号、学生资料 | `src/features/accounts` | `server/routes/auth.cjs`、`server/features/accounts`、`server/services/operations/admin.cjs` |
+| 测试、加工 | `src/features/work` | `server/features/work`、`server/services/operations/work.cjs` |
+| 采购与到货入库 | `src/features/purchases` | `server/services/operations/purchase.cjs` |
+| 材料建库、批次修改 | `src/features/inventory` | `server/features/inventory`、`server/services/operations/inventory.cjs` |
+| 出库、退库、采购人审批 | `src/features/stock` | `server/features/stock`、`server/services/operations/stock.cjs` |
+| 总览与报表 | `src/features/dashboard`、`src/features/reports` | 共用业务记录与筛选规则 |
+| 帮助、留言 | `src/features/help` | `server/features/help` |
+
+## 公共部分
+
+| 文件或目录 | 职责 |
+| --- | --- |
+| `src/App.jsx` | 登录状态、同步数据与页面装配 |
+| `src/shared/components` | 搜索下拉、筛选、日期、表格、弹窗和附件控件 |
+| `src/shared/api` | 请求、增量同步、图片压缩与下载 |
+| `src/shared/lib` | 身份筛选、CSV、编号等纯函数 |
+| `src/styles`、`src/app/styles.js` | 全局样式和共享外观 |
+| `src/config/platform-settings.json` | 标题、房间、毕业年份范围、登录标识方式 |
+| `src/config/dropdown-options.json` | 基础菜单、材料别名与规格；业务新增选项仍从数据库读取 |
+| `server/runtime.cjs` | 组装数据库、认证、权限及业务依赖 |
+| `server/routes` | 路由与鉴权；`ops.cjs`按明确操作名分发 |
+| `server/db` | 表结构、记录读写与编号 |
+| `server/queries` | 业务快照、管理员日志筛选 |
+| `server/services` | 同步、变更通知、备份、启动及关联删除 |
+| `server/security` | 登录限流、会话撤销、学生到期停用和请求限制 |
+| `server/migrations`、`server/legacy` | 现有部署的数据兼容；删除前查调用及历史数据 |
+| `tests/features`、`tests/security` | 业务一致性、身份匹配与安全回归测试 |
+| `tests/ui/platform.mjs` | 使用虚构数据检查三种角色及电脑、手机页面 |
+| `scripts` | 构建、备份和更新工具 |
+
+## 改动顺序
+
+1. 先确认业务操作名和数据字段，再改相应页面与服务；读写权限由服务端检查。
+2. 库存、审批、附件绑定及审计的关联写入放在同一个数据库事务中。
+3. 修改筛选时同步检查屏幕、统计和CSV；姓名筛选使用账号身份，全文搜索使用文本。
+4. 新增重要流程后补对应业务测试，并更新角色帮助。旧帮助引用按原索引保留为`history`，避免既有评论失去位置。
+
+数据库、上传文件和部署配置是运行数据，不放进业务源码目录。
