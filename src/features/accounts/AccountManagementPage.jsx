@@ -25,7 +25,7 @@ function AccountManagementPage({ accounts = [], allAccounts = [], teachers = [],
   const [showAllAccounts, setShowAllAccounts] = useState(false);
   const newestFirst = (a, b) => (Date.parse(b.created_at) || 0) - (Date.parse(a.created_at) || 0) || Number(b.id || b._id) - Number(a.id || a._id);
   const orderedAccounts = [...accounts].sort(newestFirst);
-  const shownAccounts = showAllAccounts ? orderedAccounts : orderedAccounts.slice(0, 3);
+  const shownAccounts = showAllAccounts ? orderedAccounts : orderedAccounts.slice(0, 1);
   const activeAccounts = accounts.filter((a) => a.status === "active").length;
   const pendingAccounts = accounts.filter((a) => a.status === "pending").length;
   const disabledAccounts = accounts.filter((a) => a.status === "disabled").length;
@@ -42,14 +42,14 @@ function AccountManagementPage({ accounts = [], allAccounts = [], teachers = [],
       <StatCard title="管理员账号" value={adminCount} tone="purple" />
     </div>
     <section style={styles.card}>
-      <div style={styles.cardHeader}><h2 style={styles.h2}>账号列表</h2><div style={styles.buttonRowCompact}>{accounts.length > 3 && <button aria-expanded={showAllAccounts} style={styles.lightButton} onClick={() => setShowAllAccounts(!showAllAccounts)}>{showAllAccounts ? "仅显示最近3条账号" : `查看全部账号（${accounts.length}）`}</button>}<button style={styles.secondaryButton} onClick={onExportAccounts}>导出账号CSV</button></div></div>
+      <div style={styles.cardHeader}><h2 style={styles.h2}>账号列表</h2><div style={styles.buttonRowCompact}>{accounts.length > 1 && <button aria-expanded={showAllAccounts} style={styles.lightButton} onClick={() => setShowAllAccounts(!showAllAccounts)}>{showAllAccounts ? "仅显示最近1条账号" : `查看全部账号（${accounts.length}）`}</button>}<button style={styles.secondaryButton} onClick={onExportAccounts}>导出账号CSV</button></div></div>
       {accounts.length === 0 ? <Empty text="暂无账号数据。" /> : <div className="platform-table-scroll" style={styles.tableWrap}><table className="platform-data-table" style={styles.table}>
         <thead><tr>{["姓名", "身份", "状态", "个人资料", "创建时间", "操作"].map((c) => <th key={c} style={styles.th}>{c}</th>)}</tr></thead>
         <tbody>{shownAccounts.map((a) => <tr key={a.id || a._id}>
           <td data-label="姓名" className="platform-identity" style={styles.td}>{a.display_name || a.username}</td>
           <td data-label="身份" style={styles.td}>{accountTypeLabels[a.account_type] || a.account_type}</td>
           <td data-label="状态" style={styles.td}><Badge text={accountStatusLabels[a.status] || a.status || "启用中"} /></td>
-          <td data-label="个人资料" style={styles.td}>{a.account_type === "student" ? a.student_profile ? <><strong>{a.student_profile.responsible_teacher_name}</strong> · {a.student_profile.guiding_teacher_name}<br/>{a.student_profile.graduation_year}年毕业</> : <strong style={{color:"#b91c1c"}}>待完善</strong> : "—"}</td>
+          <td data-label="个人资料" style={styles.td}>{a.account_type === "student" ? a.student_profile ? <>{a.student_profile.graduation_year}年毕业 / 合作结束</> : <strong style={{color:"#b91c1c"}}>待完善</strong> : "—"}</td>
           <td data-label="创建时间" style={styles.td}>{formatDate(a.created_at)}</td>
           <td data-label="操作" style={styles.td}><div style={styles.buttonRowCompact}>
             {a.account_type === "student" && <button style={styles.lightButton} onClick={()=>setEditing(a)}>修改学生资料</button>}

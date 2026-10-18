@@ -51,11 +51,11 @@ async function reviewWorkRequest(row, nextStatus) {
     const input = await showPrompt(
       nextStatus === "已通过" ? "同意意见（可选，可留空）" : "请输入驳回意见（必填）",
       row.review_note || "",
-      { title: `${row.request_type}申请审核`, multiline: true, field: { required: needsNote }, danger: needsNote, confirmText: needsNote ? '确认驳回' : '确认同意', details: [{ label: '申请编号', value: row.public_id }, { label: '申请人', value: row.applicant_name || row.applicant_username }, { label: '申请内容', value: row.work_content }, { label: '审核结果', value: nextStatus }] }
+      { title: `${row.request_type}申请审核`, multiline: true, field: { required: needsNote }, danger: needsNote, confirmText: needsNote ? '确认驳回' : '确认同意', details: [{ label: '申请编号', value: row.public_id }, { label: '申请人', value: row.applicant_name || row.applicant_username }, { label: '申请内容', value: row.work_content }, { label: '审批结果', value: nextStatus }] }
     );
     if (input === null) return;
     const note = input.trim();
-    if (needsNote && !note) return showAlert("请填写审核意见。");
+    if (needsNote && !note) return showAlert("请填写审批意见。");
     try {
       await callLabOps("reviewWorkRequest", {
         id: row._id,
@@ -83,15 +83,15 @@ async function completeWorkRequest(row) {
     const feeKey = row.request_type === '加工' ? 'cost_processing' : 'cost_test';
     const options = workOptions(row.request_type, workRequests, units, row).billing;
     const values = await showForm({ title: '确认' + row.request_type + '工单完成', confirmText: '确认完成',
-      message: '是否需要修改数量、金额或计费方式？请核对后点击“确认完成”。修改会留痕，无需再次审核。',
+      message: '是否需要修改工作量、金额或计量单位？请核对后点击“确认完成”。修改会留痕，无需再次审核。',
       details: [{label:'申请编号',value:row.public_id},{label:'申请人',value:row.applicant_name || row.applicant_username},{label:'申请内容',value:row.work_content}],
       fields: [
-        {name:'workload_quantity',label:'最终数量',type:'number',required:true,min:0,value:row.workload_quantity},
-        {name:'workload_unit',label:'计费方式',required:true,value:row.workload_unit,render:({value,onChange}) => <CustomOptionFields required label="" customLabel="其它计费方式" value={value} onChange={onChange} options={options} placeholder="选择计费方式或搜索“其它”" customPlaceholder="请填写具体计费方式" maxLength={60} Field={({label,children}) => <div>{label && <div style={styles.fieldLabel}>{label}</div>}{children}</div>} SearchableSelect={SearchableSelect} styles={styles} />},
+        {name:'workload_quantity',label:'最终工作量',type:'number',required:true,min:0,value:row.workload_quantity},
+        {name:'workload_unit',label:'计量单位',required:true,value:row.workload_unit,render:({value,onChange}) => <CustomOptionFields required label="" customLabel="其它计量单位" value={value} onChange={onChange} options={options} placeholder="选择计量单位或搜索“其它”" customPlaceholder="请填写具体计量单位" maxLength={60} Field={({label,children}) => <div>{label && <div style={styles.fieldLabel}>{label}</div>}{children}</div>} SearchableSelect={SearchableSelect} styles={styles} />},
         {name:feeKey,label:'最终总' + row.request_type + '费 / 元',type:'number',required:true,min:0,value:workFee(row)},
-        {name:'completion_note',label:'完成备注（可选）',wide:true,maxLength:2000,value:row.completion_note || '',placeholder:'可说明费用或数量调整原因'},
+        {name:'completion_note',label:'完成备注（可选）',wide:true,maxLength:2000,value:row.completion_note || '',placeholder:'可说明费用或工作量调整原因'},
       ],
-      validate: values => !Number.isFinite(Number(values.workload_quantity)) || Number(values.workload_quantity) <= 0 ? '最终数量必须大于 0。' : !String(values.workload_unit || '').trim() || ['其它','其他','__custom_option__'].includes(values.workload_unit) ? '请选择或填写计费方式。' : '',
+      validate: values => !Number.isFinite(Number(values.workload_quantity)) || Number(values.workload_quantity) <= 0 ? '最终工作量必须大于 0。' : !String(values.workload_unit || '').trim() || ['其它','其他','__custom_option__'].includes(values.workload_unit) ? '请选择或填写计量单位。' : '',
     });
     if (values === null) return;
     try {

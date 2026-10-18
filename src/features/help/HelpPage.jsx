@@ -66,6 +66,7 @@ export default function HelpPage({ currentUser }) {
   const studentNameIndex = useMemo(() => createStudentNameIndex(studentNames), [studentNames]);
   const account = useMemo(() => displayStudentAccount(rawAccount, studentNameIndex), [rawAccount, studentNameIndex]);
   const comments = useMemo(() => rawComments.map(row => displayStudentComment(row, studentNameIndex)), [rawComments, studentNameIndex]);
+  const [commentsRequireLogin, setCommentsRequireLogin] = useState(false);
   const [selection, setSelection] = useState(null), [composer, setComposer] = useState(null);
   const [activeComment, setActiveComment] = useState(null), [error, setError] = useState(''), [busy, setBusy] = useState(false);
   const [jump, setJump] = useState(initialView.anchor ? { id: initialView.anchor } : null), [commentTargets, setCommentTargets] = useState(null);
@@ -100,10 +101,10 @@ export default function HelpPage({ currentUser }) {
     return () => { alive = false; };
   }, [token]);
   useEffect(() => {
-    let alive = true;
+    let alive = true, anonymousDenied = false;
     if (!history || !isAdmin) setAuditCommentsLoaded(false);
-    const load = () => commentRequest(history && isAdmin ? '/admin' : '', token)
-      .then(json => { if (alive) { setComments(json.comments); setStudentNames(json.student_name_labels || []); setError(''); if (history && isAdmin) setAuditCommentsLoaded(true); } }).catch(failure => { if (alive) setError(failure.message); });
+    const load = () => !anonymousDenied && commentRequest(history && isAdmin ? '/admin' : '', token)
+      .then(json => { if (alive) { setCommentsRequireLogin(false); setComments(json.comments); setStudentNames(json.student_name_labels || []); setError(''); if (history && isAdmin) setAuditCommentsLoaded(true); } }).catch(failure => { if (!alive) return; if (!token && [401, 403].includes(failure.status)) { anonymousDenied = true; setCommentsRequireLogin(true); setComments([]); setError(''); } else setError(failure.message); });
     load(); const interval = setInterval(load, 10000);
     return () => { alive = false; clearInterval(interval); };
   }, [token, isAdmin, history, revision]);
@@ -219,6 +220,7 @@ export default function HelpPage({ currentUser }) {
       <section className="help-comment-tools" aria-label="帮助评论">
         <span>选中正文可评论，也可直接留言。</span>
         <div className="help-comment-actions"><button type="button" onClick={openMessage}>直接留言</button><a href="#help-messages">查看留言（{messages.length}）</a><button type="button" onClick={() => setRevision(value => value + 1)}>刷新讨论</button>{(legacyCommentCount > 0 || showLegacy) && <button type="button" aria-pressed={showLegacy} onClick={() => { setShowLegacy(!showLegacy); setLegacyAnchor(''); setJump(null); }}>{showLegacy ? '收起历史正文评论' : `历史正文评论（${legacyCommentCount}）`}</button>}{isAdmin && <label><input type="checkbox" checked={history} onChange={event => setHistory(event.target.checked)} />查看已删除评论与操作记录</label>}</div>
+        {commentsRequireLogin && <p className="help-comment-note"><a href="/">登录</a>后查看留言和评论。</p>}
         {(selectionError || error) && !composer && <p className="help-composer-error" role="alert">{selectionError || error}</p>}
       </section>
       {selection && !composer && <div className="help-selection-bar" role="status" onPointerDown={event => event.preventDefault()}><span>已选 {selection.quote.length} 字</span><button type="button" disabled={selection.quote.length > 1000} onClick={commentSelection}>评论所选内容</button><button type="button" onClick={clearSelection}>取消选择</button></div>}

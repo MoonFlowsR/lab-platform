@@ -53,11 +53,11 @@ async function reviewPurchase(row, nextStatus) {
     const input = await showPrompt(
       nextStatus === "已通过" ? "采购同意意见（可选，可留空）" : "请输入采购驳回意见（必填）",
       row.review_note || "",
-      { title: '采购申请审核', multiline: true, field: { required: needsNote }, danger: needsNote, confirmText: needsNote ? '确认驳回' : '确认同意', message: nextStatus === '已通过' ? '同意后进入待入库，物品到货后须完成入库。' : '', details: [{ label: '申请编号', value: row.public_id }, { label: '申请人', value: row.applicant_name || row.applicant_username }, { label: '采购物品', value: row.material_name }, { label: '审核结果', value: nextStatus }] }
+      { title: '采购申请审核', multiline: true, field: { required: needsNote }, danger: needsNote, confirmText: needsNote ? '确认驳回' : '确认同意', message: nextStatus === '已通过' ? '同意后进入待入库，物品到货后须完成入库。' : '', details: [{ label: '申请编号', value: row.public_id }, { label: '申请人', value: row.applicant_name || row.applicant_username }, { label: '采购物品', value: row.material_name }, { label: '审批结果', value: nextStatus }] }
     );
     if (input === null) return;
     const note = input.trim();
-    if (needsNote && !note) return showAlert("请填写审核意见。");
+    if (needsNote && !note) return showAlert("请填写审批意见。");
     try {
       await callLabOps("reviewPurchaseRequest", {
         id: row._id,

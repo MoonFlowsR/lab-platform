@@ -51,8 +51,6 @@ function StockHistorySection({ title, rows, attachments, isAdmin, onDeleteRecord
       t.storage_location || "-",
       t.purchase_purpose || "未标注",
       [stockApprovalExemptionText(t), t.purchaser_approved_by ? `${t.purchaser_approved_by} · ${formatDate(t.purchaser_approved_at)}` : t.consent_note].filter(Boolean).join('；') || "-",
-      t.responsible_teacher_name || "未填写",
-      t.guiding_teacher_name || "未填写",
       t.usage_reason || t.modification_reason || "-",
       ...(shownRows.some(row => row.associated_teacher_names) ? [t.associated_teacher_names || "未关联"] : []),
       formatDate(t.created_at),
@@ -61,7 +59,7 @@ function StockHistorySection({ title, rows, attachments, isAdmin, onDeleteRecord
     ];
   });
 
-  return <DataTable mobileColumns={["材料", "类型", "数量", "变更后", "操作人", "地点"]} columns={["编号", "类型", "材料", "批次", "数量", "变更前", "变更后", "操作人", "地点", "使用目的", "采购人审批 / 原同意备注", "系统责任教师", "实际指导教师", "用途/原因", ...(shownRows.some(row => row.associated_teacher_names) ? ["关联教师"] : []), "时间", "附件证明", ...(isAdmin ? ["管理操作"] : [])]} rows={tableRows} />;
+  return <DataTable mobileColumns={["材料", "类型", "数量", "变更后", "操作人", "地点"]} columns={["编号", "类型", "材料", "批次", "数量", "变更前", "变更后", "操作人", "地点", "使用目的", "采购人审批 / 原同意备注", "用途/原因", ...(shownRows.some(row => row.associated_teacher_names) ? ["关联教师"] : []), "时间", "附件证明", ...(isAdmin ? ["管理操作"] : [])]} rows={tableRows} />;
     }}</RecentRecords>
 
       {extra}

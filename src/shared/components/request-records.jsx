@@ -27,7 +27,7 @@ function PurchaseSummaryCard({ row }) {
       {row.received_status === "已入库" && <Info label="有效期" value={row.expiry_date || "未填写"} />}
       <Info label="预计金额" value={money(row.estimated_price)} />
     </div>
-    {row.review_note && <p style={styles.note}><b>审核意见：</b>{row.review_note}{row.reviewed_by && <>（审批人：<strong className="platform-identity">{row.reviewed_by}</strong>）</>}</p>}
+    {row.review_note && <p style={styles.note}><b>审批意见：</b>{row.review_note}{row.reviewed_by && <>（审批人：<strong className="platform-identity">{row.reviewed_by}</strong>）</>}</p>}
   </div>;
 }
 function RequestHistorySection({ title, rows, renderCard, emptyText, className = 'platform-section-history' }) {
@@ -47,9 +47,9 @@ function RequestViewScope({ scope, onChange, label }) {
 }
 function ReviewHistory({ row, logs = [] }) {
   const matching = logs.filter(log => log.action !== "完成" && (String(log.target_id) === String(row._id) || (log.target_public_id && log.target_public_id === row.public_id)));
-  const history = matching.length ? matching : row.reviewed_at ? [{ _id: "latest-review", created_at: row.reviewed_at, reviewer_name: row.reviewed_by, reviewer_username: row.reviewed_username, action: row.status === "已关闭" ? row.closed_from_status || "已驳回" : ["待入库", "已完成", "已归档"].includes(row.status) ? "已通过" : row.status, review_note: row.review_note }] : [];
+  const history = matching.length ? matching : (row.reviewed_at || row.review_note || row.reviewed_by) ? [{ _id: "latest-review", created_at: row.reviewed_at, reviewer_name: row.reviewed_by, reviewer_username: row.reviewed_username, action: row.status === "已关闭" ? row.closed_from_status || "已驳回" : ["待入库", "已完成", "已归档"].includes(row.status) ? "已通过" : row.status, review_note: row.review_note }] : [];
   if (!history.length) return null;
-  return <details open style={styles.logBox}><summary>审批记录（{history.length} 条）</summary><DataTable columns={["审批时间", "审批人", "审批结果", "审批意见"]} rows={sortByCreatedAt(history).map(log => [formatDate(log.created_at), log.reviewer_name || log.reviewer_username || "-", log.action, log.review_note || "未填写"])} /></details>;
+  return <details open style={styles.logBox}><summary>审批记录（{history.length} 条）</summary><RecentRecords rows={sortByCreatedAt(history)}>{shown => <DataTable mobileColumns={["审批人", "审批结果", "审批意见", "审批时间"]} columns={["审批时间", "审批人", "审批结果", "审批意见"]} rows={shown.map(log => [formatDate(log.created_at), log.reviewer_name || log.reviewer_username || "-", log.action, log.review_note || "未填写"])} />}</RecentRecords></details>;
 }
 function WorkRequestCard({ row, logs = [], compact = false, completionDetailsOpen = false, attachmentPanel, actions }) {
   return <div style={styles.listItem}>
@@ -61,7 +61,7 @@ function WorkRequestCard({ row, logs = [], compact = false, completionDetailsOpe
       <div style={styles.badgeRow}>
         <Badge text={row.status === "已通过" ? "已通过 · 待确认完成" : row.status} />
         {row.completion_modified && <Badge text="完结时已修改" />}
-        {row.reviewed_by && <strong className="platform-identity">审批人：{row.reviewed_by}</strong>}
+        {compact && row.reviewed_by && <strong className="platform-identity">审批人：{row.reviewed_by}</strong>}
       </div>
     </div>
     <div className="platform-detail-grid" style={styles.detailGrid4}>
@@ -74,11 +74,10 @@ function WorkRequestCard({ row, logs = [], compact = false, completionDetailsOpe
     {!compact && <>
       {row.completion_modified && <details open={completionDetailsOpen} style={styles.logBox}><summary><strong>完结修改记录</strong></summary><p style={styles.note}>{completionChangesText(row)}</p></details>}
       {(row.safety_notes || row.remark || row.completion_note) && <div style={styles.detailGrid2}>
-        {row.safety_notes && <Info label="安全注意事项" value={row.safety_notes} />}
+        {row.safety_notes && <Info label="安全事项" value={row.safety_notes} />}
         {row.remark && <Info label="备注" value={row.remark} />}
         {row.completion_note && <Info label="完成备注" value={row.completion_note} />}
       </div>}
-      {row.review_note && <p style={styles.note}><b>审核意见：</b>{row.review_note}{row.reviewed_by && <>（审批人：<strong className="platform-identity">{row.reviewed_by}</strong>）</>}</p>}
       <ReviewHistory row={row} logs={logs} />
     </>}
     {attachmentPanel}

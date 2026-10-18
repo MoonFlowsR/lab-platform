@@ -22,7 +22,7 @@ npm run local
 
 - 管理员：使用 `ADMIN_INVITE_CODE`，首个管理员自动启用。
 - 教师：使用 `TEACHER_INVITE_CODE`，由管理员启用。
-- 学生：使用 `STUDENT_INVITE_CODE`，首次登录填写责任教师、指导教师和毕业年份。
+- 学生：使用 `STUDENT_INVITE_CODE`，首次登录填写系统责任教师、实际指导教师和毕业年份。
 
 默认使用中文姓名登录。名称、渠道等初始选项为空，录入时选“其它”添加。
 
@@ -75,11 +75,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/service.ps1 -Action 
 | `.env` | 密钥、注册码、服务配置 |
 | `server/data/lab_platform.db` | 账号、业务、审批、评论与审计 |
 | `server/uploads/` | 照片和附件 |
-| `server/backups/` | 每小时的数据库快照，保留72份 |
+| `server/backups/` | 每小时的数据库与配置备份，成套保留72份 |
 | `server/logs/` | 运行日志 |
 | 项目同级的`项目名-backups/` | 手动完整备份 |
 
-运行 `npm run backup`，备份数据库、附件、配置、程序及构建并校验。自动备份只含数据库；完整备份另存一份到其他磁盘或私有存储。
+运行 `npm run backup`，备份数据库、附件、配置、程序及构建并校验。自动备份包含数据库与配置，不含照片；完整备份另存一份到其他磁盘或私有存储。
 
 恢复前停止服务和监测，先备份当前状态，再成套还原数据库与附件。程序更新及回滚步骤见 `docs/MAINTENANCE.md`。
 
