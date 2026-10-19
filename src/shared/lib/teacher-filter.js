@@ -57,7 +57,7 @@ export function recordSearchText(row) {
     ? Object.entries(value).filter(([key]) => !hidden.test(key) || ['public_id','target_public_id','related_purchase_id'].includes(key)).flatMap(([, item]) => values(item))
     : typeof value === 'string' || typeof value === 'number' ? [String(value)] : [];
   const source = values(row.account_type ? {...row,status:undefined,direction:undefined,teacher_name:undefined} : row).join(' ');
-  const labels = { applicant_name: '申请人', review_teacher_name: '审核教师', responsible_teacher_name: '系统责任教师', guiding_teacher_name: '实际指导教师', graduation_year: '毕业年份', purchaser_name: '采购人', inbound_by_name:'入库人', reviewed_by: '审批人', reviewer_name:'审批人', reviewer_username:'审批人', operator_name: '操作人', material_name: '材料', name_cn:'材料名称', repair_personnel: '维修人员', work_content: row.request_type === '维修' ? '维修设备' : '名称', request_type:'类型', transaction_type:'类型', quantity:'数量', unit:'单位', purchase_category:'材料类别 采购类别', purchase_purpose:'使用目的', expiry_date:'有效期', specification: '规格', spec: '规格', storage_room: '存放房间', storage_location:'地点 位置', storage_detail: '具体位置简述', associated_teacher_names: '关联教师', review_note: '审批意见', settlement_status: '工单状态', remark: '备注', closed_by_name: '关闭人' };
+  const labels = { applicant_name: '申请人', review_teacher_name: '审核教师', responsible_teacher_name: '系统责任教师', guiding_teacher_name: '实际指导教师', graduation_year: '毕业年份', purchaser_name: '采购人', inbound_by_name:'入库人', reviewed_by: '审批人', reviewer_name:'审批人', reviewer_username:'审批人', operator_name: '操作人', material_name: '材料', name_cn:'材料名称', repair_personnel: '维修人员', work_content: row.request_type === '维修' ? '维修设备' : '名称', request_type:'类型', transaction_type:'类型', quantity:'数量', unit:'单位', purchase_category:'材料类别 采购类别', purchase_purpose:'使用目的', expiry_date:'有效期', specification: '规格', spec: '规格', storage_room: '存放房间', storage_location:'地点 位置', storage_detail: '具体位置简述', associated_teacher_names: '关联教师', review_note: '审批意见', actual_received_qty:'到货数量', actual_total_price:'最终总采购费', inbound_note:'入库备注', settlement_status: '工单状态', remark: '备注', closed_by_name: '关闭人' };
   const displayed = Object.entries(labels).filter(([key]) => row[key] != null && row[key] !== '').map(([key, label]) => `${label}：${row[key]}`);
   displayed.push(...materialModelTerms(row.material_name || row.name_cn || row.name,
     [row.spec, row.specification, ...(row.stock_by_spec || []).map(item => item.spec)]));
@@ -76,7 +76,7 @@ export function recordSearchText(row) {
       displayed.push(defaultDate.format(date),readable,readable.replaceAll('/','-'));
     }
   }
-  for (const field of ['cost_test', 'cost_processing', 'cost_repair', 'estimated_price']) if (row[field] !== undefined && Number.isFinite(Number(row[field]))) displayed.push(`¥${Number(row[field]).toLocaleString('zh-CN', { maximumFractionDigits: 2 })}`);
+  for (const field of ['cost_test', 'cost_processing', 'cost_repair', 'estimated_price', 'actual_total_price']) if (row[field] !== undefined && Number.isFinite(Number(row[field]))) displayed.push(`¥${Number(row[field]).toLocaleString('zh-CN', { maximumFractionDigits: 2 })}`);
   if (row.status === '已通过') displayed.push('已通过（待确认完成）');
   if (row.account_type) displayed.push(({student:'学生账号',teacher:'教师账号',admin:'管理员账号'})[row.account_type] || row.account_type);
   if (row.operator_role) displayed.push(({student:'学生账号',teacher:'教师账号',admin:'管理员账号',system:'系统维护'})[row.operator_role] || row.operator_role);

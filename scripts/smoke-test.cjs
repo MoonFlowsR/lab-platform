@@ -35,12 +35,13 @@ async function post(route,body={},token,ok=true){const response=await fetch(base
   const approved=snapshot.lab_work_requests.find(row=>String(row._id)===String(work._id));
   const completed=(await post('ops/completeWorkRequest',{id:work._id,confirmed:true,expected_updated_at:approved.updated_at,settlement_status:'已开票',patch:{workload_quantity:2,workload_unit:'按组',cost_test:20}},student)).record;assert.equal(completed.status,'已完成');assert.equal(completed.completion_modified,true);
   const purchase=(await post('ops/submitPurchaseRequest',{material_name:'示例物品',specification:'示例规格',quantity:2,unit:'套',preferred_supplier:'示例供应商',purchase_category:'耗材',purchase_purpose:'公用',estimated_price:10,safety_notes:'示例安全说明',review_teacher_username:'示例教师'},student)).record;
-  assert.equal(purchase.expiry_date,undefined);await post('ops/reviewPurchaseRequest',{id:purchase._id,next_status:'已通过'},teacher);
+  assert.equal(purchase.expiry_date,undefined);const approvedPurchase=(await post('ops/reviewPurchaseRequest',{id:purchase._id,next_status:'已通过'},teacher)).record;
   const image='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==';
   const photo=(await post('attachments/uploadJson',{target_collection:'lab_purchase_requests',target_id:purchase._id,target_public_id:purchase.public_id,original_name:'example.png',mime_type:'image/png',file_base64:image},student)).attachment;
-  const inbound={id:purchase._id,actual_qty:2,unit:'套',storage_room:'A101',storage_detail:'示例柜上层',photo_attachment_id:photo._id};
+  const inbound={id:purchase._id,confirmed:true,expected_updated_at:approvedPurchase.updated_at,actual_total_price:12,settlement_status:'已挂账',actual_qty:2,unit:'套',storage_room:'A101',storage_detail:'示例柜上层',photo_attachment_id:photo._id};
+  assert.match((await post('ops/completePurchaseInbound',{...inbound,settlement_status:''},student,false)).message,/工单状态/);
   assert.match((await post('ops/completePurchaseInbound',inbound,student,false)).message,/有效期/);
-  const received=await post('ops/completePurchaseInbound',{...inbound,expiry_date:'长期'},student);assert.equal(received.batch.current_qty,2);
+  const received=await post('ops/completePurchaseInbound',{...inbound,expiry_date:'长期'},student);assert.equal(received.batch.current_qty,2);assert.equal(received.batch.total_price,12);assert.equal(received.batch.unit_price,6);assert.equal(received.record.actual_total_price,12);assert.equal(received.record.estimated_price,10);assert.equal(received.record.inbound_modified,true);assert.equal(received.record.settlement_status,'已挂账');
   const shared=(await post('ops/listAll',{},teacher)).data;assert.ok(shared.lab_material_catalog.find(row=>row.name==='示例物品'));
   await post('help-comments',{kind:'message',body:'示例帮助讨论'},student);
   const readable=await fetch(base+'help-comments',{headers:{Authorization:'Bearer '+teacher}});assert.equal(readable.status,200);assert.ok((await readable.json()).comments.some(row=>row.body==='示例帮助讨论'));

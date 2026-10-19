@@ -1,3 +1,4 @@
+import { money } from "../../app/formatters.js";
 import { callLabOps, uploadAttachmentApi } from "../../app/api.js";
 import { showAlert, showConfirm, showPrompt } from "../../shared/components/platform-dialog.jsx";
 import { validatePhotoFile } from "../../app/attachment-validation.js";
@@ -75,6 +76,8 @@ async function reviewPurchase(row, nextStatus) {
 async function completePurchaseInbound(row, form, photoFile) {
     try {
       validatePhotoFile(photoFile);
+      if (!["已开票","已挂账"].includes(form.settlement_status)) throw new Error("请选择工单状态：已开票或已挂账。");
+      if (!await showConfirm("请确认物品已到货，数量、总采购费及存放信息无误。确认后完成采购入库，修改信息会留痕。", {title:"确认到货并完成采购",confirmText:"确认到货并完成入库",details:[{label:"采购物品",value:row.material_name},{label:"实际到货数量",value:form.actual_qty+" "+form.unit},{label:"最终总采购费",value:money(form.actual_total_price)},{label:"工单状态",value:form.settlement_status},{label:"存放位置",value:form.storage_room+" · "+form.storage_detail}]})) return false;
       const photo = await uploadAttachmentApi({
         target_collection: "lab_purchase_requests",
         target_id: row._id,
@@ -82,6 +85,10 @@ async function completePurchaseInbound(row, form, photoFile) {
       }, photoFile, currentUser);
       await callLabOps("completePurchaseInbound", {
         id: row._id,
+        confirmed: true,
+        expected_updated_at: row.updated_at,
+        actual_total_price: Number(form.actual_total_price),
+        settlement_status: form.settlement_status,
         actual_qty: Number(form.actual_qty),
         unit: form.unit,
         storage_location: form.storage_location,

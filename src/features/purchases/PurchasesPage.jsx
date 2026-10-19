@@ -1,6 +1,7 @@
+import { isReceivedPurchase, purchaseWasModified, purchaseAmount, purchaseAmountLabel, purchaseQuantityText, inboundChangesText } from './purchase-values.js';
 import SupplierChangeHistory from "../../shared/components/SupplierChangeHistory.jsx";
 import { useEffect, useState } from "react";
-import { splitRequestSections } from "../../shared/lib/request-sections.js";
+import { splitReviewedPurchaseSections } from "../../shared/lib/request-sections.js";
 import { styles } from "../../app/styles.js";
 import { canReviewAssignedRequest, reviewTeacherName } from "../../shared/lib/review-scope.js";
 import { formatDate, money, normalizeItemName, num, uniqueNonEmpty } from "../../app/formatters.js";
@@ -24,11 +25,10 @@ import ExpiryDateField from "../../shared/components/ExpiryDateField.jsx";
 import ItemPhotoFields from "../../shared/components/ItemPhotoFields.jsx";
 
 function PurchasesPage({ registeredTeacherAccounts = [], teacherAccounts = [], reviewScope = "mine", onReviewScopeChange, viewScope = "mine", onViewScopeChange, materialCatalog = [], rows, logs = [], attachments = [], batches = [], purchaseHistory = [], purchaseCatalog = [], fundSummary = {}, currentUser, units = [], canSubmit, canReview, isAdmin = false, onAdd, onResubmit, onWithdraw, onReview, onCompleteInbound, onCloseRejected, onDeleteRecord, onHideRecord, onUploadAttachment, onDownloadAttachment, onDeleteAttachment, onExport }) {
-  const isManager = canReview || isAdmin;
   const [editingRow, setEditingRow] = useState(null);
   useEffect(() => { if (editingRow && !rows.some(row => row._id === editingRow._id)) setEditingRow(null); }, [rows, editingRow]);
   const [inboundRow, setInboundRow] = useState(null);
-  const { ongoing, history } = splitRequestSections(rows, { purchase: true, manager: isManager });
+  const { pending, reviewed, completed, modified } = splitReviewedPurchaseSections(rows);
   const studentCanEdit = (row) => canSubmit && row.applicant_username === currentUser?.username && ["已撤回", "需修改", "已驳回"].includes(row.status);
   const studentCanClose = row => canSubmit && row.applicant_username === currentUser?.username && ["已驳回", "需修改"].includes(row.status);
   const studentCanWithdraw = (row) => currentUser?.account_type === "student" && row.applicant_username === currentUser.username && row.status === "待教师审核";
@@ -42,14 +42,15 @@ function PurchasesPage({ registeredTeacherAccounts = [], teacherAccounts = [], r
           <h3 style={styles.h3}>{p.material_name}</h3>
           <p style={styles.meta}>{formatPublicNumber(p.public_id)} · 申请人：<strong className="platform-identity">{p.applicant_name}</strong> · 审核教师：<strong className="platform-identity">{reviewTeacherName(p)}</strong> · 提交时间：{formatDate(p.created_at)}</p>
         </div>
-        <div style={styles.badgeRow}><Badge text={p.status} />{p.is_first_purchase && <Badge text="首次采购" />}</div>
+        <div style={styles.badgeRow}><Badge text={p.status} />{purchaseWasModified(p) && <Badge text="完成时已修改" />}{p.is_first_purchase && <Badge text="首次采购" />}</div>
       </div>
       <div className="platform-detail-grid" style={styles.detailGrid4}>
         <Info label="采购类别" value={p.purchase_category || "未填写"} />
         <Info label="规格" value={p.specification} />
-        <Info label="数量" value={`${p.quantity} ${p.unit}`} />
+        <Info label={isReceivedPurchase(p) ? "到货数量" : "数量"} value={purchaseQuantityText(p)} />
         <Info label="采购渠道" value={p.preferred_supplier} />
-        <Info label="预计金额" value={money(p.estimated_price)} />
+        <Info label={purchaseAmountLabel(p)} value={money(purchaseAmount(p))} />
+        {isReceivedPurchase(p) && <Info label="工单状态" value={p.settlement_status || "未登记"} />}
         <Info label="使用目的" value={p.purchase_purpose || "未标注"} />
         {p.received_status === "已入库" && <Info label="有效期" value={p.expiry_date || "未填写"} />}
         <Info label="入库状态" value={p.received_status || (p.status === "已完成" ? "已入库" : "-")} />
@@ -58,6 +59,9 @@ function PurchasesPage({ registeredTeacherAccounts = [], teacherAccounts = [], r
       </div>
       {p.safety_notes && <p><b>安全事项：</b>{p.safety_notes}</p>}
       {p.remark && <p><b>备注：</b>{p.remark}</p>}
+      {isReceivedPurchase(p) && <p style={styles.meta}>入库确认人：<strong className="platform-identity">{p.completed_by || p.completed_username || "未登记"}</strong> · 确认时间：{formatDate(p.completed_at)}</p>}
+      {purchaseWasModified(p) && <details style={styles.logBox}><summary><strong>完成时修改记录</strong></summary><p style={styles.note}>{inboundChangesText(p)}</p></details>}
+      {p.inbound_note && <p><b>入库备注：</b>{p.inbound_note}</p>}
       <ReviewHistory row={p} logs={logs} />
       <SupplierChangeHistory row={p} />
       {p.status === "待入库" && <div style={styles.securityBox}><b>下一步：</b>物品到货后，原申请人上传照片并确认入库，采购才标记为“已完成”。</div>}
@@ -113,8 +117,10 @@ function PurchasesPage({ registeredTeacherAccounts = [], teacherAccounts = [], r
       <small style={styles.muted}>调整查看范围可查看团队内其它采购/入库进度</small>
     </section>}
     <DashboardMetrics purchases={rows} types={["采购"]} mode={canSubmit ? "student" : canReview ? "review" : "team"} money={money} />
-    <RequestHistorySection className="platform-section-pending" title={isManager ? '待审核采购' : '进行中采购工单'} rows={ongoing} renderCard={renderCard} emptyText={`暂无${isManager ? '待审核' : '进行中'}采购申请。`} />
-    <RequestHistorySection className="platform-section-reviewed" key={`${currentUser?.username}-purchases`} title={isAdmin ? '历史采购记录' : canReview ? '已审核采购' : '已完成采购工单'} rows={history} renderCard={renderCard} emptyText={`暂无${isAdmin ? '历史' : canReview ? '已审核' : '已完成'}采购申请。`} />
+    <RequestHistorySection className="platform-section-pending" title="待审批采购工单" rows={pending} renderCard={renderCard} emptyText="暂无待审批工单。" />
+    <RequestHistorySection className="platform-section-approved" title="已审批采购工单" rows={reviewed} renderCard={renderCard} emptyText="暂无已审批未完成工单。" />
+    <RequestHistorySection className="platform-section-reviewed" title="已完成采购工单" rows={completed} renderCard={renderCard} emptyText="暂无已完成工单。" />
+    <RequestHistorySection className="platform-section-modified" title="完成时修改的采购工单" rows={modified} renderCard={renderCard} emptyText="暂无入库确认时修改过信息的工单。" />
   </main>;
 }
 function PurchaseForm({ teacherAccounts = [], materialCatalog = [], onSubmit, purchaseHistory = [], purchaseCatalog = [], batches = [], currentUser, units = [], initialData = null, existingAttachments = [], onDownloadAttachment, onDeleteAttachment, submitLabel = "提交采购审核", onCancel }) {
@@ -268,6 +274,8 @@ function PurchaseForm({ teacherAccounts = [], materialCatalog = [], onSubmit, pu
 function PurchaseInboundForm({ row, onSubmit, onCancel }) {
   const [form, setForm] = useState({
     actual_qty: num(row.quantity) || 1,
+    actual_total_price: row.estimated_price ?? "",
+    settlement_status: "",
     unit: row.unit || "g",
     storage_location: "",
     storage_room: "",
@@ -282,12 +290,14 @@ function PurchaseInboundForm({ row, onSubmit, onCancel }) {
 
   return <div className="platform-purchase-inbound" style={styles.inboundBox}>
     <div style={styles.cardHeader}>
-      <div><h3 style={styles.h3}>到货并完成入库</h3><p style={styles.muted}>核对到货信息并上传物品特写，提交后完成采购入库。</p></div>
+      <div><h3 style={styles.h3}>到货并完成入库</h3><p style={styles.muted}>核对实际数量和总采购费，选择工单状态，上传物品特写后确认入库。</p></div>
       <button type="button" style={styles.lightButton} onClick={onCancel}>取消</button>
     </div>
     <p style={styles.requiredHint}><span style={styles.requiredStar}>*</span> 为必填项</p>
     <form style={styles.formGrid} onSubmit={async (e) => {
       e.preventDefault();
+      if (!["已开票","已挂账"].includes(form.settlement_status)) return showAlert("请选择工单状态：已开票或已挂账。");
+      if (!Number.isFinite(Number(form.actual_qty)) || Number(form.actual_qty) <= 0) return showAlert("实际到货数量必须大于 0。");
       if (!form.storage_detail.trim()) return showAlert("请填写具体位置简述。");
       if (!form.expiry_date) return showAlert("请选择实际有效期或长期有效。");
       try { validatePhotoFile(photo); } catch (error) { return showAlert(error.message || error); }
@@ -295,8 +305,10 @@ function PurchaseInboundForm({ row, onSubmit, onCancel }) {
       try { await onSubmit(form, photo); } finally { setBusy(false); }
     }}>
 
-      <Field required label="实际到货数量"><input required type="number" min="0" step="any" style={styles.input} value={form.actual_qty} onChange={(e) => set("actual_qty", Number(e.target.value))} /></Field>
+      <Field required label="实际到货数量"><input required type="number" min="0" step="any" style={styles.input} value={form.actual_qty} onChange={(e) => set("actual_qty", e.target.value)} /></Field>
       <Field required label="单位"><input required style={styles.input} value={form.unit} onChange={(e) => set("unit", e.target.value)} /></Field>
+      <Field required label="最终总采购费 / 元"><input required type="number" min="0" step="any" style={styles.input} value={form.actual_total_price} onChange={e => set("actual_total_price", e.target.value)} /></Field>
+      <Field required label="工单状态"><SearchableSelect required value={form.settlement_status} onChange={value => set("settlement_status", value)} options={["已开票","已挂账"]} placeholder="请选择" /></Field>
       <StorageFields form={form} onChange={patch => setForm(prev => ({ ...prev, ...patch }))} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
       <ExpiryDateField value={form.expiry_date} onChange={value => set("expiry_date", value)} Field={Field} DateInput={DateInput} styles={styles} />
       <ItemPhotoFields photo={photo} onPhotoChange={setPhoto} Field={Field} FilePicker={FilePicker} styles={styles} />

@@ -1,3 +1,4 @@
+const inboundConfirmation = require('../../features/inventory/inbound-confirmation.cjs');
 module.exports = function createPurchaseOperations(context) {
 const { PURCHASE_EDIT_FIELDS, addAudit, addReviewLog, db, getPreviousPurchases, getRecord, insertRecord, isImageAttachmentRecord, listRecords, nextPublicId, normalizeItemName, nowISO, num, pickFields, purchaseCategory, purchasePurpose, recordChanges, requireAssignedReviewer, requireOwner, requireStudentSubmission, requireTeacherOrAdmin, requiredPurchaseExpiryDate, selectedReviewTeacher, selectedStockTeachers, storageDetails, updateRecord } = context;
 return {
@@ -198,8 +199,8 @@ if (action === "completePurchaseInbound") {
     if (before.status !== "待入库") throw new Error("只有审核通过且处于待入库状态的采购才能完成入库。");
 
     const teachers = selectedStockTeachers(db.prepare("SELECT * FROM accounts WHERE username=?").get(before.applicant_username) || account);
-    const actualQty = num(payload.actual_qty);
-    const unit = String(payload.unit || before.unit || "").trim();
+    const confirmation = inboundConfirmation(before, payload);
+    const { actualQty, totalPrice, unit } = confirmation;
     const storage = storageDetails(payload);
     const storageLocation = storage.storage_location;
     const expiryDate = requiredPurchaseExpiryDate(payload.expiry_date);
@@ -250,7 +251,6 @@ if (action === "completePurchaseInbound") {
     }
 
     const batchIdInfo = nextPublicId("BATCH");
-    const totalPrice = num(before.estimated_price);
     const unitPrice = totalPrice / actualQty;
     const batch = insertRecord("lab_material_batches", {
       ...batchIdInfo,
@@ -333,6 +333,8 @@ if (action === "completePurchaseInbound") {
       inbound_transaction_id: transaction._id,
       inbound_photo_attachment_id: photoAttachment._id,
       expiry_date: expiryDate,
+      ...confirmation.patch,
+      inbound_note: inboundRemark,
       actual_received_qty: actualQty,
       actual_received_unit: unit,
       storage_location: storageLocation,

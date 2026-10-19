@@ -1,3 +1,4 @@
+import { isReceivedPurchase, purchaseWasModified, hasFinalPurchaseAmount, inboundChangesText } from '../../features/purchases/purchase-values.js';
 import { workFeeKey } from '../../features/work/work-types.js';
 import { collectionName, actionName } from './audit-labels.js';
 import { reviewTeacherName } from './review-scope.js';
@@ -48,10 +49,10 @@ const definitions = {
   purchases: { title: '采购申请', columns: [
     numberColumn('申请编号','public_id'),column('采购物品','material_name'),column('采购类别','purchase_category'),column('规格型号','specification'),
     column('申请人', row => row.applicant_name || row.applicant_username),column('审核教师',reviewTeacherName),column('系统责任教师','responsible_teacher_name',true),column('实际指导教师','guiding_teacher_name',true),column('毕业年份','graduation_year',true),column('采购数量',row => numeric(row.quantity)),column('计量单位','unit'),
-    column('采购渠道','preferred_supplier'),column('采购渠道修改记录',supplierHistory,true),column('使用目的','purchase_purpose'),column('有效期',row => row.received_status === '已入库' ? row.expiry_date : '',true),column('预计金额（元）',row => numeric(row.estimated_price)),
+    column('采购渠道','preferred_supplier'),column('采购渠道修改记录',supplierHistory,true),column('使用目的','purchase_purpose'),column('有效期',row => row.received_status === '已入库' ? row.expiry_date : '',true),column('预计金额（元）',row => numeric(row.estimated_price)),column('最终总采购费（元）',row => hasFinalPurchaseAmount(row) ? numeric(row.actual_total_price) : '',true),column('工单状态',row => isReceivedPurchase(row) ? row.settlement_status || '未登记' : '',true),column('完成时修改',row => purchaseWasModified(row) ? '是' : '',true),column('入库修改明细',inboundChangesText,true),
     column('申请状态','status'),column('提交时间',row => date(row.created_at)),...approval,...closure,
     column('实际到货数量',row => numeric(row.actual_received_qty),true),column('到货计量单位','actual_received_unit',true),column('入库存放房间',row => row.storage_room || row.storage_location,true),column('入库具体位置简述','storage_detail',true),
-    column('入库时间',row => date(row.completed_at),true),column('入库状态','received_status',true),column('安全事项','safety_notes',true),column('备注','remark',true),column('附件文件名',(row,context) => attachments(row,'lab_purchase_requests',context),true),
+    column('入库时间',row => date(row.completed_at),true),column('入库确认人',row => row.completed_by || row.completed_username,true),column('入库备注','inbound_note',true),column('入库状态','received_status',true),column('安全事项','safety_notes',true),column('备注','remark',true),column('附件文件名',(row,context) => attachments(row,'lab_purchase_requests',context),true),
   ] },
   stock: { title: '出入退库记录', columns: [column('关联教师','associated_teacher_names',true),
     numberColumn('流水编号','public_id'),column('出入退库类型','transaction_type'),column('材料名称','material_name'),numberColumn('库存批次','batch_code'),

@@ -1,6 +1,6 @@
 const {test,before}=require('node:test'),assert=require('node:assert/strict');
-let splitRequestSections,splitReviewedWorkSections;
-before(async()=>({splitRequestSections,splitReviewedWorkSections}=await import('../../src/shared/lib/request-sections.js')));
+let splitReviewedPurchaseSections,splitReviewedWorkSections;
+before(async()=>({splitReviewedPurchaseSections,splitReviewedWorkSections}=await import('../../src/shared/lib/request-sections.js')));
 const row=(id,status,extra={})=>({_id:id,status,request_type:'测试',...extra});
 const ids=rows=>rows.map(item=>item._id);
 test('all roles use four exclusive stages, preserving rejection, withdrawal and closure',()=>{
@@ -23,9 +23,10 @@ test('partition preserves scope, object identity, order and unknown legacy statu
  for(const list of Object.values(sections))assert.deepEqual(list,rows.filter(item=>list.includes(item)));
  assert.equal(JSON.stringify(rows),original);assert.deepEqual(ids(sections.pending),[1]);
 });
-test('purchase categories retain their existing rules',()=>{
- const rows=[row(1,'待教师审核'),row(2,'待入库'),row(3,'已驳回'),row(4,'已完成'),row(5,'已关闭'),row(6,'待入库',{received_status:'已入库'})];
- assert.deepEqual(ids(splitRequestSections(rows,{purchase:true}).ongoing),[1,2,3]);
- assert.deepEqual(ids(splitRequestSections(rows,{purchase:true,manager:true}).ongoing),[1]);
+test('purchase has four exclusive stages for all roles, with legacy inbound and closed records preserved',()=>{
+ const rows=[row(1,'待教师审核'),row(2,'待入库'),row(3,'已驳回'),row(4,'已完成'),row(5,'已关闭'),row(6,'待入库',{received_status:'已入库'}),row(7,'已完成',{inbound_modified:true}),row(8,'已撤回'),row(9,'已关闭',{inbound_modified:true}),row(10,'待入库',{inbound_modified:true})];
+ const sections=splitReviewedPurchaseSections(rows);
+ assert.deepEqual(Object.fromEntries(Object.entries(sections).map(([k,v])=>[k,ids(v)])),{pending:[1,8],reviewed:[2,3,10],completed:[4,5,6,9],modified:[7]});
+ assert.equal(Object.values(sections).flat().length,rows.length);
 });
 test('empty input has four empty categories',()=>assert.deepEqual(splitReviewedWorkSections(),{pending:[],reviewed:[],completed:[],modified:[]}));
