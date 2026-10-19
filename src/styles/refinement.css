@@ -36,3 +36,5 @@
 .platform-supplier-change time, .platform-supplier-sync-note { color: #5b6878; font-size: 13px; }
 
 @media(max-width:640px){.platform-filter-panel .platform-student-filter-grid[data-module="purchases"].has-extra>label:nth-child(3){grid-column:1/-1!important}}
+
+@media(max-width:640px){.platform-filter-panel .platform-student-filter-grid.has-teacher.has-extra:is([data-module="test"],[data-module="processing"],[data-module="repair"],[data-module="purchases"])>label:nth-child(n+3):nth-child(-n+4){grid-column:1/-1!important}}

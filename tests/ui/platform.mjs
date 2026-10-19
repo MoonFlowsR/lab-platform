@@ -157,7 +157,7 @@ try {
   await page.goto(origin+'/help');await page.locator('.help-page').waitFor();await page.screenshot({path:path.join(out,role+'-'+width+'-help.png'),fullPage:true});
   results.push({role,width,help:true,overflow:await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),errors});await page.close();
  }
- results.push(...await checkPurchaseFilters(browser,origin,out,snapshot,teachers[0]));
+ results.push(...await checkPurchaseFilters(browser,origin,out,snapshot,[teachers[0],admin]));
  results.push(...await checkAccountViewScope(browser,origin,out,snapshot,teachers[0]));
  results.push(...await checkWorkReview(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkPurchaseChannels(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
