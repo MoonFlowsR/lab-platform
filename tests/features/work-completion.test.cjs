@@ -12,7 +12,7 @@ test('all work types require an explicit valid settlement choice without changin
   const {before,payload}=fixture(type);payload.settlement_status=status;
   const result=complete(before,payload,account,[],'2026-10-19T00:00:00Z');
   assert.equal(result.settlement_status,status);assert.equal(result.status,'已完成');assert.equal(result.completion_modified,false);assert.deepEqual(result.completion_changes,[]);
-  for(const invalid of [undefined,'','未开票','已完成',{},['已开票']])assert.throws(()=>complete(before,{...payload,settlement_status:invalid},account,[],''),/订单状态/);
+  for(const invalid of [undefined,'','未开票','已完成',{},['已开票']])assert.throws(()=>complete(before,{...payload,settlement_status:invalid},account,[],''),/工单状态/);
  }
 });
 test('final amount edits retain approval values and exact changed fields',()=>{
@@ -33,14 +33,14 @@ test('completion retains owner, role, workflow and concurrency protections',()=>
 test('CSV includes settlement state and distinguishes old missing data from open orders',async()=>{
  const {buildCsv}=await import('../../src/shared/lib/csv-export.js');
  const rows=[{...fixture().before,status:'已完成',settlement_status:'已挂账'},{...fixture().before,status:'已完成'},{...fixture().before}];
- const result=buildCsv('test',rows);assert(result.headers.includes('订单状态'));assert(result.csv.includes('已挂账'));assert(result.csv.includes('未登记'));
- assert(!buildCsv('test',[rows[2]]).headers.includes('订单状态'));
+ const result=buildCsv('test',rows);assert(result.headers.includes('工单状态'));assert(result.csv.includes('已挂账'));assert(result.csv.includes('未登记'));
+ assert(!buildCsv('test',[rows[2]]).headers.includes('工单状态'));
 });
 
-test('repair completion fixes the unit without restricting other work types',()=>{
+test('all work types accept custom completion units and reject placeholder values',()=>{
  for(const type of ['测试','加工','维修']){
   const {before,payload}=fixture(type);payload.patch.workload_unit='样品';
-  if(type==='维修')assert.throws(()=>complete(before,payload,account,[],''),/只能为“次”/);
-  else assert.equal(complete(before,payload,account,[],'').workload_unit,'样品');
+  assert.equal(complete(before,payload,account,[],'').workload_unit,'样品');
+  for(const invalid of ['', '其它', '其他', '__custom_option__'])assert.throws(()=>complete(before,{...payload,patch:{...payload.patch,workload_unit:invalid}},account,[],''),/计量单位/);
  }
 });

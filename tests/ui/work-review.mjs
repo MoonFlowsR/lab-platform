@@ -42,6 +42,7 @@ export async function checkWorkReview(browser, origin, out, snapshot, users) {
       const pending=page.locator('main > .platform-section-pending'),reviewed=page.locator('main > .platform-section-approved');
       assert.equal(await pending.locator('h3').count(),1);assert.equal(await reviewed.locator('h3').count(),1);
       if(role==='teacher'){
+        for (const section of ['approved','reviewed','modified']) assert.equal(await page.locator('main > .platform-section-'+section+' .platform-same-work-history').count(),0);
         const history=pending.locator('.platform-same-work-history');assert.equal(await history.getAttribute('open'),null);
         await history.locator(':scope > summary').click();assert.match(await history.locator(':scope > summary').innerText(),/（4）/);
         assert.equal(await history.locator('tbody tr').count(),4);
@@ -58,21 +59,22 @@ export async function checkWorkReview(browser, origin, out, snapshot, users) {
       }else assert.equal(await page.locator('.platform-same-work-history').count(),0);
       if(role==='student'){
         await reviewed.getByRole('button',{name:'确认完成',exact:true}).click();const dialog=page.getByRole('dialog');
-        if(type==='维修'){assert.equal(await dialog.getByLabel('计量单位',{exact:true}).inputValue(),'次');assert(await dialog.getByLabel('计量单位',{exact:true}).getAttribute('readonly')!==null);}
+        if(type==='维修'){await dialog.getByPlaceholder('选择计量单位或搜索“其它”').fill('其它');await dialog.getByRole('option',{name:'其它',exact:true}).click();await dialog.getByPlaceholder('请填写具体计量单位').fill('台');}
         await dialog.getByRole('button',{name:'确认完成',exact:true}).click();assert.equal(submitted.length,['测试','加工','维修'].indexOf(type));
         await dialog.getByRole('alert').waitFor();
+        assert((await dialog.innerText()).includes('工单状态'));assert(!(await dialog.innerText()).includes('订单状态'));
         const field=dialog.getByPlaceholder('请选择',{exact:true});assert.equal(await field.inputValue(),'');await field.fill('已挂账');await dialog.getByRole('option',{name:'已挂账',exact:true}).click();
         await page.screenshot({path:path.join(out,`completion-${type}-${width}.png`)});
         assert.equal(await dialog.evaluate(el=>el.getBoundingClientRect().right<=innerWidth&&el.getBoundingClientRect().left>=0),true);
         await dialog.getByRole('button',{name:'确认完成',exact:true}).click();await dialog.waitFor({state:'hidden'});
         await page.waitForFunction(()=>document.querySelector('main > .platform-section-reviewed')?.textContent.includes('已挂账'));
-        assert.equal(submitted.at(-1).settlement_status,'已挂账');assert.equal(submitted.at(-1).expected_updated_at,'fixture-version');
+        assert.equal(submitted.at(-1).settlement_status,'已挂账');assert.equal(submitted.at(-1).expected_updated_at,'fixture-version');if(type==='维修')assert.equal(submitted.at(-1).patch.workload_unit,'台');
       }
       if(type==='维修'&&role==='student'){
         const section=page.locator('main > .platform-section-create');await section.getByRole('button',{name:'新建维修',exact:true}).click();const form=section.locator('form');
         const text=await form.innerText();assert(!text.includes('安全事项'));assert(!text.includes('维修渠道'));assert(!text.includes('维修名称'));
         for(const label of ['维修设备','工作量','计量单位','维修人员','维修人员单位','预计总维修费','审核教师','备注（可选）','附件（可选）'])assert(text.includes(label));
-        assert.equal(await form.getByLabel('计量单位',{exact:true}).inputValue(),'次');assert(await form.getByLabel('计量单位',{exact:true}).getAttribute('readonly')!==null);
+        const unit= form.getByPlaceholder('选择计量单位或搜索“其它”');assert.equal(await unit.inputValue(),'次');await unit.fill('其它');await form.getByRole('option',{name:'其它',exact:true}).click();await form.getByPlaceholder('请填写具体计量单位').fill('台');
         await form.getByPlaceholder('选择维修设备或搜索“其它”').fill('同项目核对');await form.getByRole('option',{name:'同项目核对',exact:true}).click();
         await form.getByPlaceholder('选择维修人员单位或搜索“其它”').fill('示例机构甲');await form.getByRole('option',{name:'示例机构甲',exact:true}).click();
         await form.locator('input[type=number]').nth(0).fill('2');await form.locator('input[type=number]').nth(1).fill('90');
@@ -81,7 +83,7 @@ export async function checkWorkReview(browser, origin, out, snapshot, users) {
         await form.getByPlaceholder('填写维修人员姓名').fill(' 示例维修人员 ');
         await page.screenshot({path:path.join(out,'repair-form-'+width+'.png'),fullPage:true});
         await form.getByRole('button',{name:'提交教师审核',exact:true}).click();await form.waitFor({state:'hidden'});
-        assert.equal(created.length,1);assert.equal(created[0].repair_personnel,'示例维修人员');assert.equal(created[0].external_unit,'示例机构甲');assert.equal(created[0].workload_unit,'次');assert.equal(created[0].request_type,'维修');assert.deepEqual(created[0].attachment_ids,[]);
+        assert.equal(created.length,1);assert.equal(created[0].repair_personnel,'示例维修人员');assert.equal(created[0].external_unit,'示例机构甲');assert.equal(created[0].workload_unit,'台');assert.equal(created[0].request_type,'维修');assert.deepEqual(created[0].attachment_ids,[]);
       }
       await page.screenshot({path:path.join(out,`work-review-${role}-${type}-${width}.png`),fullPage:true});
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
