@@ -1,5 +1,5 @@
 import { chinaDate } from '../../features/reports/report-data.js';
-export const datedModules = ['test', 'processing', 'purchases', 'stock', 'materials'];
+export const datedModules = ['test', 'processing', 'repair', 'purchases', 'stock', 'materials'];
 export function validDateRange({ start = '', end = '' } = {}) { return !start || !end || start <= end; }
 export function recordInDateRange(row, range = {}, field = 'created_at') {
   if (!validDateRange(range)) return false;

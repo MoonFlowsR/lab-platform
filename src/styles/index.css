@@ -134,7 +134,7 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
 /* Shared overview and report statistics: color identifies business; white cards keep the page calm. */
 .platform-metric-scope{margin:0 0 12px;color:#64748b;font-size:13px;line-height:1.6}
 .platform-metric-scope strong{color:#334155;font-weight:700}
-.platform-business-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:16px}
+.platform-business-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}
 .platform-business-card{--business-color:#1d4ed8;padding:18px;border:1px solid #e2e8f0;border-top:3px solid var(--business-color);border-radius:14px;background:#fff;min-width:0}
 .platform-business-card.is-processing{--business-color:#7c3aed}
 .platform-business-card.is-purchase{--business-color:#047857}
@@ -269,3 +269,5 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
 .platform-shell .platform-filter-bar.has-inventory-category,.platform-shell .platform-filter-bar.has-inventory-category:has(.platform-date-filter){grid-template-columns:minmax(0,1fr) minmax(170px,220px)!important;align-items:end}
 .platform-filter-bar.has-inventory-category>.platform-date-filter{grid-column:1/-1}
 @media(max-width:640px){.platform-shell .platform-filter-bar.has-inventory-category,.platform-shell .platform-filter-bar.has-inventory-category:has(.platform-date-filter){grid-template-columns:minmax(0,1fr)!important}}
+
+.platform-business-card.is-repair{--business-color:#0e7490}

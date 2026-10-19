@@ -1,0 +1,5 @@
+[
+  {"name":"测试","module":"test","feeKey":"cost_test","prefix":"TEST","names":"testNames","channels":"testUnits"},
+  {"name":"加工","module":"processing","feeKey":"cost_processing","prefix":"PROC","names":"processingNames","channels":"processingUnits"},
+  {"name":"维修","module":"repair","feeKey":"cost_repair","prefix":"REPAIR","names":"repairNames","channels":"repairUnits"}
+]

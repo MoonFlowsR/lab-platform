@@ -38,7 +38,7 @@ function Dashboard({ stockOutRequests = [], accounts = [], stockRows = [], curre
     </section>}
     <div style={styles.twoColumns}>
       <div style={styles.sideStack}>
-        {[{ type: "测试", tab: "test" }, { type: "加工", tab: "processing" }].map(({ type, tab }) => {
+        {[{ type: "测试", tab: "test" }, { type: "加工", tab: "processing" }, { type: "维修", tab: "repair" }].map(({ type, tab }) => {
           const recentRows = recentWorkRows(type);
           return <section key={type} style={styles.card}>
             <div style={styles.cardHeader}><h2 style={styles.h2}>近期{type}</h2><button style={styles.lightButton} onClick={() => setActiveTab(tab)}>进入{type}{currentUser?.account_type === "teacher" ? "审核" : currentUser?.account_type === "admin" ? "记录" : ""}</button></div>

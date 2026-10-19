@@ -11,13 +11,13 @@ if (action === "submitWorkRequest") {
     const workloadQuantity = num(payload.workload_quantity);
     const workloadUnit = String(payload.workload_unit || "").trim();
 
-    if (!["测试", "加工"].includes(requestType)) throw new Error("申请类型只能为测试或加工。");
+    if (!["测试", "加工", "维修"].includes(requestType)) throw new Error("申请类型只能为测试、加工或维修。");
     if (!workContent) throw new Error(`请填写${requestType}名称。`);
     if (!externalUnit) throw new Error(`请填写${requestType}单位。`);
-    if (workloadQuantity <= 0) throw new Error("机时/样品数量必须大于 0。");
-    if (!workloadUnit) throw new Error("请选择计量方式。");
+    if (workloadQuantity <= 0) throw new Error("工作量必须大于 0。");
+    if (!workloadUnit) throw new Error("请选择计量单位。");
 
-    const idInfo = nextPublicId(requestType === "测试" ? "TEST" : "PROC");
+    const idInfo = nextPublicId(require('../../../src/config/work-types.json').find(item => item.name === requestType).prefix);
     const record = saveWorkWithAttachments(account, payload.attachment_ids || [], () => insertRecord("lab_work_requests", {
       ...pickFields(payload, WORK_REQUEST_EDIT_FIELDS),
       ...reviewTeacher,
@@ -70,7 +70,7 @@ resubmitWorkRequest(req, res, action, payload, account) {
 if (action === "resubmitWorkRequest") {
     requireStudentSubmission(account);
     const before = getRecord("lab_work_requests", payload.id);
-    if (!before) throw new Error("未找到测试/加工申请。");
+    if (!before) throw new Error("未找到测试/加工/维修申请。");
     requireOwner(before, account);
     if (!["需修改", "已驳回", "已撤回"].includes(before.status)) throw new Error("请先撤回，或在需修改/已驳回状态下重新提交。");
 
@@ -82,11 +82,11 @@ if (action === "resubmitWorkRequest") {
     const workloadQuantity = num(patch.workload_quantity);
     const workloadUnit = String(patch.workload_unit || "").trim();
 
-    if (!["测试", "加工"].includes(requestType)) throw new Error("申请类型只能为测试或加工。");
+    if (!["测试", "加工", "维修"].includes(requestType)) throw new Error("申请类型只能为测试、加工或维修。");
     if (!workContent) throw new Error(`请填写${requestType}名称。`);
     if (!externalUnit) throw new Error(`请填写${requestType}单位。`);
-    if (workloadQuantity <= 0) throw new Error("机时/样品数量必须大于 0。");
-    if (!workloadUnit) throw new Error("请选择计量方式。");
+    if (workloadQuantity <= 0) throw new Error("工作量必须大于 0。");
+    if (!workloadUnit) throw new Error("请选择计量单位。");
 
     const after = saveWorkWithAttachments(account, payload.attachment_ids || [], () => updateRecord("lab_work_requests", payload.id, {
       ...patch,
@@ -119,7 +119,7 @@ if (action === "reviewWorkRequest") {
     const result = db.transaction(() => {
     requireTeacherOrAdmin(account);
     const before = getRecord("lab_work_requests", payload.id);
-    if (!before) throw new Error("未找到测试/加工申请。");
+    if (!before) throw new Error("未找到测试/加工/维修申请。");
     requireAssignedReviewer(before, account);
     if (before.status !== "待教师审核") throw new Error("该申请当前不处于待审核状态，不能重复审核。");
 
@@ -155,7 +155,7 @@ if (action === "reviewWorkRequest") {
 },
 closeRejectedRequest(req, res, action, payload, account) {
 if (action === "closeRejectedRequest") {
-    if (!["lab_work_requests", "lab_purchase_requests"].includes(payload.collection)) throw new Error("仅测试、加工或采购工单支持关闭。");
+    if (!["lab_work_requests", "lab_purchase_requests"].includes(payload.collection)) throw new Error("仅测试、加工、维修或采购工单支持关闭。");
     const after = db.transaction(() => {
       const before = getRecord(payload.collection, payload.id);
       if (!before) throw new Error("未找到工单。");
@@ -171,7 +171,7 @@ if (action === "closeRejectedRequest") {
 completeWorkRequest(req, res, action, payload, account) {
 if (action === "completeWorkRequest") {
     const before = getRecord("lab_work_requests", payload.id);
-    if (!before) throw new Error("未找到测试/加工申请。");
+    if (!before) throw new Error("未找到测试/加工/维修申请。");
     const patch = completeWorkValues(before, payload, account, require('../../../src/config/dropdown-options.json').billingMethods, nowISO());
     const after = db.transaction(() => {
       const record = updateRecord("lab_work_requests", payload.id, patch);

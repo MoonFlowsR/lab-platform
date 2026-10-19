@@ -89,7 +89,7 @@ const TEST_FUND_TOTAL = process.env.TEST_FUND_TOTAL ? Number(process.env.TEST_FU
 
 const WORK_REQUEST_EDIT_FIELDS = [
   "request_type", "work_content", "external_unit", "workload_quantity", "workload_unit",
-  "safety_notes", "cost_material", "cost_test", "cost_processing", "remark", "review_teacher_username"
+  "safety_notes", "cost_material", "cost_test", "cost_processing", "cost_repair", "remark", "review_teacher_username"
 ];
 
 const PURCHASE_EDIT_FIELDS = [
@@ -145,6 +145,7 @@ const closeDatabase = db.close.bind(db);
 db.close = function close() { graduationExpiry.stop(); return closeDatabase(); };
 
 require("./migrations/purpose-migration.cjs")({ db, nowISO, addAudit });
+
 
 
 const app = express();
@@ -261,15 +262,17 @@ function num(value) {
   return Number.isFinite(n) ? n : 0;
 }
 
+const workDefinitions = require('../src/config/work-types.json');
 function workRequestCosts(source, requestType) {
-  const key = requestType === "加工" ? "cost_processing" : "cost_test";
+  const key = workDefinitions.find(item => item.name === requestType)?.feeKey;
+  if (!key) throw new Error('不支持的申请类型。');
   const value = source[key];
   if ((typeof value !== "number" && typeof value !== "string") || String(value).trim() === "") {
     throw new Error("请填写预计总" + requestType + "费。");
   }
   const amount = Number(value);
   if (!Number.isFinite(amount) || amount < 0) throw new Error("预计总" + requestType + "费必须为不小于 0 的有效金额。");
-  return { cost_test: requestType === "测试" ? amount : 0, cost_processing: requestType === "加工" ? amount : 0, cost_material: 0 };
+  return { cost_test: requestType === "测试" ? amount : 0, cost_processing: requestType === "加工" ? amount : 0, cost_repair: requestType === "维修" ? amount : 0, cost_material: 0 };
 }
 
 function saveWorkWithAttachments(account, attachmentIds, save) {
@@ -529,7 +532,7 @@ function ensureCanAccessAttachmentTarget(account, targetCollection, targetId, { 
 
   if (targetCollection === "lab_work_requests") {
     const row = getRecord("lab_work_requests", targetId);
-    if (!row) throw new Error("未找到关联测试/加工申请。");
+    if (!row) throw new Error("未找到关联测试/加工/维修申请。");
     if (!readOnly && isStudentAccountForAcl(account) && !isOwnerStudentForAcl(row, account)) throw new Error("无权修改其他成员申请的附件。");
     return row;
   }

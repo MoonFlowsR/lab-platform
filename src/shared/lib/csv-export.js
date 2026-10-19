@@ -1,3 +1,4 @@
+import { workFeeKey } from '../../features/work/work-types.js';
 import { collectionName, actionName } from './audit-labels.js';
 import { reviewTeacherName } from './review-scope.js';
 import { stockApprovalExemptionText } from '../../features/stock/stock-out-policy.js';
@@ -28,9 +29,9 @@ const attachments = (row, collection, context) => (context.attachments || []).fi
 const workColumns = type => [
   numberColumn('申请编号', 'public_id'), column(type + '名称', 'work_content'), column('申请人', row => row.applicant_name || row.applicant_username),
   column('审核教师', reviewTeacherName), column('系统责任教师','responsible_teacher_name',true),column('实际指导教师','guiding_teacher_name',true),column('毕业年份','graduation_year',true), column(type + '渠道', 'external_unit'), column('工作量', row => numeric(row.workload_quantity)), column('计量单位', 'workload_unit'),
-  column('预计总' + type + '费（元）', row => numeric(row.completion_original?.[type === '加工' ? 'cost_processing' : 'cost_test'] ?? workFee(row))),
+  column('预计总' + type + '费（元）', row => numeric(row.completion_original?.[workFeeKey(type)] ?? workFee(row))),
   column('最终总' + type + '费（元）', row => isCompletedWork(row) ? workFee(row) : '', true),
-  column('开票/挂账状态', row => isCompletedWork(row) ? row.settlement_status || '未登记' : '', true),
+  column('订单状态', row => isCompletedWork(row) ? row.settlement_status || '未登记' : '', true),
   column('完结时修改', row => row.completion_modified ? '是' : '', true),
   column('完结修改明细', completionChangesText, true),
   column('申请状态', row => row.status === '已通过' ? '已通过（待确认完成）' : row.status), column('提交时间', row => date(row.created_at)), ...approval,...closure,
@@ -42,6 +43,7 @@ const role = value => ({student:'学生',teacher:'教师',admin:'管理员',syst
 const definitions = {
   test: { title: '测试申请', columns: workColumns('测试') },
   processing: { title: '加工申请', columns: workColumns('加工') },
+  repair: { title: '维修申请', columns: workColumns('维修') },
   purchases: { title: '采购申请', columns: [
     numberColumn('申请编号','public_id'),column('采购物品','material_name'),column('采购类别','purchase_category'),column('规格型号','specification'),
     column('申请人', row => row.applicant_name || row.applicant_username),column('审核教师',reviewTeacherName),column('系统责任教师','responsible_teacher_name',true),column('实际指导教师','guiding_teacher_name',true),column('毕业年份','graduation_year',true),column('采购数量',row => numeric(row.quantity)),column('计量单位','unit'),

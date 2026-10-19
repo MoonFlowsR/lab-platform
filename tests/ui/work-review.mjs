@@ -6,12 +6,12 @@ export async function checkWorkReview(browser, origin, out, snapshot, users) {
   const results=[], now=Date.now(), student=users.find(user=>user.account_type==='student'), teacher=users.find(user=>user.account_type==='teacher');
   for (const width of [1440,390,320]) for (const user of users) {
     const account={...user,profile_required:false,session_token:'synthetic-work-review'},role=user.account_type;
-    const records=['测试','加工'].flatMap((type,index)=>[
+    const records=['测试','加工','维修'].flatMap((type,index)=>[
       ['待教师审核',0],['已通过',1],['已完成',2],['已完成',3],['已驳回',4],['已完成',5],['已完成',6],
     ].map(([status,offset])=>({
       _id:801+index*10+offset,public_id:`QA-${index}-${offset}`,request_type:type,work_content:'同项目核对',external_unit:offset===6?'示例机构乙':'示例机构甲',
       applicant_username:student.username,applicant_name:student.display_name,review_teacher_username:teacher.username,review_teacher_name:teacher.display_name,
-      status,workload_quantity:2,workload_unit:'小时',cost_test:type==='测试'?100:0,cost_processing:type==='加工'?100:0,
+      status,workload_quantity:2,workload_unit:'小时',cost_test:type==='测试'?100:0,cost_processing:type==='加工'?100:0,cost_repair:type==='维修'?100:0,
       completion_modified:offset===3,settlement_status:offset===3?'已挂账':undefined,
       created_at:new Date(now-(offset===5?220:offset)*86400000-60000).toISOString(),updated_at:'fixture-version',
     })));
@@ -32,7 +32,7 @@ export async function checkWorkReview(browser, origin, out, snapshot, users) {
       return route.fulfill({json:{ok:true,rows:[],total:0}});
     });
     await page.goto(origin);await page.locator('.platform-nav').waitFor();
-    for(const type of ['测试','加工']){
+    for(const type of ['测试','加工','维修']){
       await page.locator('.platform-nav').getByRole('button',{name:type+(role==='teacher'?'审核':role==='admin'?'记录':''),exact:true}).click();
       for(const prefix of ['待审批','已审批','已完成','完成后修改的'])await page.getByRole('heading',{name:new RegExp('^'+prefix+type+'工单')}).waitFor();
       const pending=page.locator('main > .platform-section-pending'),reviewed=page.locator('main > .platform-section-approved');
@@ -54,9 +54,9 @@ export async function checkWorkReview(browser, origin, out, snapshot, users) {
       }else assert.equal(await page.locator('.platform-same-work-history').count(),0);
       if(role==='student'){
         await reviewed.getByRole('button',{name:'确认完成',exact:true}).click();const dialog=page.getByRole('dialog');
-        await dialog.getByRole('button',{name:'确认完成',exact:true}).click();assert.equal(submitted.length,type==='测试'?0:1);
+        await dialog.getByRole('button',{name:'确认完成',exact:true}).click();assert.equal(submitted.length,['测试','加工','维修'].indexOf(type));
         await dialog.getByRole('alert').waitFor();
-        const field=dialog.getByPlaceholder('请选择已开票或已挂账');await field.fill('已挂账');await dialog.getByRole('option',{name:'已挂账',exact:true}).click();
+        const field=dialog.getByPlaceholder('请选择',{exact:true});assert.equal(await field.inputValue(),'');await field.fill('已挂账');await dialog.getByRole('option',{name:'已挂账',exact:true}).click();
         await page.screenshot({path:path.join(out,`completion-${type}-${width}.png`)});
         assert.equal(await dialog.evaluate(el=>el.getBoundingClientRect().right<=innerWidth&&el.getBoundingClientRect().left>=0),true);
         await dialog.getByRole('button',{name:'确认完成',exact:true}).click();await dialog.waitFor({state:'hidden'});

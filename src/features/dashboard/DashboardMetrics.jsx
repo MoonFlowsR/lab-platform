@@ -1,6 +1,7 @@
+import { workModule } from '../work/work-types.js';
 import { businessMetrics } from './dashboard-metrics.js';
 
-export default function DashboardMetrics({ workRequests, purchases, mode = 'review', money, onOpen, types = ['测试', '加工', '采购'] }) {
+export default function DashboardMetrics({ workRequests, purchases, mode = 'review', money, onOpen, types = ['测试', '加工', '维修', '采购'] }) {
   return <div className={`platform-business-metrics${types.length === 1 ? " is-single" : ""}`}>
     {businessMetrics(workRequests, purchases).filter(metric => types.includes(metric.type)).map(metric => {
       const purchase = metric.type === '采购';
@@ -10,8 +11,8 @@ export default function DashboardMetrics({ workRequests, purchases, mode = 'revi
         : mode === 'report'
           ? [['待审核', metric.pending], [purchase ? '待入库' : '待学生完结', metric.ready], ['驳回/需修改', metric.revise], [purchase ? '已入库' : '已完成', metric.completed], ['已撤回', metric.withdrawn], ['已关闭', metric.closed], ...(metric.other ? [['其它状态', metric.other]] : [])]
           : [[purchase ? '待入库' : '待学生完结', metric.ready], [purchase ? '已入库' : '已完成', metric.completed], ['驳回/需修改', metric.revise]];
-      return <section key={metric.type} aria-label={`${metric.type}统计`} className={`platform-business-card is-${purchase ? 'purchase' : metric.type === '测试' ? 'test' : 'processing'}`}>
-        <div className="platform-business-heading"><h2>{purchase ? '采购/入库' : metric.type}</h2>{onOpen && <button type="button" onClick={() => onOpen(purchase ? 'purchases' : metric.type === '测试' ? 'test' : 'processing')}>{mode === 'review' ? '去审核' : '查看'} →</button>}</div>
+      return <section key={metric.type} aria-label={`${metric.type}统计`} className={`platform-business-card is-${purchase ? 'purchase' : workModule(metric.type)}`}>
+        <div className="platform-business-heading"><h2>{purchase ? '采购/入库' : metric.type}</h2>{onOpen && <button type="button" onClick={() => onOpen(purchase ? 'purchases' : workModule(metric.type))}>{mode === 'review' ? '去审核' : '查看'} →</button>}</div>
         <div className="platform-business-headline"><strong>{headline[1]}</strong><span>{headline[0]}</span>{mode !== 'report' && <small>共 {metric.total} 条申请</small>}</div>
         <dl className="platform-business-statuses">{statuses.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
         <div className="platform-business-footer">

@@ -20,6 +20,7 @@ import { LoginPage } from "./features/accounts/LoginPage.jsx";
 import ModuleDateFilter from "./shared/components/ModuleDateFilter.jsx";
 import RecordFilters from "./shared/components/RecordFilters.jsx";
 import { Dashboard } from "./features/dashboard/Dashboard.jsx";
+import { WORK_DEFINITIONS, WORK_MODULES, workModule } from './features/work/work-types.js';
 import { workInstitutionOptions, matchesWorkInstitution } from "./features/work/work-history.js";
 import { WorkRequestsPage } from "./features/work/WorkRequestsPage.jsx";
 import { PurchasesPage } from "./features/purchases/PurchasesPage.jsx";
@@ -96,9 +97,9 @@ function App() {
   const isAdmin = currentUser?.account_type === "admin";
   const profileRequired = isStudent && currentUser?.profile_required !== false;
   const canReview = isTeacher;
-  const showInstitutionFilter = isTeacher && ["test", "processing"].includes(activeTab);
+  const showInstitutionFilter = isTeacher && WORK_MODULES.includes(activeTab);
   const selectedInstitution = showInstitutionFilter ? moduleWorkInstitutions[activeTab] || "" : "";
-  const institutionType = activeTab === "processing" ? "加工" : "测试";
+  const institutionType = WORK_DEFINITIONS.find(item => item.module === activeTab)?.name || '测试';
   const institutionOptions = useMemo(() => workInstitutionOptions(workRequests, institutionType), [workRequests, institutionType]);
   useEffect(() => { setModuleWorkInstitutions({}); }, [accountUsername]);
   const showStudentFilter = (isTeacher || isAdmin) && (studentFilterModules.includes(activeTab) || (isAdmin && activeTab === "admin"));
@@ -264,11 +265,11 @@ function App() {
   );
 
   const dashboardRecordVisible = item => activeTab !== "dashboard" || (isStudent ? item.applicant_username === currentUser.username : teacherScopeMatches(item, currentUser));
-  const requestDateMatches = item => recordInDateRange(item, moduleRanges[item.request_type === "测试" ? "test" : "processing"] || {});
+  const requestDateMatches = item => recordInDateRange(item, moduleRanges[workModule(item.request_type)] || {});
   const searchRequest = useMemo(() => requestSearchIndex(reviewLogs, attachments), [reviewLogs, attachments]);
   const todayForSearch = chinaDate();
   const filteredAccounts = accounts.filter(row => (!selectedModuleStudent || row.username === selectedModuleStudent) && (!selectedModuleTeacher || row.username === selectedModuleTeacher) && recordInDateRange(row,dateRange) && containsQuery(row,query));
-  const filteredWorkRequests = workRequests.filter((item) => dashboardRecordVisible(item) && (isAdmin || !isHiddenForMe("lab_work_requests", item)) && searchRequest(item, "lab_work_requests", query) && (!["test", "processing"].includes(activeTab) || (requestDateMatches(item) && matchesWorkInstitution(item, selectedInstitution) && recordMatchesStudent(item, selectedModuleStudent, activeTab) && moduleTeacherMatches(item, activeTab) && workScopeMatches(item, currentUser, reviewScope))));
+  const filteredWorkRequests = workRequests.filter((item) => dashboardRecordVisible(item) && (isAdmin || !isHiddenForMe("lab_work_requests", item)) && searchRequest(item, "lab_work_requests", query) && (!WORK_MODULES.includes(activeTab) || (requestDateMatches(item) && matchesWorkInstitution(item, selectedInstitution) && recordMatchesStudent(item, selectedModuleStudent, activeTab) && moduleTeacherMatches(item, activeTab) && workScopeMatches(item, currentUser, reviewScope))));
   const inventoryMatches = useCallback(item => recordInDateRange(item, dateRange) && recordMatchesStudent(item, selectedModuleStudent, "materials") && moduleTeacherMatches(item, "materials"), [dateRange, selectedModuleStudent, moduleTeacherMatches]);
   const categoryInventory = useMemo(() => filterInventoryCategory(materials, materialBatches, activeTab === "materials" ? inventoryCategory : ""), [materials, materialBatches, activeTab, inventoryCategory]);
   const summaryBatches = useMemo(() => categoryInventory.batches.filter(item => activeTab !== "materials" || inventoryMatches(item)), [categoryInventory.batches, activeTab, inventoryMatches]);
@@ -303,8 +304,7 @@ function App() {
 
   const tabs = [
     ["dashboard", "总览"],
-    ["test", isAdmin ? "测试记录" : canReview ? "测试审核" : "测试"],
-    ["processing", isAdmin ? "加工记录" : canReview ? "加工审核" : "加工"],
+    ...WORK_DEFINITIONS.map(({name,module}) => [module, name + (isAdmin ? '记录' : canReview ? '审核' : '')]),
     ["purchases", isAdmin ? "采购记录" : canReview ? "采购审核" : "采购/入库"],
     ["stock", isStudent ? "出/退库" : "出入退库"],
     ["materials", "库存"],
@@ -312,8 +312,7 @@ function App() {
     ...(isAdmin ? [["admin", "账号管理"]] : []),
   ];
 
-  const testRows = filteredWorkRequests.filter((r) => r.request_type === "测试");
-  const processingRows = filteredWorkRequests.filter((r) => r.request_type === "加工");
+  const workRows = filteredWorkRequests.filter(row => row.request_type === institutionType);
 
   return (
     <div className="platform-shell" style={styles.page}>
@@ -342,8 +341,7 @@ function App() {
       {showStudentFilter && <RecordFilters module={activeTab} extraSummary={activeTab === "stock" ? stockMovementType : selectedInstitution} onResetSearch={() => { setQuery(""); setModuleWorkInstitutions(prev => ({ ...prev, [activeTab]: "" })); setStockMovementType(''); if (activeTab === "materials") setInventoryCategory(""); }} extraFields={activeTab === "stock" ? <Field label="出入退库类型"><SearchableSelect value={stockMovementType} onChange={setStockMovementType} clearOnInput={false} options={[{value:"",label:"全部"},...["出库","入库","退库"].map(value=>({value,label:value}))]} fixedOptions={[""]} placeholder="搜索或选择出入退库类型" /></Field> : showInstitutionFilter ? <Field label={institutionType + "机构"}><SearchableSelect value={selectedInstitution} onChange={value => setModuleWorkInstitutions(prev => ({ ...prev, [activeTab]: value }))} clearOnInput={false} options={[{value:"",label:"全部"}, ...institutionOptions.map(value => ({value,label:value}))]} fixedOptions={[""]} placeholder={"搜索或选择" + institutionType + "机构"} /></Field> : null} showTeacherFilter={isAdmin} teachers={filterTeacherAccounts} teacher={selectedModuleTeacher} onTeacherChange={teacher => setModuleTeachers(prev => ({ ...prev, [activeTab]: teacher }))} students={studentAccounts} student={selectedModuleStudent} onStudentChange={student => setModuleStudents(prev => ({ ...prev, [activeTab]: student }))} range={dateRange} onRangeChange={range => setModuleRanges(prev => ({ ...prev, [activeTab]: range }))} styles={styles} Field={Field} SearchableSelect={SearchableSelect} DateInput={DateInput} />}
 
       {activeTab === "dashboard" && <Dashboard stockOutRequests={filteredStockOutRequests.filter(row => isAdmin || row.applicant_username === currentUser.username || row.purchaser_username === currentUser.username)} accounts={filteredAccounts} stockRows={isStudent ? filteredStocks.filter(row => row.operator_username === currentUser.username) : filteredStocks} attachments={attachments} onDownloadAttachment={downloadAttachment} currentUser={currentUser} workRequests={filteredWorkRequests} batches={filteredBatches} purchases={filteredPurchases} canManageStock={canManageStock} setActiveTab={setActiveTab} />}
-      {activeTab === "test" && <WorkRequestsPage workHistory={workRequests} teacherAccounts={teacherAccounts} reviewScope={reviewScope} onReviewScopeChange={setReviewScope} fixedType="测试" rows={testRows} logs={reviewLogs} attachments={attachments} currentUser={currentUser} units={units} canSubmit={isStudent} canReview={canReview} isAdmin={isAdmin} onAdd={addWorkRequest} onResubmit={resubmitWorkRequest} onWithdraw={withdrawWorkRequest} onReview={reviewWorkRequest} onComplete={completeWorkRequest} onCloseRejected={closeRejectedOrder} onDeleteRecord={deleteRecordPermanently} onHideRecord={hideRecordForMe} onUploadAttachment={uploadAttachment} onDownloadAttachment={downloadAttachment} onDeleteAttachment={deleteAttachment} onExport={() => exportModule("test", testRows)} />}
-      {activeTab === "processing" && <WorkRequestsPage workHistory={workRequests} teacherAccounts={teacherAccounts} reviewScope={reviewScope} onReviewScopeChange={setReviewScope} fixedType="加工" rows={processingRows} logs={reviewLogs} attachments={attachments} currentUser={currentUser} units={units} canSubmit={isStudent} canReview={canReview} isAdmin={isAdmin} onAdd={addWorkRequest} onResubmit={resubmitWorkRequest} onWithdraw={withdrawWorkRequest} onReview={reviewWorkRequest} onComplete={completeWorkRequest} onCloseRejected={closeRejectedOrder} onDeleteRecord={deleteRecordPermanently} onHideRecord={hideRecordForMe} onUploadAttachment={uploadAttachment} onDownloadAttachment={downloadAttachment} onDeleteAttachment={deleteAttachment} onExport={() => exportModule("processing", processingRows)} />}
+      {WORK_MODULES.includes(activeTab) && <WorkRequestsPage workHistory={workRequests} teacherAccounts={teacherAccounts} reviewScope={reviewScope} onReviewScopeChange={setReviewScope} fixedType={institutionType} rows={workRows} logs={reviewLogs} attachments={attachments} currentUser={currentUser} units={units} canSubmit={isStudent} canReview={canReview} isAdmin={isAdmin} onAdd={addWorkRequest} onResubmit={resubmitWorkRequest} onWithdraw={withdrawWorkRequest} onReview={reviewWorkRequest} onComplete={completeWorkRequest} onCloseRejected={closeRejectedOrder} onDeleteRecord={deleteRecordPermanently} onHideRecord={hideRecordForMe} onUploadAttachment={uploadAttachment} onDownloadAttachment={downloadAttachment} onDeleteAttachment={deleteAttachment} onExport={() => exportModule(activeTab, workRows)} />}
       {activeTab === "purchases" && <PurchasesPage registeredTeacherAccounts={registeredTeacherAccounts} teacherAccounts={teacherAccounts} reviewScope={reviewScope} onReviewScopeChange={setReviewScope} viewScope={purchaseViewScope} onViewScopeChange={setPurchaseViewScope} materialCatalog={materialCatalog} logs={reviewLogs} rows={filteredPurchases} attachments={attachments} batches={materialBatches} purchaseHistory={purchaseRequests} purchaseCatalog={purchaseCatalog} fundSummary={fundSummary} currentUser={currentUser} units={units} canSubmit={isStudent} canReview={canReview} isAdmin={isAdmin} onAdd={addPurchaseRequest} onResubmit={resubmitPurchaseRequest} onWithdraw={withdrawPurchaseRequest} onReview={reviewPurchase} onCompleteInbound={completePurchaseInbound} onCloseRejected={closeRejectedOrder} onDeleteRecord={deleteRecordPermanently} onHideRecord={hideRecordForMe} onUploadAttachment={uploadAttachment} onDownloadAttachment={downloadAttachment} onDeleteAttachment={deleteAttachment} onExport={() => exportModule("purchases", filteredPurchases)} />}
       {activeTab === "stock" && <StockPage movementType={isStudent ? "" : stockMovementType} currentUser={currentUser} purchaseRequests={purchaseRequests} teacherAccounts={registeredTeacherAccounts} requests={filteredStockOutRequests} onReviewRequest={reviewStockOutRequest} onCompleteRequest={completeStockOutRequest} onWithdrawRequest={withdrawStockOutRequest} onExportRequests={rows => exportModule("stockRequests", rows)} viewScope={stockViewScope} onViewScopeChange={setStockViewScope} canSubmit={isStudent} materialCatalog={materialCatalog} rows={filteredStocks} batches={materialBatches} attachments={attachments} isAdmin={isAdmin} onDeleteRecord={deleteRecordPermanently} isManager={canManageStock} onAdd={addStockTransaction} onDownloadAttachment={downloadAttachment} onExport={rows => exportModule("stock", rows)} />}
       {activeTab === "materials" && canInboundStock && <InventoryPage searchQuery={query} canInitialize={isStudent} materialCatalog={materialCatalog} onInitialize={initializeMaterialStock} initializationMaterials={materials} initializationBatches={materialBatches} initializationUnits={units} materials={filteredMaterials} batches={filteredBatches} isAdmin={isAdmin} onDeleteRecord={deleteRecordPermanently} attachments={attachments} onDownloadAttachment={downloadAttachment} canManageStock={canManageStock} canEditBatchInformation={canEditBatchInformation} onAddBatch={addMaterialBatch} onUpdateBatch={updateMaterialBatch} onExportMaterials={() => exportModule("materials", filteredMaterials)} onExportBatches={() => exportModule("batches", filteredBatches)} />}

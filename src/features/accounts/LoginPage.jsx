@@ -12,7 +12,7 @@ function LoginPage({ onLogin, onRegister, message }) {
     <div className="platform-shell platform-login" style={styles.page}>
       <section style={styles.loginCard}>
         <h1 style={styles.title}>{PLATFORM_TITLE}</h1>
-        <p style={styles.subtitle}>学生办理测试、加工、采购入库、材料建库、出库退库及物品信息修改；教师审核指定工单、维护库存；管理员管理账号与团队数据。成员可查看团队记录、下载附件和导出数据。</p>
+        <p style={styles.subtitle}>学生办理测试、加工、维修、采购入库、材料建库、出库退库及物品信息修改；教师审核指定工单、维护库存；管理员管理账号与团队数据。成员可查看团队记录、下载附件和导出数据。</p>
         <div style={styles.loginSwitch}>
           <button style={tabStyle(mode === "login")} onClick={() => setMode("login")}>账号登录</button>
           <button style={tabStyle(mode === "register")} onClick={() => setMode("register")}>账号注册</button>

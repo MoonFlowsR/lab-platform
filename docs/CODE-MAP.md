@@ -5,14 +5,16 @@
 | 业务 | 页面与前端操作 | 服务端实现 |
 | --- | --- | --- |
 | 账号、学生资料 | `src/features/accounts` | `server/routes/auth.cjs`、`server/features/accounts`、`server/services/operations/admin.cjs` |
-| 测试、加工 | `src/features/work` | `server/features/work`、`server/services/operations/work.cjs` |
+| 测试、加工、维修 | `src/features/work` | `server/features/work`、`server/services/operations/work.cjs` |
 | 采购与到货入库 | `src/features/purchases` | `server/services/operations/purchase.cjs` |
 | 材料建库、批次修改 | `src/features/inventory` | `server/features/inventory`、`server/services/operations/inventory.cjs` |
 | 出库、退库、采购人审批 | `src/features/stock` | `server/features/stock`、`server/services/operations/stock.cjs` |
 | 总览与报表 | `src/features/dashboard`、`src/features/reports` | 共用业务记录与筛选规则 |
 | 帮助、留言 | `src/features/help` | `server/features/help` |
 
-测试与加工：`request-sections.js`负责四类工单分组，`work-history.js`负责同学生、同项目、同机构的近半年记录及机构匹配，`work-completion.cjs`校验最终信息与开票/挂账状态。`settlement_status`保存在工单记录中；已有未登记记录不自动补值。
+测试、加工与维修：`request-sections.js`负责四类工单分组，`work-history.js`负责同学生、同项目、同机构的近半年记录及机构匹配，`work-completion.cjs`校验最终信息与订单状态。`settlement_status`保存在工单记录中；已有未登记记录不自动补值。
+
+`src/config/work-types.json`统一定义工单类型、页面、费用字段和编号前缀；维修复用测试加工流程，通过`cost_repair`单独统计费用。
 
 ## 公共部分
 

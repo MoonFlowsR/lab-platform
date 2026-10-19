@@ -1,3 +1,4 @@
+import { workFeeKey } from './work-types.js';
 import { useEffect, useMemo, useState } from "react";
 import { splitReviewedWorkSections } from "../../shared/lib/request-sections.js";
 import WorkHistory from "./WorkHistory.jsx";
@@ -91,9 +92,10 @@ function WorkRequestForm({ workHistory = [], teacherAccounts = [], fixedType, on
     work_content: "",
     external_unit: "",
     workload_quantity: 1,
-    workload_unit: "样品",
+    workload_unit: fixedType === '维修' ? '次' : '样品',
     safety_notes: "",
     cost_test: "",
+    cost_repair: "",
     cost_processing: initialData?.request_type === "加工" ? (initialData.cost_processing ?? (num(initialData.cost_test) + num(initialData.cost_material))) : "",
     remark: "",
   };
@@ -143,7 +145,7 @@ function WorkRequestForm({ workHistory = [], teacherAccounts = [], fixedType, on
         </Field>
         <CustomOptionFields required label="计量单位" customLabel="其它计量单位" value={form.workload_unit} onChange={value => set("workload_unit", value)} options={choices.billing} placeholder="选择计量单位或搜索“其它”" customPlaceholder="请填写具体计量单位" maxLength={60} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
         <Field required label={"预计总" + fixedType + "费 / 元"}>
-          <input required type="number" min="0" step="0.01" style={styles.input} value={fixedType === "测试" ? form.cost_test : form.cost_processing} onChange={(e) => set(fixedType === "测试" ? "cost_test" : "cost_processing", e.target.value)} />
+          <input required type="number" min="0" step="0.01" style={styles.input} value={form[workFeeKey(fixedType)]} onChange={(e) => set(workFeeKey(fixedType), e.target.value)} />
         </Field>
         <ReviewTeacherField teachers={teacherAccounts} value={form.review_teacher_username} onChange={value => set("review_teacher_username", value)} />
         <Field wide label="安全事项（可选）">

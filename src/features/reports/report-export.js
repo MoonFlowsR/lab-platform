@@ -14,23 +14,24 @@ export function buildReportExport(data, filters = {}, now = new Date()) {
   // Use the same selector as the report page, on the already authorized account dataset.
   const selected = selectReportData(data, { student, teacher, query, startDate, endDate });
   const tests = selected.workRequests.filter(row => row.request_type === '测试');
+  const repairs = selected.workRequests.filter(row => row.request_type === '维修');
   const processing = selected.workRequests.filter(row => row.request_type === '加工');
   const summary = reportSummaryRows(selected, chinaDate(now));
   summary.push(['私用/项目用物品待采购人审批',selected.stockOutRequests.filter(row=>row.status==='待采购人审批').length,'条'],['私用/项目用物品已同意待出库',selected.stockOutRequests.filter(row=>row.status==='已同意待出库').length,'条']);
   const context = { attachments: data.attachments || [], batches: selected.batches };
   const details = [
-    ['测试明细', 'test', tests], ['加工明细', 'processing', processing], ['采购明细', 'purchases', selected.purchases],
+    ['测试明细', 'test', tests], ['加工明细', 'processing', processing], ['维修明细', 'repair', repairs], ['采购明细', 'purchases', selected.purchases],
     ['出入退库明细', 'stock', selected.stockTransactions], ['出库申请', 'stockRequests', selected.stockOutRequests], ['审批明细', 'reviews', selected.reviewLogs],
     ['库存批次', 'batches', selected.batches], ['材料目录', 'materials', selected.materials],
   ];
   const statuses = [];
-  for (const [title, rows, field] of [['测试状态',tests,'status'], ['加工状态',processing,'status'], ['采购状态',selected.purchases,'status']]) {
+  for (const [title, rows, field] of [['测试状态',tests,'status'], ['加工状态',processing,'status'], ['维修状态',repairs,'status'], ['采购状态',selected.purchases,'status']]) {
     const counts = new Map();
     for (const row of rows) { const key = row[field] === '已通过' && title !== '采购状态' ? '已通过（待确认完成）' : row[field] || '未填写'; counts.set(key, (counts.get(key) || 0) + 1); }
     for (const [label, count] of counts) statuses.push([title, label, count]);
   }
   const files = [
-    { ...buildCsvTable('筛选条件', ['学生姓名','教师姓名','搜索内容','开始日期','结束日期','库存统计口径','费用统计口径','导出时间'], [[student ? studentName : '全部', teacher ? teacherName : '全部', query.trim() || '不限', startDate || '不限开始', endDate || '不限结束', '相关批次的当前库存', '测试加工按已完成最终费用；采购按待审核、待入库、已入库分别统计预计金额', timestamp(now)]]), filename:'筛选条件.csv' },
+    { ...buildCsvTable('筛选条件', ['学生姓名','教师姓名','搜索内容','开始日期','结束日期','库存统计口径','费用统计口径','导出时间'], [[student ? studentName : '全部', teacher ? teacherName : '全部', query.trim() || '不限', startDate || '不限开始', endDate || '不限结束', '相关批次的当前库存', '测试加工维修按已完成最终费用；采购按待审核、待入库、已入库分别统计预计金额', timestamp(now)]]), filename:'筛选条件.csv' },
     { ...buildCsvTable('统计汇总', ['统计项目','数值','单位'], summary), filename:'统计汇总.csv' },
     { ...buildCsvTable('状态统计', ['统计类别','分类','记录数'], statuses), filename:'状态统计.csv' },
     ...details.map(([title, kind, rows]) => ({ ...buildCsv(kind, rows, context), filename:title+'.csv' })),
