@@ -50,6 +50,7 @@ export async function checkPurchaseFilters(browser, origin, out, snapshot, teach
     if (!(await supplier.isVisible())) await page.getByRole('button', { name: /展开筛选/ }).click();
     assert.equal(await supplier.inputValue(), '示例供应商');
     await page.getByRole('button', { name: '重置筛选', exact: true }).click();
+    await page.waitForFunction(() => document.querySelector('input[placeholder="搜索或选择采购单位"]')?.value === '全部');
     assert.equal(await supplier.inputValue(), '全部');
     await page.getByRole('heading', { name: '待审批采购工单（3）', exact: true }).waitFor();
     results.push({ purchaseUnitFilter: true, width, overflow: await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), errors });
