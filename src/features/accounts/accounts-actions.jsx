@@ -59,7 +59,7 @@ async function registerAccount(form) {
       if (account?.pending) {
         setCurrentUser(null);
         clearStoredAccount();
-        setMessage(account.server_message || "账号已提交注册，待管理员审核通过后才能登录。");
+        setMessage(account.server_message || "账号已提交注册，待管理员审核通过后才能登录。", { persistent: true });
         return;
       }
       setSessionChecked(false);
