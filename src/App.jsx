@@ -42,7 +42,11 @@ const emptyRange = {};
 function App() {
   const [loginReady, setLoginReady] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
+  const [notice, setNotice] = useState({ text: "", id: 0, persistent: false });
+  // Each completed operation starts a fresh five-second notice, including repeated text.
+  const setMessage = useCallback((text, { persistent = false } = {}) => {
+    setNotice(previous => ({ text, persistent, id: previous.id + 1 }));
+  }, []);
   const [editingBatch, setEditingBatch] = useState(null);
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
   const [sessionChecked, setSessionChecked] = useState(false);
@@ -100,12 +104,6 @@ function App() {
   const canInboundStock = isStudent || canManageStock;
   const canViewReports = isTeacher || isAdmin;
 
-  async function ensureLogin() {
-    setLoginReady(true);
-    setMessage("");
-    setLoading(false);
-  }
-
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState("等待同步");
   const studentNameDisplay = useMemo(() => createStudentNameDisplay(), []);
@@ -144,8 +142,8 @@ function App() {
     onBusy: setSyncing,
     onStart: () => setSyncStatus("正在同步数据…"),
     onSuccess: () => { setLoading(false); setSyncStatus("同步完成"); },
-    onError: error => { setLoading(false); setSyncStatus("同步失败，请重试"); setMessage(error.message || "同步失败，请重试。"); },
-  }), [currentUser?.session_token, studentNameDisplay]);
+    onError: error => { setLoading(false); setSyncStatus("同步失败，请重试"); setMessage(error.message || "同步失败，请重试。", { persistent: true }); },
+  }), [currentUser?.session_token, studentNameDisplay, setMessage]);
 
   function loadAll() {
     if (!currentUser) return Promise.resolve();
@@ -153,8 +151,10 @@ function App() {
   }
 
   useEffect(() => {
-    ensureLogin();
-  }, []);
+    setLoginReady(true);
+    setMessage("");
+    setLoading(false);
+  }, [setMessage]);
 
   useEffect(() => {
     if (!loginReady || !sessionToken || !sessionChecked || profileRequired) return;
@@ -212,7 +212,7 @@ function App() {
         clearStoredAccount();
         setCurrentUser(null);
         setActiveTab("dashboard"); setModuleRanges({}); setModuleStudents({}); setModuleReviewScopes({}); setPurchaseViewScope("mine"); setStockViewScope("mine"); setStockMovementType(""); setInventoryCategory(""); setModuleTeachers({}); setAccountSettingsOpen(false); setQuery("");
-        setMessage("长时间未操作，已自动退出。请重新登录。");
+        setMessage("长时间未操作，已自动退出。请重新登录。", { persistent: true });
       }, AUTO_LOGOUT_MS);
     };
     const events = ["click", "keydown", "mousemove", "scroll", "touchstart"];
@@ -222,7 +222,7 @@ function App() {
       if (timer) window.clearTimeout(timer);
       events.forEach((eventName) => window.removeEventListener(eventName, resetTimer));
     };
-  }, [accountUsername]);
+  }, [accountUsername, setMessage]);
 
   useEffect(() => {
     const token = currentUser?.session_token;
@@ -237,13 +237,13 @@ function App() {
         setCurrentUser(account); saveStoredAccount(account); setRegisteredTeacherAccounts(result.teachers || []); setSessionChecked(true);
       } catch (error) {
         if (controller.signal.aborted || error.status === 401) return;
-        setMessage('正在核对登录信息，请稍候…'); retryTimer = setTimeout(verify, 5000);
+        setMessage('正在核对登录信息，请稍候…', { persistent: true }); retryTimer = setTimeout(verify, 5000);
       }
     }
     verify(); return () => { controller.abort(); clearTimeout(retryTimer); };
-  }, [currentUser?.session_token, sessionCheckRetry]);
+  }, [currentUser?.session_token, sessionCheckRetry, setMessage]);
 
-  const expireSession = useEffectEvent(event => { logoutAccount(); setMessage(event.detail.message || "登录状态已失效，请重新登录。"); });
+  const expireSession = useEffectEvent(event => { logoutAccount(); setMessage(event.detail.message || "登录状态已失效，请重新登录。", { persistent: true }); });
   useEffect(() => {
     const expired = event => { if (event.detail?.token === currentUser?.session_token) { expireSession(event); } };
     const missingProfile = event => { if (event.detail?.token === currentUser?.session_token) { setSessionChecked(false); setSessionCheckRetry(value => value + 1); } };
@@ -283,6 +283,10 @@ function App() {
   const { addStockTransaction, reviewStockOutRequest, completeStockOutRequest, withdrawStockOutRequest } = createStockActions({ uploadStockEvidence, currentUser, setMessage, loadAll, materialBatches, purchaseRequests });
   const { exportModule, deleteRecordPermanently, hideRecordForMe } = createRecordsActions({ attachments, setMessage, isAdmin, currentUser, loadAll });
 
+  const message = notice.text && <div key={notice.id} className={`platform-action-notice${notice.persistent ? "" : " is-success"}`} role="status"
+    onAnimationEnd={event => { if (event.target === event.currentTarget && event.animationName === "platform-notice-out") setNotice(current => current.id === notice.id ? { ...current, text: "" } : current); }}>
+    <span>{notice.text}</span><button type="button" aria-label="关闭操作提示" onClick={() => setMessage("")}>×</button>
+  </div>;
   const accountSettings = <AccountSettingsDialog key={currentUser?.username} account={currentUser || {}} teachers={registeredTeacherAccounts} required={profileRequired} onSaveProfile={saveMyStudentProfile} onSavePassword={saveMyPassword} onLogout={logoutAccount} onClose={() => setAccountSettingsOpen(false)}    />;
   if (currentUser && !sessionChecked) return <div className="platform-shell platform-login" style={styles.page}><div style={styles.card}>正在核对登录信息…</div></div>;
   if (currentUser && profileRequired) return <div className="platform-shell" style={styles.page}>{accountSettings}</div>;
@@ -320,7 +324,7 @@ function App() {
         </div>
       </header>
 
-      {message && <div key={message} className={`platform-action-notice${message.startsWith("登录成功，") ? " is-login-success" : ""}`} role="status" onAnimationEnd={event => { if (event.target === event.currentTarget && event.animationName === "platform-login-notice-out") setMessage(current => current === message ? "" : current); }}><span>{message}</span><button type="button" aria-label="关闭操作提示" onClick={() => setMessage("")}>×</button></div>}
+      {message}
       <nav className="platform-nav" style={styles.nav}>{tabs.map(([key, label]) => <button key={key} style={tabStyle(activeTab === key)} onClick={() => setActiveTab(key)}>{label}</button>)}</nav>
 
       {<section className={`platform-filter-bar${activeTab === "materials" ? " has-inventory-category" : ""}`} style={styles.filterBar}>

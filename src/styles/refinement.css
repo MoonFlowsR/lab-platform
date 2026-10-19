@@ -23,6 +23,8 @@
  .platform-action-notice{bottom:10px;padding:10px 12px;font-size:13px}
 }
 
-.platform-action-notice.is-login-success{animation:platform-login-notice-out .4s ease 5s forwards}
-@keyframes platform-login-notice-out{from{opacity:1}to{opacity:0}}
-@media(prefers-reduced-motion:reduce){.platform-action-notice.is-login-success{animation-duration:1ms}}
+.platform-action-notice.is-success{animation:platform-notice-out .4s ease 5s forwards}
+@keyframes platform-notice-out{from{opacity:1}to{opacity:0}}
+@media(prefers-reduced-motion:reduce){.platform-action-notice.is-success{animation-duration:1ms}}
+
+.platform-login .platform-action-notice{position:static;transform:none;max-width:none;margin-top:16px;box-shadow:none}

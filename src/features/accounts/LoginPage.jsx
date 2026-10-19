@@ -27,7 +27,7 @@ function LoginPage({ onLogin, onRegister, message }) {
           {mode === "register" && form.account_type === "admin" && <Field required label="管理员注册码"><input required style={styles.input} value={form.admin_code} onChange={(e) => set("admin_code", e.target.value)} placeholder="由平台负责人提供" /></Field>}
           <button style={styles.primaryButton}>{mode === "login" ? "登录" : "注册并登录"}</button>
         </form>
-        {message && <p style={styles.note}>{message}</p>}
+        {message}
         <div style={{ ...styles.securityBox, display: "flex", alignItems: "flex-end", gap: 12 }}><span style={{ flex: 1, minWidth: 0 }}>忘记密码请联系管理员重置。</span><a className="platform-login-help" href="/help">帮助文档</a></div>
       </section>
     </div>
