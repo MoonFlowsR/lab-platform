@@ -1,3 +1,4 @@
+import SupplierChangeHistory from "../../shared/components/SupplierChangeHistory.jsx";
 import { useEffect, useState } from "react";
 import { splitRequestSections } from "../../shared/lib/request-sections.js";
 import { styles } from "../../app/styles.js";
@@ -58,6 +59,7 @@ function PurchasesPage({ registeredTeacherAccounts = [], teacherAccounts = [], r
       {p.safety_notes && <p><b>安全事项：</b>{p.safety_notes}</p>}
       {p.remark && <p><b>备注：</b>{p.remark}</p>}
       <ReviewHistory row={p} logs={logs} />
+      <SupplierChangeHistory row={p} />
       {p.status === "待入库" && <div style={styles.securityBox}><b>下一步：</b>物品到货后，原申请人上传照片并确认入库，采购才标记为“已完成”。</div>}
       {p.status === "已关闭" && <ClosureInfo row={p} />}
       <AttachmentPanel targetCollection="lab_purchase_requests" row={p} attachments={rowAttachments} onUpload={onUploadAttachment} onDownload={onDownloadAttachment} />

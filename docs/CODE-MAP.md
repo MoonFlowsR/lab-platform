@@ -16,6 +16,8 @@
 
 `src/config/work-types.json`统一定义工单类型、页面、费用字段和编号前缀；维修复用测试加工流程，通过`cost_repair`单独统计费用。维修设备沿用`work_content`，维修人员保存为`repair_personnel`，维修人员单位沿用`external_unit`，计量单位默认“次”，其它单位从已保存维修记录补入菜单；专有字段由`repair-fields.cjs`校验。
 
+库存采购渠道联动：`server/features/inventory/purchase-supplier.cjs` 通过批次关联采购单同步渠道，与库存修改、流水及审计共用事务；`src/shared/components/SupplierChangeHistory.jsx` 展示两处修改记录。
+
 ## 公共部分
 
 | 文件或目录 | 职责 |

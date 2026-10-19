@@ -80,7 +80,7 @@ function WorkRequestsPage({ workHistory = [], teacherAccounts = [], reviewScope 
     <RequestHistorySection className="platform-section-pending" title={`待审批${fixedType}工单`} rows={pending} renderCard={renderCard} emptyText="暂无待审批工单。" />
     <RequestHistorySection className="platform-section-approved" title={`已审批${fixedType}工单`} rows={reviewed} renderCard={renderCard} emptyText="暂无已审批未完成工单。" />
     <RequestHistorySection className="platform-section-reviewed" title={`已完成${fixedType}工单`} rows={completed} renderCard={renderCard} emptyText="暂无已完成工单。" />
-    <RequestHistorySection className="platform-section-modified" title={`完成后修改的${fixedType}工单`} rows={modified} renderCard={renderCard} emptyText="暂无确认完成时修改过信息的工单。" />
+    <RequestHistorySection className="platform-section-modified" title={`完成时修改的${fixedType}工单`} rows={modified} renderCard={renderCard} emptyText="暂无确认完成时修改过信息的工单。" />
   </main>;
 }
 function WorkRequestForm({ workHistory = [], teacherAccounts = [], fixedType, onSubmit, currentUser, units = [], initialData = null, existingAttachments = [], onDownloadAttachment, onDeleteAttachment, submitLabel = "提交教师审核", onCancel }) {

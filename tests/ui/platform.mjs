@@ -1,3 +1,4 @@
+import { checkPurchaseChannels } from './purchase-channels.mjs';
 import { checkWorkReview } from './work-review.mjs';
 import fs from 'node:fs/promises';
 import http from 'node:http';
@@ -154,6 +155,7 @@ try {
   results.push({role,width,help:true,overflow:await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),errors});await page.close();
  }
  results.push(...await checkWorkReview(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
+ results.push(...await checkPurchaseChannels(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  const anonymous=await browser.newPage({viewport:{width:390,height:850}});let deniedReads=0;
  await anonymous.route('**/*',route=>{const u=new URL(route.request().url());if(u.origin!==origin)return route.abort();if(!u.pathname.startsWith('/api/'))return route.continue();if(u.pathname==='/api/help-comments'){deniedReads++;return route.fulfill({status:401,json:{ok:false,message:'请先登录。'}});}return route.fulfill({json:{ok:true,comments:[]}});});
  await anonymous.goto(origin+'/help');await anonymous.getByText('后查看留言和评论。',{exact:false}).waitFor();
