@@ -5,7 +5,7 @@ const number = value => Number.isFinite(Number(value)) ? Number(value) : 0;
 const sum = (rows, get) => rows.reduce((total, row) => total + number(get(row)), 0);
 
 export function businessMetrics(workRequests = [], purchases = []) {
-  return ['测试', '加工', '采购'].map(type => {
+  return ['测试', '加工', '维修', '采购'].map(type => {
     const rows = type === '采购' ? purchases : workRequests.filter(row => row.request_type === type);
     const completed = rows.filter(row => type === '采购' ? ['已完成', '已入库', '已归档'].includes(row.status) : isCompletedWork(row));
     const pending = rows.filter(row => row.status === '待教师审核');

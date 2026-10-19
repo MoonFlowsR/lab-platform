@@ -8,10 +8,14 @@ export function splitRequestSections(rows = [], { purchase = false, manager = fa
   return { ongoing: rows.filter(row => !isHistory(row)), history: rows.filter(isHistory) };
 }
 
-export function splitReviewedWorkSections(rows = [], { manager = true } = {}) {
-  const modifiedAfterReview = row => row.completion_modified === true && isCompletedWork(row);
-  return {
-    ...splitRequestSections(rows.filter(row => !modifiedAfterReview(row)), { manager }),
-    modified: rows.filter(modifiedAfterReview),
-  };
+export function splitReviewedWorkSections(rows = []) {
+  const sections = { pending: [], reviewed: [], completed: [], modified: [] };
+  for (const row of rows) {
+    const section = isCompletedWork(row)
+      ? row.completion_modified === true ? 'modified' : 'completed'
+      : row.status === '已关闭' ? 'completed'
+      : ['已通过', '已实施', '已驳回', '需修改'].includes(row.status) ? 'reviewed' : 'pending';
+    sections[section].push(row);
+  }
+  return sections;
 }

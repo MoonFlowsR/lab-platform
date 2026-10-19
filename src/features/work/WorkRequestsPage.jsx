@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react";
-import { splitRequestSections, splitReviewedWorkSections } from "../../shared/lib/request-sections.js";
+import { workFeeKey } from './work-types.js';
+import { useEffect, useMemo, useState } from "react";
+import { splitReviewedWorkSections } from "../../shared/lib/request-sections.js";
+import WorkHistory from "./WorkHistory.jsx";
+import { indexWorkHistory, recentSameWork } from "./work-history.js";
 import { AttachmentPanel, ExistingAttachmentsViewer, PreSubmitAttachmentUploader } from "../../shared/components/attachments.jsx";
 import { styles } from "../../app/styles.js";
 import RecordActions from "../../shared/components/RecordActions.jsx";
@@ -14,11 +17,10 @@ import CustomOptionFields from "../../shared/components/CustomOptionFields.jsx";
 import { ALLOWED_ATTACHMENT_LABEL } from "../../app/attachment-validation.js";
 
 function WorkRequestsPage({ workHistory = [], teacherAccounts = [], reviewScope = "mine", onReviewScopeChange, fixedType, rows, logs, attachments = [], currentUser, units = [], canSubmit, canReview, isAdmin = false, onAdd, onResubmit, onWithdraw, onReview, onComplete, onCloseRejected, onDeleteRecord, onHideRecord, onUploadAttachment, onDownloadAttachment, onDeleteAttachment, onExport }) {
-  const isManager = canReview || isAdmin;
-  const showModifiedSection = isManager || canSubmit;
+  const historyIndex = useMemo(() => canReview ? indexWorkHistory(workHistory) : new Map(), [canReview, workHistory]);
   const [editingRow, setEditingRow] = useState(null);
   useEffect(() => { if (editingRow && !rows.some(row => row._id === editingRow._id)) setEditingRow(null); }, [rows, editingRow]);
-  const { ongoing, history, modified = [] } = showModifiedSection ? splitReviewedWorkSections(rows, { manager: isManager }) : splitRequestSections(rows);
+  const { pending, reviewed, completed, modified } = splitReviewedWorkSections(rows);
   const studentCanEdit = (row) => canSubmit && row.applicant_username === currentUser?.username && ["已撤回", "需修改", "已驳回"].includes(row.status);
   const studentCanClose = row => canSubmit && row.applicant_username === currentUser?.username && ["已驳回", "需修改"].includes(row.status);
   const studentCanWithdraw = (row) => currentUser?.account_type === "student" && row.applicant_username === currentUser.username && row.status === "待教师审核";
@@ -28,7 +30,8 @@ function WorkRequestsPage({ workHistory = [], teacherAccounts = [], reviewScope 
     return <WorkRequestCard
       key={row._id}
       row={row}
-      completionDetailsOpen={showModifiedSection && row.completion_modified === true}
+      completionDetailsOpen={row.completion_modified === true}
+      historyPanel={canReview && <WorkHistory type={fixedType} rows={recentSameWork(row, historyIndex)} />}
       logs={logs.filter((log) => String(log.target_id) === String(row._id) || log.target_public_id === row.public_id)}
       attachmentPanel={<AttachmentPanel targetCollection="lab_work_requests" row={row} attachments={rowAttachments} onUpload={onUploadAttachment} onDownload={onDownloadAttachment} />}
       actions={<RecordActions dangerous={isAdmin ? <button style={styles.dangerButton} onClick={() => onDeleteRecord?.("lab_work_requests", row)}>永久删除申请</button> : !canReview && <>{studentCanClose(row) && <button style={styles.warningButton} onClick={() => onCloseRejected?.("lab_work_requests", row)}>关闭工单</button>}<button style={styles.lightButton} onClick={() => onHideRecord?.("lab_work_requests", row)}>从我的列表隐藏</button></>}>
@@ -74,9 +77,10 @@ function WorkRequestsPage({ workHistory = [], teacherAccounts = [], reviewScope 
 
     {["teacher", "student"].includes(currentUser?.account_type) && <RequestViewScope scope={reviewScope} onChange={onReviewScopeChange} label={`${fixedType}${canReview ? "审核" : ""}查看范围`} />}
     <DashboardMetrics workRequests={rows} types={[fixedType]} mode={canSubmit ? "student" : canReview ? "review" : "team"} money={money} />
-    <RequestHistorySection className="platform-section-pending" title={isManager ? `待审核${fixedType}` : `进行中${fixedType}工单`} rows={ongoing} renderCard={renderCard} emptyText={`暂无${isManager ? '待审核' : '进行中'}${fixedType}申请。`} />
-    <RequestHistorySection className="platform-section-reviewed" key={`${currentUser?.username}-${fixedType}`} title={isAdmin ? `历史${fixedType}记录` : canReview ? `已审核${fixedType}` : `已完成${fixedType}工单`} rows={history} renderCard={renderCard} emptyText={`暂无${isAdmin ? '历史' : canReview ? '已审核' : '已完成'}${fixedType}申请。`} />
-    {showModifiedSection && <RequestHistorySection className="platform-section-modified" title={`审批后修改的${fixedType}工单`} rows={modified} renderCard={renderCard} emptyText="暂无审批后修改的工单。" />}
+    <RequestHistorySection className="platform-section-pending" title={`待审批${fixedType}工单`} rows={pending} renderCard={renderCard} emptyText="暂无待审批工单。" />
+    <RequestHistorySection className="platform-section-approved" title={`已审批${fixedType}工单`} rows={reviewed} renderCard={renderCard} emptyText="暂无已审批未完成工单。" />
+    <RequestHistorySection className="platform-section-reviewed" title={`已完成${fixedType}工单`} rows={completed} renderCard={renderCard} emptyText="暂无已完成工单。" />
+    <RequestHistorySection className="platform-section-modified" title={`完成后修改的${fixedType}工单`} rows={modified} renderCard={renderCard} emptyText="暂无确认完成时修改过信息的工单。" />
   </main>;
 }
 function WorkRequestForm({ workHistory = [], teacherAccounts = [], fixedType, onSubmit, currentUser, units = [], initialData = null, existingAttachments = [], onDownloadAttachment, onDeleteAttachment, submitLabel = "提交教师审核", onCancel }) {
@@ -88,9 +92,10 @@ function WorkRequestForm({ workHistory = [], teacherAccounts = [], fixedType, on
     work_content: "",
     external_unit: "",
     workload_quantity: 1,
-    workload_unit: "样品",
+    workload_unit: fixedType === '维修' ? '次' : '样品',
     safety_notes: "",
     cost_test: "",
+    cost_repair: "",
     cost_processing: initialData?.request_type === "加工" ? (initialData.cost_processing ?? (num(initialData.cost_test) + num(initialData.cost_material))) : "",
     remark: "",
   };
@@ -140,7 +145,7 @@ function WorkRequestForm({ workHistory = [], teacherAccounts = [], fixedType, on
         </Field>
         <CustomOptionFields required label="计量单位" customLabel="其它计量单位" value={form.workload_unit} onChange={value => set("workload_unit", value)} options={choices.billing} placeholder="选择计量单位或搜索“其它”" customPlaceholder="请填写具体计量单位" maxLength={60} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
         <Field required label={"预计总" + fixedType + "费 / 元"}>
-          <input required type="number" min="0" step="0.01" style={styles.input} value={fixedType === "测试" ? form.cost_test : form.cost_processing} onChange={(e) => set(fixedType === "测试" ? "cost_test" : "cost_processing", e.target.value)} />
+          <input required type="number" min="0" step="0.01" style={styles.input} value={form[workFeeKey(fixedType)]} onChange={(e) => set(workFeeKey(fixedType), e.target.value)} />
         </Field>
         <ReviewTeacherField teachers={teacherAccounts} value={form.review_teacher_username} onChange={value => set("review_teacher_username", value)} />
         <Field wide label="安全事项（可选）">

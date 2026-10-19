@@ -1,4 +1,4 @@
-export const studentFilterModules = ['test', 'processing', 'purchases', 'stock', 'materials'];
+export const studentFilterModules = ['test', 'processing', 'repair', 'purchases', 'stock', 'materials'];
 
 export function studentFilterOptions(students = []) {
   const names = students.map(account => account.display_name || account.username);

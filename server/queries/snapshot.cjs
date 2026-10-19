@@ -48,8 +48,9 @@ function buildFundSummary() {
     test_total: Number.isFinite(TEST_FUND_TOTAL) ? TEST_FUND_TOTAL : null,
     test_committed: testCommitted,
     processing_committed: processingCommitted,
+    repair_committed: work.filter(row => row.request_type === '维修').reduce((sum,row)=>sum+num(row.cost_repair),0),
     test_balance: Number.isFinite(TEST_FUND_TOTAL) ? TEST_FUND_TOTAL - testCommitted : null,
-    note: "测试、加工仅统计已完成工单的最终金额；采购按申请记录金额统计。",
+    note: "测试、加工、维修仅统计已完成工单的最终金额；采购按申请记录金额统计。",
   };
 }
 

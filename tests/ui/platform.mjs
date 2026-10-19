@@ -1,3 +1,4 @@
+import { checkWorkReview } from './work-review.mjs';
 import fs from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
@@ -90,7 +91,7 @@ try {
    results.push({role,width,tab:tabs[i],...geometry,errors:[...errors]});
    if(role==='admin' && width===1440){
     if(tabs[i]==='测试记录'){
-     const pending=page.locator('main > section').filter({has:page.getByRole('heading',{name:/^待审核测试/})});
+     const pending=page.locator('main > section').filter({has:page.getByRole('heading',{name:/^待审批测试/})});
      assert.equal(await pending.locator('h3').count(),1);
      await pending.getByRole('button',{name:'查看全部',exact:true}).click();assert.equal(await pending.locator('h3').count(),3);
      await pending.getByRole('button',{name:'仅显示最近1条',exact:true}).click();assert.equal(await pending.locator('h3').count(),1);
@@ -152,6 +153,7 @@ try {
   await page.goto(origin+'/help');await page.locator('.help-page').waitFor();await page.screenshot({path:path.join(out,role+'-'+width+'-help.png'),fullPage:true});
   results.push({role,width,help:true,overflow:await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),errors});await page.close();
  }
+ results.push(...await checkWorkReview(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  const anonymous=await browser.newPage({viewport:{width:390,height:850}});let deniedReads=0;
  await anonymous.route('**/*',route=>{const u=new URL(route.request().url());if(u.origin!==origin)return route.abort();if(!u.pathname.startsWith('/api/'))return route.continue();if(u.pathname==='/api/help-comments'){deniedReads++;return route.fulfill({status:401,json:{ok:false,message:'请先登录。'}});}return route.fulfill({json:{ok:true,comments:[]}});});
  await anonymous.goto(origin+'/help');await anonymous.getByText('后查看留言和评论。',{exact:false}).waitFor();

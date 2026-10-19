@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { createHash, randomUUID } = require('node:crypto');
-const names = { lab_work_requests:'测试/加工申请', lab_purchase_requests:'采购申请', lab_materials:'材料', lab_material_batches:'库存批次', lab_stock_transactions:'出入退库记录', lab_stock_out_requests:'项目物品出库申请', lab_review_logs:'审批记录', lab_attachments:'附件', lab_expense_records:'费用记录', lab_test_processing_units:'外协单位' };
+const names = { lab_work_requests:'测试/加工/维修申请', lab_purchase_requests:'采购申请', lab_materials:'材料', lab_material_batches:'库存批次', lab_stock_transactions:'出入退库记录', lab_stock_out_requests:'项目物品出库申请', lab_review_logs:'审批记录', lab_attachments:'附件', lab_expense_records:'费用记录', lab_test_processing_units:'外协单位' };
 const allowed = ['lab_work_requests','lab_purchase_requests','lab_materials','lab_material_batches','lab_stock_transactions','lab_stock_out_requests','lab_expense_records','lab_test_processing_units'];
 module.exports = function createDeletionService({ db, uploadDir, nowISO, addAudit }) {
   const root = path.resolve(uploadDir);

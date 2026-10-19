@@ -1,4 +1,4 @@
-const prefixes = 'TEST|PROC|PUR|OUT|IO|MAT|BATCH|UNIT|REV';
+const prefixes = 'TEST|PROC|REPAIR|PUR|OUT|IO|MAT|BATCH|UNIT|REV';
 const shortDate = '\\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\\d|3[01])';
 const longNumber = new RegExp(`^(${prefixes})-20(${shortDate})-(\\d+)$`, 'i');
 const longNumbers = new RegExp(`\\b(${prefixes})-20(${shortDate})-(\\d+)\\b`, 'gi');

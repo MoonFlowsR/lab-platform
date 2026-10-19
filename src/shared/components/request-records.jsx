@@ -42,7 +42,7 @@ function ReviewTeacherField({ teachers, value, onChange }) {
 function RequestViewScope({ scope, onChange, label }) {
   return <section aria-label={label} className="platform-purchase-scope" style={styles.card}>
     <Field label="查看范围"><SearchableSelect value={scope} onChange={onChange} clearOnInput={false} options={[{ value: "mine", label: "本人" }, { value: "all", label: "全部" }]} placeholder="搜索或选择查看范围" /></Field>
-    <small style={styles.muted}>调整查看范围可查看团队内其它测试/加工/采购/入库进度</small>
+    <small style={styles.muted}>调整查看范围可查看团队内其它测试/加工/维修/采购/入库进度</small>
   </section>;
 }
 function ReviewHistory({ row, logs = [] }) {
@@ -51,12 +51,12 @@ function ReviewHistory({ row, logs = [] }) {
   if (!history.length) return null;
   return <details open style={styles.logBox}><summary>审批记录（{history.length} 条）</summary><RecentRecords rows={sortByCreatedAt(history)}>{shown => <DataTable mobileColumns={["审批人", "审批结果", "审批意见", "审批时间"]} columns={["审批时间", "审批人", "审批结果", "审批意见"]} rows={shown.map(log => [formatDate(log.created_at), log.reviewer_name || log.reviewer_username || "-", log.action, log.review_note || "未填写"])} />}</RecentRecords></details>;
 }
-function WorkRequestCard({ row, logs = [], compact = false, completionDetailsOpen = false, attachmentPanel, actions }) {
+function WorkRequestCard({ row, logs = [], compact = false, completionDetailsOpen = false, attachmentPanel, actions, historyPanel }) {
   return <div style={styles.listItem}>
     <div style={styles.rowBetween}>
       <div>
         <h3 style={styles.h3}>{row.work_content || formatPublicNumber(row.public_id)}</h3>
-        <p style={styles.meta}>{formatPublicNumber(row.public_id)} · {row.request_type || "测试/加工"} · 申请人：<strong className="platform-identity">{row.applicant_name}</strong> · 审核教师：<strong className="platform-identity">{reviewTeacherName(row)}</strong> · 提交时间：{formatDate(row.created_at)}</p>
+        <p style={styles.meta}>{formatPublicNumber(row.public_id)} · {row.request_type || "测试/加工/维修"} · 申请人：<strong className="platform-identity">{row.applicant_name}</strong> · 审核教师：<strong className="platform-identity">{reviewTeacherName(row)}</strong> · 提交时间：{formatDate(row.created_at)}</p>
       </div>
       <div style={styles.badgeRow}>
         <Badge text={row.status === "已通过" ? "已通过 · 待确认完成" : row.status} />
@@ -65,9 +65,10 @@ function WorkRequestCard({ row, logs = [], compact = false, completionDetailsOpe
       </div>
     </div>
     <div className="platform-detail-grid" style={styles.detailGrid4}>
-      <Info label={`${row.request_type || "测试/加工"}渠道`} value={row.external_unit} />
+      <Info label={`${row.request_type || "测试/加工/维修"}渠道`} value={row.external_unit} />
       <Info label="工作量" value={`${row.workload_quantity || "-"} ${row.workload_unit || ""}`} />
       <Info label={(isCompletedWork(row) ? "最终总" : row.status === "已关闭" ? "原预计总" : "预计总") + row.request_type + "费"} value={money(workFee(row))} />
+      {isCompletedWork(row) && <Info label="订单状态" value={row.settlement_status || "未登记"} />}
     </div>
     {row.status === "已关闭" && <ClosureInfo row={row} />}
     {isCompletedWork(row) && <p style={styles.meta}>完结人：<strong className="platform-identity">{row.completed_by || row.completed_username || "未记录"}</strong> · 完成时间：{formatDate(row.completed_at)}</p>}
@@ -82,6 +83,7 @@ function WorkRequestCard({ row, logs = [], compact = false, completionDetailsOpe
     </>}
     {attachmentPanel}
     {actions}
+    {historyPanel}
   </div>;
 }
 export { ClosureInfo, PurchaseSummaryCard, RequestHistorySection, RequestViewScope, ReviewHistory, ReviewTeacherField, WorkRequestCard };

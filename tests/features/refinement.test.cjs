@@ -69,3 +69,27 @@ test('approval handover preserves purchaser history and resets pending approvals
 test('audit search uses exact teacher identity, returns compact pages, and exports the full filtered set',async()=>{
  const f=fixture();try{const c=f.context;for(let i=0;i<7;i++)c.addAudit(request,f.accounts['示例教师'],'reviewWorkRequest','lab_work_requests',String(i),null,{applicant_username:'示例学生甲',work_content:'可搜索正文'});c.addAudit(request,f.accounts['示例学生乙'],'changePassword','accounts','other',null,{responsible_teacher_name:'示例教师'});let output;const handler=require('../../server/queries/audit.cjs')(c),res={set(){},end(b){output=JSON.parse(String(b))}};await handler({get:()=>''},res,{teacher:'示例教师',limit:3,query:'可搜索正文'},f.accounts['示例管理员']);assert.equal(output.total,7);assert.equal(output.rows.length,3);assert(!('after_json'in output.rows[0]));await handler({get:()=>''},res,{teacher:'示例教师',all:true},f.accounts['示例管理员']);assert.equal(output.rows.length,7);await assert.rejects(handler({get:()=>''},res,{},f.accounts['示例学生甲']));}finally{f.close();}
 });
+
+
+test('repair lifecycle uses designated review, required order status, final fees and durable history',async()=>{
+ const f=fixture();try{
+  const c=f.context,ops=require('../../server/services/operations/work.cjs')(c),student=f.accounts['示例学生甲'],teacher=f.accounts['示例教师'],admin=f.accounts['示例管理员'];
+  const call=(action,payload,account=student)=>ops[action](request,response(c.db),action,payload,account);
+  const input={request_type:'维修',work_content:'示例仪器维修',external_unit:'示例维修机构',workload_quantity:1,workload_unit:'次',cost_repair:80,review_teacher_username:teacher.username};
+  assert.throws(()=>call('submitWorkRequest',{...input,cost_repair:''}),/预计总维修费/);
+  const submitted=call('submitWorkRequest',input).record;assert.match(submitted.public_id,/^REPAIR-/);assert.equal(submitted.cost_repair,80);assert.equal(submitted.cost_test,0);assert.equal(submitted.cost_processing,0);
+  assert.throws(()=>call('reviewWorkRequest',{id:submitted._id,next_status:'已通过'},admin),/管理员|指定/);
+  assert.throws(()=>call('reviewWorkRequest',{id:submitted._id,next_status:'已驳回'},teacher),/意见/);
+  call('reviewWorkRequest',{id:submitted._id,next_status:'已驳回',review_note:'请核实内容'},teacher);
+  call('resubmitWorkRequest',{id:submitted._id,patch:{...input,cost_repair:90}});
+  const approved=call('reviewWorkRequest',{id:submitted._id,next_status:'已通过'},teacher).record;
+  const final={id:approved._id,confirmed:true,expected_updated_at:approved.updated_at,patch:{workload_quantity:2,workload_unit:'次',cost_repair:120}};
+  assert.throws(()=>call('completeWorkRequest',final),/订单状态/);assert.equal(c.getRecord('lab_work_requests',approved._id).status,'已通过');
+  const complete=call('completeWorkRequest',{...final,settlement_status:'已挂账'}).record;
+  assert.equal(complete.cost_repair,120);assert.equal(complete.completion_original.cost_repair,90);assert.equal(complete.completion_modified,true);assert.equal(complete.settlement_status,'已挂账');
+  const {businessMetrics}=await import('../../src/features/dashboard/dashboard-metrics.js');assert.equal(businessMetrics([complete]).find(item=>item.type==='维修').completedAmount,120);
+  const {buildReportExport}=await import('../../src/features/reports/report-export.js');const exported=buildReportExport({workRequests:[complete]});const csv=exported.files.find(file=>file.filename==='维修明细.csv');assert(csv.csv.includes('已挂账'));assert(csv.csv.includes('120'));
+  const {workOptions}=await import('../../src/features/work/work-options.js');assert(workOptions('维修',[complete]).names.includes(input.work_content));assert(workOptions('维修',[complete]).channels.includes(input.external_unit));assert(!workOptions('测试',[complete]).names.includes(input.work_content));
+  assert.equal(c.db.pragma('integrity_check',{simple:true}),'ok');
+ }finally{f.close();}
+});
