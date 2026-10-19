@@ -12,6 +12,8 @@
 | 总览与报表 | `src/features/dashboard`、`src/features/reports` | 共用业务记录与筛选规则 |
 | 帮助、留言 | `src/features/help` | `server/features/help` |
 
+测试与加工：`request-sections.js`负责四类工单分组，`work-history.js`负责同学生、同项目、同机构的近半年记录及机构匹配，`work-completion.cjs`校验最终信息与开票/挂账状态。`settlement_status`保存在工单记录中；已有未登记记录不自动补值。
+
 ## 公共部分
 
 | 文件或目录 | 职责 |

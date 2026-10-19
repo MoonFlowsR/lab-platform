@@ -12,7 +12,7 @@ import { reviewTeacherName } from '../../shared/lib/review-scope.js';
 import { inventoryMetrics } from '../dashboard/dashboard-metrics.js';
 import DashboardMetrics, { InventoryMetrics } from '../dashboard/DashboardMetrics.jsx';
 
-export default function ReportsPage({ data, onQueryChange, query = "", canFilterTeacher = false, teachers = [], students = [] }) {
+export default function ReportsPage({ data, onMessage, onQueryChange, query = "", canFilterTeacher = false, teachers = [], students = [] }) {
   const [student, setStudent] = useState('');
   const [teacher, setTeacher] = useState('');
   const [range, setRange] = useState('all');
@@ -20,12 +20,12 @@ export default function ReportsPage({ data, onQueryChange, query = "", canFilter
   const [endDate, setEndDate] = useState('');
   const [detail, setDetail] = useState('tests');
   const [showAllDetails, setShowAllDetails] = useState(false);
-  const [exportMessage, setExportMessage] = useState('');
+
   const studentOptions = studentFilterOptions(students);
   const selectedTeacher = teachers.find(account => account.username === teacher);
   const selectedStudent = studentOptions.find(account => account.username === student);
   const studentLabel = selectedStudent?.label || '全部学生';
-  useEffect(() => { setExportMessage(''); }, [student, teacher, query, range, startDate, endDate]);
+
   useEffect(() => { setShowAllDetails(false); }, [student, teacher, query, range, startDate, endDate, detail]);
   const invalidRange = range === 'custom' && startDate && endDate && startDate > endDate;
   const selected = invalidRange ? { workRequests: [], purchases: [], stockTransactions: [], stockOutRequests: [], reviewLogs: [], batches: [] }
@@ -45,12 +45,12 @@ export default function ReportsPage({ data, onQueryChange, query = "", canFilter
   const closureCells = row => closureColumns.length ? [row.closed_by_name || row.closed_by_username || '—', row.closed_at ? formatDate(row.closed_at) : '—'] : [];
   const workRows = rows => rows.map(row => [row.public_id, row.work_content, row.applicant_name || row.applicant_username, reviewTeacherName(row), row.status === '已通过' ? '已通过（待确认完成）' : row.status,
     `${row.workload_quantity ?? '—'} ${row.workload_unit || ''}`, money(row.completion_original?.[row.request_type === '加工' ? 'cost_processing' : 'cost_test'] ?? workFee(row)),
-    isCompletedWork(row) ? money(completedWorkFee(row)) : '—', row.completion_modified ? '有修改' : '—', formatDate(row.created_at), ...closureCells(row)]);
+    isCompletedWork(row) ? money(completedWorkFee(row)) : '—', row.completion_modified ? '有修改' : '—', isCompletedWork(row) ? row.settlement_status || '未登记' : '—', formatDate(row.created_at), ...closureCells(row)]);
   function exportReport() {
     try {
       const result = downloadReportCsvs(data, { student, teacher: canFilterTeacher ? teacher : "", teacherName: selectedTeacher?.display_name || teacher, query, studentName: selectedStudent?.display_name || student, startDate: range === 'custom' ? startDate : '', endDate: range === 'custom' ? endDate : '' });
-      setExportMessage(`已导出当前筛选下的全部数据，共 ${result.files.length} 个中文 CSV，已打包下载。`);
-    } catch (error) { setExportMessage(error.message || '导出失败，请重试。'); }
+      onMessage?.(`已导出当前筛选下的全部数据，共 ${result.files.length} 个中文 CSV，已打包下载。`);
+    } catch (error) { onMessage?.(error.message || '导出失败，请重试。', { persistent: true }); }
   }
   return <main>
     <Toolbar title="数据报表" onExport={exportReport} />
@@ -64,7 +64,7 @@ export default function ReportsPage({ data, onQueryChange, query = "", canFilter
       {invalidRange && <p role="alert" style={{ ...styles.note, color: '#b91c1c', fontWeight: 700 }}>开始日期不能晚于结束日期，请调整时间范围。</p>}
       <p className="platform-metric-scope">当前统计：<strong>{scope}</strong></p>
       <details className="platform-report-basis"><summary>统计口径</summary><ul><li>测试、加工：按已完成工单最终金额统计。</li><li>采购：按申请预计金额统计，不代表实际支出。</li><li>日期范围包含起止当天。</li></ul><a href="/help#exports">完整统计说明</a></details>
-      {exportMessage && <p role="status" style={styles.note}>{exportMessage}</p>}
+
     </FilterPanel>
     <DashboardMetrics mode="report" workRequests={workRequests} purchases={purchases} money={money} />
     <div className="platform-report-operations">
@@ -76,7 +76,7 @@ export default function ReportsPage({ data, onQueryChange, query = "", canFilter
       <div className="platform-report-tabs" role="tablist" aria-label="报表明细分类">{tabs.map(([key, label, rows]) => <button key={key} id={`report-tab-${key}`} type="button" role="tab" aria-selected={detail === key} aria-controls="report-detail-panel" onClick={() => setDetail(key)}>{label}<span>{rows.length}</span></button>)}</div>
       <div id="report-detail-panel" role="tabpanel" aria-labelledby={`report-tab-${detail}`}>
         <div className="platform-record-limit"><span>{active[1]} · 共 {active[2].length} 条{!showAllDetails && active[2].length > 1 ? ' · 最近1条' : ''}</span>{active[2].length > 1 && <button type="button" aria-expanded={showAllDetails} onClick={() => setShowAllDetails(!showAllDetails)}>{showAllDetails ? '仅显示最近1条' : '查看全部'}</button>}</div>
-        {['tests', 'processing'].includes(detail) && <DataTable mobileColumns={['名称', '申请人', '状态', '最终费用（元）']} columns={['编号', '名称', '申请人', '审核教师', '状态', '工作量', '预计费用（元）', '最终费用（元）', '完结修改', '提交时间', ...closureColumns]} rows={workRows(pageRows)} />}
+        {['tests', 'processing'].includes(detail) && <DataTable mobileColumns={['名称', '申请人', '状态', '最终费用（元）']} columns={['编号', '名称', '申请人', '审核教师', '状态', '工作量', '预计费用（元）', '最终费用（元）', '完结修改', '开票/挂账状态', '提交时间', ...closureColumns]} rows={workRows(pageRows)} />}
         {detail === 'purchases' && <DataTable mobileColumns={['物品', '申请人', '状态', '预计金额（元）']} columns={['编号', '物品', '申请人', '审核教师', '状态', '数量', '预计金额（元）', '使用目的', '有效期', '提交时间', ...closureColumns]} rows={pageRows.map(row => [row.public_id, row.material_name, row.applicant_name || row.applicant_username, reviewTeacherName(row), row.status, `${row.quantity} ${row.unit || ''}`, money(row.estimated_price), row.purchase_purpose || '未标注', row.expiry_date || '—', formatDate(row.created_at), ...closureCells(row)])} />}
         {detail === 'stock' && <DataTable mobileColumns={['材料', '类型', '数量', '操作人']} columns={['类型', '材料', '批次', '数量', '操作人', '地点', '具体位置简述', '采购人审批 / 原同意备注', '用途/原因', '时间']} rows={pageRows.map(row => [row.transaction_type, row.material_name, row.batch_code, `${row.quantity} ${row.unit || ''}`, row.operator_name || row.operator_username, row.storage_room || row.storage_location || '—', row.storage_detail || '—',row.purchaser_approved_by ? row.purchaser_approved_by + ' · ' + formatDate(row.purchaser_approved_at) : row.consent_note || '—', row.usage_reason || row.modification_reason || '—', formatDate(row.created_at)])} />}
         {detail === 'stockRequests' && <DataTable mobileColumns={['材料','申请人','采购人','状态','数量']} columns={['编号','材料','批次','申请人','采购人','状态','数量','审批人','审批意见','审批时间','提交时间','完成出库时间']} rows={pageRows.map(row=>[row.public_id,row.material_name,row.batch_code,row.applicant_name,row.purchaser_name,row.status,row.quantity+' '+row.unit,row.reviewed_by || '—',row.review_note || '—',formatDate(row.reviewed_at),formatDate(row.created_at),formatDate(row.completed_at)])} />}

@@ -89,6 +89,7 @@ async function completeWorkRequest(row) {
         {name:'workload_quantity',label:'最终工作量',type:'number',required:true,min:0,value:row.workload_quantity},
         {name:'workload_unit',label:'计量单位',required:true,value:row.workload_unit,render:({value,onChange}) => <CustomOptionFields required label="" customLabel="其它计量单位" value={value} onChange={onChange} options={options} placeholder="选择计量单位或搜索“其它”" customPlaceholder="请填写具体计量单位" maxLength={60} Field={({label,children}) => <div>{label && <div style={styles.fieldLabel}>{label}</div>}{children}</div>} SearchableSelect={SearchableSelect} styles={styles} />},
         {name:feeKey,label:'最终总' + row.request_type + '费 / 元',type:'number',required:true,min:0,value:workFee(row)},
+        {name:'settlement_status',label:'开票/挂账状态',required:true,value:row.settlement_status || '',render:({value,onChange}) => <SearchableSelect required value={value} onChange={onChange} options={['已开票','已挂账']} placeholder="请选择已开票或已挂账" />},
         {name:'completion_note',label:'完成备注（可选）',wide:true,maxLength:2000,value:row.completion_note || '',placeholder:'可说明费用或工作量调整原因'},
       ],
       validate: values => !Number.isFinite(Number(values.workload_quantity)) || Number(values.workload_quantity) <= 0 ? '最终工作量必须大于 0。' : !String(values.workload_unit || '').trim() || ['其它','其他','__custom_option__'].includes(values.workload_unit) ? '请选择或填写计量单位。' : '',
@@ -96,7 +97,7 @@ async function completeWorkRequest(row) {
     if (values === null) return;
     try {
       await callLabOps('completeWorkRequest', {id:row._id, confirmed:true, expected_updated_at:row.updated_at,
-        patch:{workload_quantity:Number(values.workload_quantity),workload_unit:values.workload_unit,[feeKey]:Number(values[feeKey])},completion_note:values.completion_note.trim()}, currentUser);
+        patch:{workload_quantity:Number(values.workload_quantity),workload_unit:values.workload_unit,[feeKey]:Number(values[feeKey])},settlement_status:values.settlement_status,completion_note:values.completion_note.trim()}, currentUser);
       setMessage(row.request_type + '工单已完成，费用按最终金额统计。');
       await loadAll();
     } catch (error) { showAlert(error.message || error); }

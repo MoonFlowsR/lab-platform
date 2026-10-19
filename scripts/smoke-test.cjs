@@ -33,7 +33,7 @@ async function post(route,body={},token,ok=true){const response=await fetch(base
   await post('ops/reviewWorkRequest',{id:work._id,next_status:'已通过'},teacher);
   const snapshot=(await post('ops/listAll',{},student)).data;
   const approved=snapshot.lab_work_requests.find(row=>String(row._id)===String(work._id));
-  const completed=(await post('ops/completeWorkRequest',{id:work._id,confirmed:true,expected_updated_at:approved.updated_at,patch:{workload_quantity:2,workload_unit:'按组',cost_test:20}},student)).record;assert.equal(completed.status,'已完成');assert.equal(completed.completion_modified,true);
+  const completed=(await post('ops/completeWorkRequest',{id:work._id,confirmed:true,expected_updated_at:approved.updated_at,settlement_status:'已开票',patch:{workload_quantity:2,workload_unit:'按组',cost_test:20}},student)).record;assert.equal(completed.status,'已完成');assert.equal(completed.completion_modified,true);
   const purchase=(await post('ops/submitPurchaseRequest',{material_name:'示例物品',specification:'示例规格',quantity:2,unit:'套',preferred_supplier:'示例供应商',purchase_category:'耗材',purchase_purpose:'公用',estimated_price:10,safety_notes:'示例安全说明',review_teacher_username:'示例教师'},student)).record;
   assert.equal(purchase.expiry_date,undefined);await post('ops/reviewPurchaseRequest',{id:purchase._id,next_status:'已通过'},teacher);
   const image='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==';

@@ -108,6 +108,8 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
 
 .platform-section-create{border:3px solid #60a5fa!important}
 .platform-section-pending{border:3px solid #d4a72c!important}
+.platform-section-approved{border:3px solid #6095cd!important}
+.platform-same-work-history>summary{cursor:pointer;font-weight:650;padding:4px 0}
 .platform-section-reviewed{border:3px solid #4d9d73!important}
 .platform-filter-bar:has(+ .platform-student-filter){grid-template-columns:minmax(0,1fr)!important}
 @media(max-width:640px){.platform-student-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}.platform-student-filter-grid>label:nth-child(-n+2){grid-column:1/-1}}

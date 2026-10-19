@@ -51,7 +51,7 @@ function ReviewHistory({ row, logs = [] }) {
   if (!history.length) return null;
   return <details open style={styles.logBox}><summary>审批记录（{history.length} 条）</summary><RecentRecords rows={sortByCreatedAt(history)}>{shown => <DataTable mobileColumns={["审批人", "审批结果", "审批意见", "审批时间"]} columns={["审批时间", "审批人", "审批结果", "审批意见"]} rows={shown.map(log => [formatDate(log.created_at), log.reviewer_name || log.reviewer_username || "-", log.action, log.review_note || "未填写"])} />}</RecentRecords></details>;
 }
-function WorkRequestCard({ row, logs = [], compact = false, completionDetailsOpen = false, attachmentPanel, actions }) {
+function WorkRequestCard({ row, logs = [], compact = false, completionDetailsOpen = false, attachmentPanel, actions, historyPanel }) {
   return <div style={styles.listItem}>
     <div style={styles.rowBetween}>
       <div>
@@ -68,6 +68,7 @@ function WorkRequestCard({ row, logs = [], compact = false, completionDetailsOpe
       <Info label={`${row.request_type || "测试/加工"}渠道`} value={row.external_unit} />
       <Info label="工作量" value={`${row.workload_quantity || "-"} ${row.workload_unit || ""}`} />
       <Info label={(isCompletedWork(row) ? "最终总" : row.status === "已关闭" ? "原预计总" : "预计总") + row.request_type + "费"} value={money(workFee(row))} />
+      {isCompletedWork(row) && <Info label="开票/挂账状态" value={row.settlement_status || "未登记"} />}
     </div>
     {row.status === "已关闭" && <ClosureInfo row={row} />}
     {isCompletedWork(row) && <p style={styles.meta}>完结人：<strong className="platform-identity">{row.completed_by || row.completed_username || "未记录"}</strong> · 完成时间：{formatDate(row.completed_at)}</p>}
@@ -82,6 +83,7 @@ function WorkRequestCard({ row, logs = [], compact = false, completionDetailsOpe
     </>}
     {attachmentPanel}
     {actions}
+    {historyPanel}
   </div>;
 }
 export { ClosureInfo, PurchaseSummaryCard, RequestHistorySection, RequestViewScope, ReviewHistory, ReviewTeacherField, WorkRequestCard };
