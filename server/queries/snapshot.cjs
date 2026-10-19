@@ -37,7 +37,7 @@ function buildPurchaseCatalog() {
 function buildFundSummary() {
   const purchases = listRecords("lab_purchase_requests", (row) => !["已撤回", "已驳回", "已关闭"].includes(row.status));
   const work = listRecords("lab_work_requests", (row) => ["已完成", "已归档"].includes(row.status));
-  const materialCommitted = purchases.reduce((sum, row) => sum + num(row.estimated_price), 0);
+  const materialCommitted = purchases.reduce((sum, row) => sum + num((["已完成","已入库","已归档"].includes(row.status) || row.received_status === "已入库") ? row.actual_total_price ?? row.estimated_price : row.estimated_price), 0);
   const testCommitted = work.filter((row) => row.request_type === "测试").reduce((sum, row) => sum + num(row.cost_test), 0);
   const processingCommitted = work.filter((row) => row.request_type === "加工").reduce((sum, row) => sum + num(row.cost_processing ?? (num(row.cost_test) + num(row.cost_material))), 0);
 
@@ -50,7 +50,7 @@ function buildFundSummary() {
     processing_committed: processingCommitted,
     repair_committed: work.filter(row => row.request_type === '维修').reduce((sum,row)=>sum+num(row.cost_repair),0),
     test_balance: Number.isFinite(TEST_FUND_TOTAL) ? TEST_FUND_TOTAL - testCommitted : null,
-    note: "测试、加工、维修仅统计已完成工单的最终金额；采购按申请记录金额统计。",
+    note: "测试、加工、维修仅统计已完成工单的最终金额；采购已入库按最终金额、未入库按预计金额统计，旧记录沿用原预计金额。",
   };
 }
 

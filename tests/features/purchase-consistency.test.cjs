@@ -28,7 +28,7 @@ function fixture(failAt) {
   };
   const purchase = insertRecord('lab_purchase_requests', { public_id: 'PUR-example', status: '待入库',
     applicant_username: account.username, applicant_name: account.display_name, material_name: '示例材料',
-    specification: '规格A', unit: '瓶', quantity: 2, estimated_price: 100, purchase_category: '试剂原料',
+    updated_at: '2026-10-13T00:00:00.000Z', specification: '规格A', unit: '瓶', quantity: 2, estimated_price: 100, purchase_category: '试剂原料',
     purchase_purpose: '公用', safety_notes: '示例', preferred_supplier: '示例供应商' });
   const photo = insertRecord('lab_attachments', { target_collection: 'lab_purchase_requests', target_id: purchase._id,
     original_name: 'photo.png', uploaded_by_username: account.username, attachment_state: 'draft' });
@@ -48,7 +48,7 @@ function fixture(failAt) {
     requiredPurchaseExpiryDate: value => value,
     storageDetails: value => ({ storage_location: `${value.storage_room} ${value.storage_detail}`, storage_room: value.storage_room, storage_detail: value.storage_detail }),
   };
-  const payload = { id: purchase._id, photo_attachment_id: photo._id, actual_qty: 2,
+  const payload = { id: purchase._id, confirmed:true, expected_updated_at:purchase.updated_at, actual_total_price:100, settlement_status:'已挂账', photo_attachment_id: photo._id, actual_qty: 2,
     storage_room: 'A101', storage_detail: 'A柜', expiry_date: '长期' };
   let response;
   const res = { json: value => { assert.equal(db.inTransaction, false, 'success must follow COMMIT'); response = value; return value; } };
@@ -129,4 +129,47 @@ test('a purchase COMMIT failure returns no success and rolls back stock, binding
     assert.equal(f.db.prepare('SELECT count(*) AS n FROM commit_guard').get().n, 0);
     assert.equal(f.response, undefined);
   } finally { f.db.close(); }
+});
+
+test('arrival confirmation keeps the approved estimate and records final quantity, amount, status and differences', async () => {
+ const f=fixture();try {
+  const {record,batch,transaction}=f.execute(f.account,{actual_qty:4,unit:'盒',actual_total_price:60,settlement_status:'已开票',remark:'实际采购调整'});
+  assert.equal(record.estimated_price,100);assert.equal(record.quantity,2);assert.equal(record.unit,'瓶');
+  assert.equal(record.actual_total_price,60);assert.equal(record.actual_received_qty,4);assert.equal(record.actual_received_unit,'盒');assert.equal(record.settlement_status,'已开票');
+  assert.equal(record.inbound_confirmed,true);assert.equal(record.inbound_modified,true);assert.equal(record.inbound_changes.length,3);assert.equal(record.inbound_note,'实际采购调整');
+  assert.deepEqual(record.inbound_original,{quantity:2,unit:'瓶',estimated_price:100});
+  assert.equal(batch.total_price,60);assert.equal(batch.unit_price,15);assert.equal(batch.current_qty,4);assert.equal(transaction.quantity,4);
+  const {businessMetrics,reportSummaryRows}=await import('../../src/features/dashboard/dashboard-metrics.js');
+  const {buildCsv}=await import('../../src/shared/lib/csv-export.js');
+  const metric=businessMetrics([],[record]).find(r=>r.type==='采购');assert.equal(metric.completedAmount,60);assert.equal(metric.modified,1);
+  const summary=require('../../server/queries/snapshot.cjs')({num:Number,listRecords:collection=>collection==='lab_purchase_requests'?[record]:[]}).buildFundSummary();
+  assert.equal(summary.material_committed,60);
+  const csv=buildCsv('purchases',[record]).csv;for(const text of ['最终总采购费','已开票','100','60','入库修改明细','实际采购调整'])assert(csv.includes(text));
+  assert.equal(reportSummaryRows({purchases:[record]}).find(r=>r[0]==='采购已入库金额')[1],60);
+ }finally{f.db.close();}
+});
+
+test('unchanged arrival remains in completed section and zero final cost is not replaced by the estimate',async()=>{
+ const f=fixture();try{
+  const {record}=f.execute();assert.equal(record.inbound_modified,false);assert.deepEqual(record.inbound_changes,[]);
+  const {purchaseAmount,hasFinalPurchaseAmount}=await import('../../src/features/purchases/purchase-values.js');
+  assert.equal(purchaseAmount({...record,actual_total_price:0}),0);assert.equal(hasFinalPurchaseAmount({...record,actual_total_price:0}),true);
+  const {businessMetrics}=await import('../../src/features/dashboard/dashboard-metrics.js');
+  const legacy={...record,actual_total_price:undefined},closed={...record,status:'已关闭',actual_total_price:300};
+  const m=businessMetrics([],[{...record,actual_total_price:0},legacy,closed]).find(r=>r.type==='采购');
+  assert.equal(m.completedAmount,100);assert.equal(m.completed,2);assert.equal(m.legacyEstimatedCount,1);
+  const {purchaseWasModified,inboundChangesText}=await import('../../src/features/purchases/purchase-values.js');
+  const oldReceipt={status:'已完成',quantity:2,unit:'瓶',actual_received_qty:4,actual_received_unit:'盒'};
+  assert.equal(purchaseWasModified(oldReceipt),true);assert.match(inboundChangesText(oldReceipt),/2 → 4/);assert.match(inboundChangesText(oldReceipt),/瓶 → 盒/);
+  assert.equal(purchaseWasModified({...oldReceipt,status:'已关闭'}),false);
+ }finally{f.db.close();}
+});
+
+test('arrival requires explicit confirmation, current version, a chosen invoice status and valid final amounts before writes',()=>{
+ const f=fixture();try{
+  const before=f.snapshot();
+  for(const patch of [{confirmed:false},{confirmed:undefined},{expected_updated_at:'old'},{expected_updated_at:''},...['',undefined,'请选择','未开票'].map(settlement_status=>({settlement_status})),...['',undefined,null,-1,Infinity,'oops',true,{}].map(actual_total_price=>({actual_total_price})),...[0,Infinity,'',{},true].map(actual_qty=>({actual_qty}))]){
+   assert.throws(()=>f.execute(f.account,patch));assert.equal(f.snapshot(),before);
+  }
+ }finally{f.db.close();}
 });

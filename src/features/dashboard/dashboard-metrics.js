@@ -1,3 +1,4 @@
+import { purchaseWasModified, purchaseAmount, hasFinalPurchaseAmount, isReceivedPurchase } from '../purchases/purchase-values.js';
 import { completedWorkFee, isCompletedWork } from '../work/work-values.js';
 import { expiryWarnings } from '../reports/report-data.js';
 
@@ -7,7 +8,7 @@ const sum = (rows, get) => rows.reduce((total, row) => total + number(get(row)),
 export function businessMetrics(workRequests = [], purchases = []) {
   return ['测试', '加工', '维修', '采购'].map(type => {
     const rows = type === '采购' ? purchases : workRequests.filter(row => row.request_type === type);
-    const completed = rows.filter(row => type === '采购' ? ['已完成', '已入库', '已归档'].includes(row.status) : isCompletedWork(row));
+    const completed = rows.filter(row => type === '采购' ? isReceivedPurchase(row) : isCompletedWork(row));
     const pending = rows.filter(row => row.status === '待教师审核');
     const ready = rows.filter(row => type === '采购' ? row.status === '待入库' : ['已通过', '已实施'].includes(row.status));
     const revise = rows.filter(row => ['需修改', '已驳回'].includes(row.status));
@@ -18,8 +19,9 @@ export function businessMetrics(workRequests = [], purchases = []) {
       completed: completed.length, withdrawn: withdrawn.length, closed: closed.length,
       other: rows.length - completed.length - pending.length - ready.length - revise.length - withdrawn.length - closed.length,
       ongoing: rows.length - completed.length - closed.length,
-      modified: completed.filter(row => row.completion_modified).length,
-      completedAmount: sum(completed, type === '采购' ? row => row.estimated_price : completedWorkFee),
+      modified: completed.filter(row => type === '采购' ? purchaseWasModified(row) : row.completion_modified).length,
+      legacyEstimatedCount: type === '采购' ? completed.filter(row => !hasFinalPurchaseAmount(row)).length : 0,
+      completedAmount: sum(completed, type === '采购' ? purchaseAmount : completedWorkFee),
       readyAmount: sum(ready, row => row.estimated_price),
       pendingAmount: sum(pending, row => row.estimated_price),
     };
@@ -47,7 +49,8 @@ export function reportSummaryRows(data, today) {
       ['已撤回', metric.withdrawn], ['已关闭', metric.closed], ...(metric.other ? [['其它状态', metric.other]] : []),
     ]) summary.push([type + label, value, '条']);
     if (type === '采购') {
-      summary.push(['采购已入库预计金额', metric.completedAmount, '元'], ['采购待入库预计金额', metric.readyAmount, '元'], ['采购待审核预计金额', metric.pendingAmount, '元']);
+      summary.push(['采购已入库金额', metric.completedAmount, '元'], ['采购待入库预计金额', metric.readyAmount, '元'], ['采购待审核预计金额', metric.pendingAmount, '元'], ['采购完成时修改', metric.modified, '条']);
+      if (metric.legacyEstimatedCount) summary.push(['采购沿用预计金额的旧记录', metric.legacyEstimatedCount, '条']);
     } else {
       summary.push([type + '已完成最终费用', metric.completedAmount, '元'], [type + '完结时修改', metric.modified, '条']);
     }

@@ -17,7 +17,7 @@ export default function DashboardMetrics({ workRequests, purchases, mode = 'revi
         <dl className="platform-business-statuses">{statuses.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
         <div className="platform-business-footer">
           {purchase
-            ? <><span>已入库 {metric.completed} 条 · 预计金额 <b>{money(metric.completedAmount)}</b></span><><span>待入库预计金额 <b>{money(metric.readyAmount)}</b></span><span>待审核预计金额 <b>{money(metric.pendingAmount)}</b></span></></>
+            ? <><span>已入库 {metric.completed} 条 · 金额 <b>{money(metric.completedAmount)}</b></span><><span>待入库预计金额 <b>{money(metric.readyAmount)}</b></span><span>待审核预计金额 <b>{money(metric.pendingAmount)}</b></span><span>完成时修改 <b>{metric.modified}</b> 条</span>{metric.legacyEstimatedCount > 0 && <span>{metric.legacyEstimatedCount} 条旧记录沿用预计金额</span>}</></>
             : <><span>已完成 {metric.completed} 条 · 最终费用 <b>{money(metric.completedAmount)}</b></span><span>完结时修改 <b>{metric.modified}</b> 条</span></>}
           {mode !== 'report' && metric.closed > 0 && <span>已关闭 <b>{metric.closed}</b> 条</span>}
           {mode !== 'report' && (metric.withdrawn > 0 || metric.other > 0) && <span>已撤回 {metric.withdrawn} 条{metric.other > 0 ? ` · 其它状态 ${metric.other} 条` : ''}</span>}

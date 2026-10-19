@@ -31,7 +31,7 @@ export function buildReportExport(data, filters = {}, now = new Date()) {
     for (const [label, count] of counts) statuses.push([title, label, count]);
   }
   const files = [
-    { ...buildCsvTable('筛选条件', ['学生姓名','教师姓名','搜索内容','开始日期','结束日期','库存统计口径','费用统计口径','导出时间'], [[student ? studentName : '全部', teacher ? teacherName : '全部', query.trim() || '不限', startDate || '不限开始', endDate || '不限结束', '相关批次的当前库存', '测试加工维修按已完成最终费用；采购按待审核、待入库、已入库分别统计预计金额', timestamp(now)]]), filename:'筛选条件.csv' },
+    { ...buildCsvTable('筛选条件', ['学生姓名','教师姓名','搜索内容','开始日期','结束日期','库存统计口径','费用统计口径','导出时间'], [[student ? studentName : '全部', teacher ? teacherName : '全部', query.trim() || '不限', startDate || '不限开始', endDate || '不限结束', '相关批次的当前库存', '测试加工维修按已完成最终费用；采购已入库按最终金额，未入库及未确认最终金额的旧记录按预计金额', timestamp(now)]]), filename:'筛选条件.csv' },
     { ...buildCsvTable('统计汇总', ['统计项目','数值','单位'], summary), filename:'统计汇总.csv' },
     { ...buildCsvTable('状态统计', ['统计类别','分类','记录数'], statuses), filename:'状态统计.csv' },
     ...details.map(([title, kind, rows]) => ({ ...buildCsv(kind, rows, context), filename:title+'.csv' })),
