@@ -34,3 +34,5 @@
 .platform-supplier-change { border-left: 3px solid #a9bed4; margin: 8px 0; padding: 2px 0 2px 12px; }
 .platform-supplier-change p { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 5px 0; }
 .platform-supplier-change time, .platform-supplier-sync-note { color: #5b6878; font-size: 13px; }
+
+@media(max-width:640px){.platform-filter-panel .platform-student-filter-grid[data-module="purchases"].has-extra>label:nth-child(3){grid-column:1/-1!important}}
