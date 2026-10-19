@@ -98,7 +98,7 @@ function App() {
   const isAdmin = currentUser?.account_type === "admin";
   const profileRequired = isStudent && currentUser?.profile_required !== false;
   const canReview = isTeacher;
-  const showInstitutionFilter = isTeacher && (WORK_MODULES.includes(activeTab) || activeTab === "purchases");
+  const showInstitutionFilter = (isTeacher || isAdmin) && (WORK_MODULES.includes(activeTab) || activeTab === "purchases");
   const selectedInstitution = showInstitutionFilter ? moduleInstitutions[activeTab] || "" : "";
   const institutionType = WORK_DEFINITIONS.find(item => item.module === activeTab)?.name || '测试';
   const institutionLabel = activeTab === 'purchases' ? '采购单位' : institutionType === '维修' ? '维修人员单位' : institutionType + '机构';

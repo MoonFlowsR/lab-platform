@@ -46,6 +46,8 @@ export async function checkWorkReview(browser, origin, out, snapshot, users) {
         const history=pending.locator('.platform-same-work-history');assert.equal(await history.getAttribute('open'),null);
         await history.locator(':scope > summary').click();assert.match(await history.locator(':scope > summary').innerText(),/（4）/);
         assert.equal(await history.locator('tbody tr').count(),4);
+      }else assert.equal(await page.locator('.platform-same-work-history').count(),0);
+      if(role==='teacher'||role==='admin'){
         if(width<640)await page.getByRole('button',{name:/展开筛选/}).click();
         const field=page.getByPlaceholder('搜索或选择'+(type==='维修'?'维修人员单位':type+'机构'));await field.fill('示例机构乙');
         assert.equal(await page.getByRole('option').count(),1);await page.getByRole('option').click();assert.equal(await page.getByRole('listbox').count(),0);
@@ -56,7 +58,9 @@ export async function checkWorkReview(browser, origin, out, snapshot, users) {
         await page.getByRole('button',{name:'重置筛选',exact:true}).click();
         await page.getByRole('heading',{name:'已完成'+type+'工单（3）',exact:true}).waitFor();
         if(width<640)await page.getByRole('button',{name:/收起筛选/}).click();
-      }else assert.equal(await page.locator('.platform-same-work-history').count(),0);
+        if(role==='admin')assert.equal(await page.getByRole('button',{name:'同意',exact:true}).count(),0);
+      }
+
       if(role==='student'){
         await reviewed.getByRole('button',{name:'确认完成',exact:true}).click();const dialog=page.getByRole('dialog');
         if(type==='维修'){await dialog.getByPlaceholder('选择计量单位或搜索“其它”').fill('其它');await dialog.getByRole('option',{name:'其它',exact:true}).click();await dialog.getByPlaceholder('请填写具体计量单位').fill('台');}
