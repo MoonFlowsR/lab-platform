@@ -20,6 +20,7 @@ module.exports = function completeWorkValues(before, payload, account, billingMe
   const quantity = parse(input.workload_quantity, '最终工作量', true), fee = parse(input[key], '最终总' + before.request_type + '费', false);
   const unit = String(input.workload_unit || '').trim();
   if (typeof input.workload_unit !== 'string' || !unit || unit.length > 60 || ['其它','其他','__custom_option__'].includes(unit)) throw new Error('请选择或填写具体计量单位（不超过60字）。');
+  if (before.request_type === '维修' && unit !== '次') throw new Error('维修计量单位只能为“次”。');
   const note = String(payload.completion_note || '').trim();
   if (note.length > 2000) throw new Error('完成备注不能超过2000字。');
   const numeric = value => Number.isFinite(Number(value)) ? Number(value) : 0;

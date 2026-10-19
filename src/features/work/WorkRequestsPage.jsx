@@ -85,12 +85,15 @@ function WorkRequestsPage({ workHistory = [], teacherAccounts = [], reviewScope 
 }
 function WorkRequestForm({ workHistory = [], teacherAccounts = [], fixedType, onSubmit, currentUser, units = [], initialData = null, existingAttachments = [], onDownloadAttachment, onDeleteAttachment, submitLabel = "提交教师审核", onCancel }) {
   const isEditing = Boolean(initialData);
+  const isRepair = fixedType === "维修";
+  const contentLabel = isRepair ? "维修设备" : fixedType + "名称";
   const choices = workOptions(fixedType, workHistory, units, initialData || {});
   const defaultForm = {
     request_type: fixedType,
     review_teacher_username: "",
     work_content: "",
     external_unit: "",
+    repair_personnel: "",
     workload_quantity: 1,
     workload_unit: fixedType === '维修' ? '次' : '样品',
     safety_notes: "",
@@ -100,12 +103,12 @@ function WorkRequestForm({ workHistory = [], teacherAccounts = [], fixedType, on
     remark: "",
   };
   const [show, setShow] = useState(Boolean(initialData));
-  const [form, setForm] = useState({ ...defaultForm, ...(initialData || {}), request_type: fixedType });
+  const [form, setForm] = useState({ ...defaultForm, ...(initialData || {}), request_type: fixedType, ...(isRepair ? { workload_unit: "次" } : {}) });
   const [pendingAttachments, setPendingAttachments] = useState([]);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    setForm({ ...defaultForm, ...(initialData || {}), request_type: fixedType });
+    setForm({ ...defaultForm, ...(initialData || {}), request_type: fixedType, ...(isRepair ? { workload_unit: "次" } : {}) });
     setShow(Boolean(initialData));
   // eslint-disable-next-line react-hooks/exhaustive-deps -- Reset on record identity; background sync must preserve unsaved form input.
   }, [initialData?._id, fixedType]);
@@ -125,12 +128,13 @@ function WorkRequestForm({ workHistory = [], teacherAccounts = [], fixedType, on
       <p style={styles.requiredHint}><span style={styles.requiredStar}>*</span> 为必填项</p>
       <form style={styles.formGrid} onSubmit={async (e) => {
         e.preventDefault();
-        if (![form.work_content, form.external_unit, form.workload_unit].every(value => String(value || "").trim() && !["其它", "其他", "__custom_option__"].includes(String(value).trim()))) return showAlert("请完整选择或填写名称、渠道和计量单位。");
+        if (![form.work_content, form.external_unit, form.workload_unit].every(value => String(value || "").trim() && !["其它", "其他", "__custom_option__"].includes(String(value).trim()))) return showAlert(isRepair ? "请填写维修设备和维修人员单位。" : "请完整选择或填写名称、渠道和计量单位。");
+        if (isRepair && !form.repair_personnel.trim()) return showAlert("请填写维修人员。");
         if (!teacherAccounts.some(teacher => teacher.username === form.review_teacher_username)) return showAlert("请选择已启用的审核教师。");
         if (busy) return;
         setBusy(true);
         try {
-          const ok = await onSubmit({ ...form, work_content: form.work_content.trim(), request_type: fixedType }, pendingAttachments);
+          const ok = await onSubmit({ ...form, work_content: form.work_content.trim(), external_unit: form.external_unit.trim(), ...(isRepair ? { repair_personnel: form.repair_personnel.trim(), workload_unit: "次" } : {}), request_type: fixedType }, pendingAttachments);
           if (ok !== false && !isEditing) {
             setPendingAttachments([]);
             setForm(defaultForm);
@@ -138,19 +142,23 @@ function WorkRequestForm({ workHistory = [], teacherAccounts = [], fixedType, on
           }
         } finally { setBusy(false); }
       }}>
-        <CustomOptionFields required label={fixedType + "名称"} customLabel={"其它" + fixedType + "名称"} value={form.work_content} onChange={value => set("work_content", value)} options={choices.names} placeholder={"选择" + fixedType + "名称或搜索“其它”"} customPlaceholder={"请填写具体" + fixedType + "名称"} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
-        <CustomOptionFields required label={fixedType + "渠道"} customLabel={"其它" + fixedType + "渠道"} value={form.external_unit} onChange={value => set("external_unit", value)} options={choices.channels} placeholder="选择渠道或搜索“其它”" customPlaceholder="请填写具体执行单位或渠道" Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
+        <CustomOptionFields required label={contentLabel} customLabel={"其它" + contentLabel} value={form.work_content} onChange={value => set("work_content", value)} options={choices.names} placeholder={"选择" + contentLabel + "或搜索“其它”"} customPlaceholder={"请填写具体" + contentLabel} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
+        {!isRepair && <CustomOptionFields required label={fixedType + "渠道"} customLabel={"其它" + fixedType + "渠道"} value={form.external_unit} onChange={value => set("external_unit", value)} options={choices.channels} placeholder="选择渠道或搜索“其它”" customPlaceholder="请填写具体执行单位或渠道" Field={Field} SearchableSelect={SearchableSelect} styles={styles} />}
         <Field required label="工作量">
           <input required type="number" min="0" step="any" style={styles.input} value={form.workload_quantity} onChange={(e) => set("workload_quantity", Number(e.target.value))} />
         </Field>
-        <CustomOptionFields required label="计量单位" customLabel="其它计量单位" value={form.workload_unit} onChange={value => set("workload_unit", value)} options={choices.billing} placeholder="选择计量单位或搜索“其它”" customPlaceholder="请填写具体计量单位" maxLength={60} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
+        {isRepair ? <Field label="计量单位"><input aria-label="计量单位" readOnly value="次" style={styles.input} /></Field> : <CustomOptionFields required label="计量单位" customLabel="其它计量单位" value={form.workload_unit} onChange={value => set("workload_unit", value)} options={choices.billing} placeholder="选择计量单位或搜索“其它”" customPlaceholder="请填写具体计量单位" maxLength={60} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />}
+        {isRepair && <>
+          <Field required label="维修人员"><input required maxLength={100} style={styles.input} value={form.repair_personnel} onChange={e => set("repair_personnel", e.target.value)} placeholder="填写维修人员姓名" /></Field>
+          <CustomOptionFields required label="维修人员单位" customLabel="其它维修人员单位" value={form.external_unit} onChange={value => set("external_unit", value)} options={choices.channels} placeholder="选择维修人员单位或搜索“其它”" customPlaceholder="填写维修人员所属单位" Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
+        </>}
         <Field required label={"预计总" + fixedType + "费 / 元"}>
           <input required type="number" min="0" step="0.01" style={styles.input} value={form[workFeeKey(fixedType)]} onChange={(e) => set(workFeeKey(fixedType), e.target.value)} />
         </Field>
         <ReviewTeacherField teachers={teacherAccounts} value={form.review_teacher_username} onChange={value => set("review_teacher_username", value)} />
-        <Field wide label="安全事项（可选）">
+        {!isRepair && <Field wide label="安全事项（可选）">
           <textarea style={styles.textarea} value={form.safety_notes} onChange={(e) => set("safety_notes", e.target.value)} placeholder="如有特殊安全要求请填写" />
-        </Field>
+        </Field>}
         <Field wide label="备注（可选）">
           <textarea style={styles.textarea} value={form.remark} onChange={(e) => set("remark", e.target.value)} />
         </Field>

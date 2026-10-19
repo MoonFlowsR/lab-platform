@@ -1,3 +1,4 @@
+const repairFields = require('../../features/work/repair-fields.cjs');
 module.exports = function createWorkOperations(context) {
 const { WORK_REQUEST_EDIT_FIELDS, addAudit, addReviewLog, closeRejectedRequest, completeWorkValues, db, getRecord, insertRecord, nextPublicId, nowISO, num, pickFields, recordChanges, requireAssignedReviewer, requireOwner, requireStudentSubmission, requireTeacherOrAdmin, saveWorkWithAttachments, selectedReviewTeacher, studentProfiles, updateRecord, workRequestCosts } = context;
 return {
@@ -12,14 +13,16 @@ if (action === "submitWorkRequest") {
     const workloadUnit = String(payload.workload_unit || "").trim();
 
     if (!["测试", "加工", "维修"].includes(requestType)) throw new Error("申请类型只能为测试、加工或维修。");
-    if (!workContent) throw new Error(`请填写${requestType}名称。`);
-    if (!externalUnit) throw new Error(`请填写${requestType}单位。`);
+    if (!workContent) throw new Error(requestType === "维修" ? "请填写维修设备。" : `请填写${requestType}名称。`);
+    if (!externalUnit) throw new Error(requestType === "维修" ? "请填写维修人员单位。" : `请填写${requestType}单位。`);
     if (workloadQuantity <= 0) throw new Error("工作量必须大于 0。");
     if (!workloadUnit) throw new Error("请选择计量单位。");
 
+    const repair = repairFields(payload, requestType);
     const idInfo = nextPublicId(require('../../../src/config/work-types.json').find(item => item.name === requestType).prefix);
     const record = saveWorkWithAttachments(account, payload.attachment_ids || [], () => insertRecord("lab_work_requests", {
       ...pickFields(payload, WORK_REQUEST_EDIT_FIELDS),
+      ...repair,
       ...reviewTeacher,
       ...studentProfiles.snapshot(account),
       ...idInfo,
@@ -83,13 +86,15 @@ if (action === "resubmitWorkRequest") {
     const workloadUnit = String(patch.workload_unit || "").trim();
 
     if (!["测试", "加工", "维修"].includes(requestType)) throw new Error("申请类型只能为测试、加工或维修。");
-    if (!workContent) throw new Error(`请填写${requestType}名称。`);
-    if (!externalUnit) throw new Error(`请填写${requestType}单位。`);
+    if (!workContent) throw new Error(requestType === "维修" ? "请填写维修设备。" : `请填写${requestType}名称。`);
+    if (!externalUnit) throw new Error(requestType === "维修" ? "请填写维修人员单位。" : `请填写${requestType}单位。`);
     if (workloadQuantity <= 0) throw new Error("工作量必须大于 0。");
     if (!workloadUnit) throw new Error("请选择计量单位。");
 
+    const repair = repairFields(patch, requestType);
     const after = saveWorkWithAttachments(account, payload.attachment_ids || [], () => updateRecord("lab_work_requests", payload.id, {
       ...patch,
+      ...repair,
       ...reviewTeacher,
       ...studentProfiles.snapshot(account),
       request_type: requestType,
