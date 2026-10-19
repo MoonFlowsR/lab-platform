@@ -38,7 +38,7 @@ export async function checkWorkReview(browser, origin, out, snapshot, users) {
     await page.goto(origin);await page.locator('.platform-nav').waitFor();
     for(const type of ['测试','加工','维修']){
       await page.locator('.platform-nav').getByRole('button',{name:type+(role==='teacher'?'审核':role==='admin'?'记录':''),exact:true}).click();
-      for(const prefix of ['待审批','已审批','已完成','完成后修改的'])await page.getByRole('heading',{name:new RegExp('^'+prefix+type+'工单')}).waitFor();
+      for(const prefix of ['待审批','已审批','已完成','完成时修改的'])await page.getByRole('heading',{name:new RegExp('^'+prefix+type+'工单')}).waitFor();
       const pending=page.locator('main > .platform-section-pending'),reviewed=page.locator('main > .platform-section-approved');
       assert.equal(await pending.locator('h3').count(),1);assert.equal(await reviewed.locator('h3').count(),1);
       if(role==='teacher'){

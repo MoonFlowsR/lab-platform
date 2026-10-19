@@ -44,7 +44,7 @@ export default function MaterialBatchEditor({ row, materialCatalog = [], materia
       finally { setBusy(false); }
     }}>
       <div className="platform-dialog-header"><h2 id="batch-editor-title">修改物品信息</h2><button type="button" disabled={busy} className="platform-dialog-close" aria-label="关闭弹窗" onClick={onClose}>×</button></div>
-      <p className="platform-batch-editor-context"><strong>{row.material_name}</strong> · {formatPublicNumber(row.batch_code)}<br/>修改对所有用户生效，系统记录修改前后信息。修改单位时，请同时核对库存数量。</p>
+      <p className="platform-batch-editor-context"><strong>{row.material_name}</strong> · {formatPublicNumber(row.batch_code)}<br/>修改对所有用户生效，系统记录修改前后信息；采购渠道修改会同步对应采购申请。修改单位时，请同时核对库存数量。</p>
       <fieldset disabled={busy}>
         <div className="platform-batch-editor-grid">
           <Field required label="材料类别"><SearchableSelect required value={form.purchase_category} onChange={value => set('purchase_category', value)} options={['试剂原料','耗材']} placeholder="搜索或选择材料类别" /></Field>

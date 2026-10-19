@@ -1,3 +1,4 @@
+import SupplierChangeHistory from "../../shared/components/SupplierChangeHistory.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { styles } from "../../app/styles.js";
 import { formatDate } from "../../app/formatters.js";
@@ -31,7 +32,7 @@ function InventoryPage({ canInitialize = false, materialCatalog = [], isAdmin = 
     b.purchase_category || "未登记",
     b.purchaser_name || b.purchaser_username || "未登记",
     b.inbound_by_name || b.created_by_name || b.inbound_by_username || b.created_by_username || "未登记",
-    b.supplier,
+    <div key={`supplier-${b._id}`}>{b.supplier || "未填写"}<SupplierChangeHistory row={b} /></div>,
     b.spec,
     b.purchase_purpose || "未标注",
     `${b.current_qty} ${b.unit}`,

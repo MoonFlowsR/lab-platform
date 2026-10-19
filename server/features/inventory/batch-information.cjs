@@ -1,3 +1,4 @@
+const { syncPurchaseSupplier } = require('./purchase-supplier.cjs');
 const options = require('../../../src/config/dropdown-options.json');
 
 module.exports = function updateBatchInformation(context) {
@@ -37,7 +38,8 @@ module.exports = function updateBatchInformation(context) {
       material = insertRecord('lab_materials', { ...id, material_code: id.public_id, name: values.material_name, name_cn: values.material_name, category: values.purchase_category, default_unit: values.unit, min_stock: 0, created_by_username: account.username, created_by_name: account.display_name, created_at: nowISO(), updated_at: nowISO(), source: account.account_type === 'admin' ? 'admin_information_correction' : 'student_information_correction' });
       addAudit(req, account, 'updateMaterialBatchInformation', 'lab_materials', material._id, null, material);
     }
-    const after = updateRecord('lab_material_batches', before._id, { ...values, material_id: material._id,
+    const supplierHistory = syncPurchaseSupplier(context, before, values.supplier, reason);
+    const after = updateRecord('lab_material_batches', before._id, { ...values, ...supplierHistory, material_id: material._id,
       ...(photo ? { inbound_photo_attachment_id: photo._id } : {}),
       last_modified_by: account.display_name, last_modified_username: account.username, last_modified_at: nowISO(), last_modification_reason: reason,
       last_information_modified_at: nowISO(), last_information_modified_by: account.display_name,
@@ -54,6 +56,7 @@ module.exports = function updateBatchInformation(context) {
     const transaction = insertRecord('lab_stock_transactions', { ...nextPublicId('IO'), transaction_type: '调整', batch_id: after._id, batch_code: after.batch_code, material_id: after.material_id, material_name: after.material_name, quantity: Math.abs(values.current_qty - Number(before.current_qty || 0)), unit: values.unit,
       stock_before: Number(before.current_qty || 0), stock_after: values.current_qty, ...(before.unit !== values.unit ? { previous_unit: before.unit } : {}),
       operator_name: account.display_name, operator_username: account.username, operator_account_type: account.account_type,
+      ...(supplierHistory.supplier_change_history ? { supplier_before: clean(before.supplier), supplier_after: values.supplier } : {}),
       modification_reason: reason, usage_reason: '物品信息修改' + (before.unit !== values.unit ? `（单位由${before.unit}改为${values.unit}）` : '') + '：' + reason, information_modified: true,
       storage_location: after.storage_location, storage_room: after.storage_room, storage_detail: after.storage_detail, purchase_purpose: after.purchase_purpose,
       ...(photo ? { photo_attachment_id: photo._id } : {}), created_at: nowISO(), updated_at: nowISO(),
