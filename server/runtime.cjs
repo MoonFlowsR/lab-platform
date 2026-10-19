@@ -312,6 +312,8 @@ function isImageAttachmentRecord(attachment) {
 
 const buildMaterialCatalog = require('./features/inventory/material-catalog.cjs');
 
+const accountViewScope = require("./features/accounts/view-scope.cjs")({ db });
+
 function publicAccount(account) {
   const student_profile = studentProfiles.read(account);
   return {
@@ -320,6 +322,7 @@ function publicAccount(account) {
     username: account.username,
     display_name: account.display_name || account.username,
     account_type: account.account_type,
+    default_view_scope: accountViewScope(account),
     direction: account.direction || "",
     teacher_name: account.teacher_name || "",
     status: account.status || "active",

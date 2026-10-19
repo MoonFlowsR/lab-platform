@@ -5,3 +5,7 @@ export const teacherScopeMatches = (row, account, scope = 'mine') => account?.ac
 export const canReviewAssignedRequest = (row, account) => account?.account_type === 'teacher' && Boolean(row.review_teacher_username) && row.review_teacher_username === account.username;
 
 export const workScopeMatches = (row, account, scope = "mine") => account?.account_type === "student" ? scope === "all" || row.applicant_username === account.username : teacherScopeMatches(row, account, scope);
+
+// Defaults are supplied by the account, without granting additional permissions.
+export const defaultViewScope = account => account?.account_type === "teacher" && account.default_view_scope === "all" ? "all" : "mine";
+export const usesTeamOverview = account => account?.account_type === "admin" || defaultViewScope(account) === "all";
