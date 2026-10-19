@@ -1,4 +1,5 @@
 import { defaultViewScope, usesTeamOverview } from "../../shared/lib/review-scope.js";
+import { isReceivedPurchase } from "../purchases/purchase-values.js";
 import { expiryWarnings } from "../reports/report-data.js";
 import { formatDate, money, num } from "../../app/formatters.js";
 import DashboardMetrics, { InventoryMetrics, MovementMetrics } from "./DashboardMetrics.jsx";
@@ -16,22 +17,18 @@ function Dashboard({ stockOutRequests = [], accounts = [], stockRows = [], curre
   const emptyRequestText = type => financeOverview ? `团队近期暂无${type}申请。` : currentUser?.account_type === "admin" ? `团队近期暂无需审批的${type}申请。` : canManageStock ? `你近期暂无需审批的${type}申请。` : `你近期暂无${type}申请。`;
   const expiringBatches = expiryWarnings(batches);
   const lowBatches = batches.filter((b) => num(b.current_qty) <= num(b.min_qty || 0));
-  const pendingRequests = workRequests.filter((r) => r.status === "待教师审核");
-  const pendingPurchases = purchases.filter((p) => p.status === "待教师审核");
-  const pendingInbound = purchases.filter((p) => p.status === "待入库");
-  const recentWorkRows = type => {
-    const typedRows = workRequests.filter(row => row.request_type === type);
-    const pendingRows = pendingRequests.filter(row => row.request_type === type);
-    return !financeOverview && pendingRows.length ? pendingRows : typedRows;
-  };
-  const recentPurchaseRows = !financeOverview && pendingPurchases.length ? pendingPurchases : purchases;
+
+  const pendingInbound = purchases.filter(p => !isReceivedPurchase(p) && ["待入库", "已通过"].includes(p.status));
+  const recentWorkRows = type => workRequests.filter(row => row.request_type === type);
+  const pendingStockApprovals = stockOutRequests.filter(row => row.status === '待采购人审批' && (teamOverview || row.purchaser_username === currentUser.username)).length;
+  const pendingStockCompletion = stockOutRequests.filter(row => row.status === '已同意待出库' && (teamOverview || row.applicant_username === currentUser.username)).length;
 
   return <main>
     <p className="platform-metric-scope">当前统计：<strong>{currentUser?.account_type === "student" ? "本人申请" : teamOverview ? "团队全部申请" : "指定本人审核的申请"}</strong> · 随页面搜索更新</p>
     <DashboardMetrics workRequests={workRequests} purchases={purchases} mode={financeOverview ? "report" : currentUser?.account_type === "student" ? "student" : currentUser?.account_type === "teacher" ? "review" : "team"} money={money} onOpen={setActiveTab} />
     <InventoryMetrics inventory={inventoryMetrics(batches)} label="团队库存" onOpen={() => setActiveTab("materials")} />
-    <MovementMetrics rows={stockRows} onOpen={() => setActiveTab("stock")} />
-    {stockOutRequests.some(row => ['待采购人审批','已同意待出库'].includes(row.status)) && <section style={styles.card}><div style={styles.cardHeader}><h2 style={styles.h2}>私用/项目用物品出库待办</h2><button style={styles.secondaryButton} onClick={() => setActiveTab('stock')}>查看出库申请</button></div><p style={styles.meta}>{teamOverview ? '团队待采购人审批' : '待你审批'}：<strong>{stockOutRequests.filter(row => row.status === '待采购人审批' && (teamOverview || row.purchaser_username === currentUser.username)).length}</strong> 条 · {teamOverview ? '团队待完成出库' : '你待完成出库'}：<strong>{stockOutRequests.filter(row => row.status === '已同意待出库' && (teamOverview || row.applicant_username === currentUser.username)).length}</strong> 条</p></section>}
+    <MovementMetrics label={currentUser?.account_type === "student" ? "本人库存流水" : "团队库存流水"} rows={stockRows} onOpen={() => setActiveTab("stock")} />
+    {(pendingStockApprovals > 0 || pendingStockCompletion > 0) && <section style={styles.card}><div style={styles.cardHeader}><h2 style={styles.h2}>私用/项目用物品出库待办</h2><button style={styles.secondaryButton} onClick={() => setActiveTab('stock')}>查看出库申请</button></div><p style={styles.meta}>{teamOverview ? '团队待采购人审批' : '待你审批'}：<strong>{pendingStockApprovals}</strong> 条 · {teamOverview ? '团队待完成出库' : '你待完成出库'}：<strong>{pendingStockCompletion}</strong> 条</p></section>}
     {pendingInbound.length > 0 && <section style={styles.card}>
       <div style={styles.cardHeader}>
         <div><h2 style={styles.h2}>待入库提醒</h2><p style={styles.muted}>采购审核通过后，由原申请人到货时上传实物照片并完成入库，入库完成后采购才定义为“已完成”。</p></div>
@@ -50,7 +47,7 @@ function Dashboard({ stockOutRequests = [], accounts = [], stockRows = [], curre
         })}
         <section style={styles.card}>
           <div style={styles.cardHeader}><h2 style={styles.h2}>近期采购</h2><button style={styles.lightButton} onClick={() => setActiveTab("purchases")}>进入采购{financeOverview ? "记录" : currentUser?.account_type === "teacher" ? "审核" : currentUser?.account_type === "admin" ? "记录" : ""}</button></div>
-          {recentPurchaseRows.length === 0 ? <Empty text={emptyRequestText("采购")} /> : <RecentRecords rows={recentPurchaseRows}>{shown => shown.map((row) => <PurchaseSummaryCard key={row._id} row={row} />)}</RecentRecords>}
+          {purchases.length === 0 ? <Empty text={emptyRequestText("采购")} /> : <RecentRecords rows={purchases}>{shown => shown.map((row) => <PurchaseSummaryCard key={row._id} row={row} />)}</RecentRecords>}
         </section>
       </div>
       <aside style={styles.sideStack}>

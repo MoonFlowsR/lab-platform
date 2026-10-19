@@ -145,7 +145,7 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
 .platform-business-headline strong{color:var(--business-color);font-size:34px;line-height:1.15;font-weight:800;font-variant-numeric:tabular-nums}
 .platform-business-headline span{font-size:13px;color:#334155}
 .platform-business-headline small{margin-left:auto;font-size:12px;color:#64748b}
-.platform-business-statuses{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0}
+.platform-business-statuses{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0}
 .platform-business-statuses dt{font-size:12px;color:#64748b;line-height:1.5}
 .platform-business-statuses dd{margin:3px 0 0;font-size:20px;color:#334155;font-weight:700;font-variant-numeric:tabular-nums}
 .platform-business-footer{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:14px;padding-top:11px;border-top:1px solid #f1f5f9;font-size:12px;line-height:1.6;color:#64748b}
