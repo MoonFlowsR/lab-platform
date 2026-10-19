@@ -9,11 +9,13 @@ export function businessMetrics(workRequests = [], purchases = []) {
   return ['测试', '加工', '维修', '采购'].map(type => {
     const rows = type === '采购' ? purchases : workRequests.filter(row => row.request_type === type);
     const completed = rows.filter(row => type === '采购' ? isReceivedPurchase(row) : isCompletedWork(row));
-    const pending = rows.filter(row => row.status === '待教师审核');
-    const ready = rows.filter(row => type === '采购' ? row.status === '待入库' : ['已通过', '已实施'].includes(row.status));
-    const revise = rows.filter(row => ['需修改', '已驳回'].includes(row.status));
-    const withdrawn = rows.filter(row => row.status === '已撤回');
-    const closed = rows.filter(row => row.status === '已关闭');
+    const finished = new Set(completed);
+    const active = rows.filter(row => !finished.has(row));
+    const pending = active.filter(row => row.status === '待教师审核');
+    const ready = active.filter(row => type === '采购' ? row.status === '待入库' : ['已通过', '已实施'].includes(row.status));
+    const revise = active.filter(row => ['需修改', '已驳回'].includes(row.status));
+    const withdrawn = active.filter(row => row.status === '已撤回');
+    const closed = active.filter(row => row.status === '已关闭');
     return {
       type, total: rows.length, pending: pending.length, ready: ready.length, revise: revise.length,
       completed: completed.length, withdrawn: withdrawn.length, closed: closed.length,

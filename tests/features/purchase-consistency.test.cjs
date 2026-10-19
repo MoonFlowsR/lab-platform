@@ -158,6 +158,7 @@ test('unchanged arrival remains in completed section and zero final cost is not 
   const legacy={...record,actual_total_price:undefined},closed={...record,status:'已关闭',actual_total_price:300};
   const m=businessMetrics([],[{...record,actual_total_price:0},legacy,closed]).find(r=>r.type==='采购');
   assert.equal(m.completedAmount,100);assert.equal(m.completed,2);assert.equal(m.legacyEstimatedCount,1);
+  const mixed=businessMetrics([],[{...record,status:'待入库',received_status:'已入库'}]).find(r=>r.type==='采购');assert.equal(mixed.completed,1);assert.equal(mixed.ready,0);assert.equal(mixed.other,0);
   const {purchaseWasModified,inboundChangesText}=await import('../../src/features/purchases/purchase-values.js');
   const oldReceipt={status:'已完成',quantity:2,unit:'瓶',actual_received_qty:4,actual_received_unit:'盒'};
   assert.equal(purchaseWasModified(oldReceipt),true);assert.match(inboundChangesText(oldReceipt),/2 → 4/);assert.match(inboundChangesText(oldReceipt),/瓶 → 盒/);
