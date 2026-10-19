@@ -75,21 +75,29 @@ test('repair lifecycle uses designated review, required order status, final fees
  const f=fixture();try{
   const c=f.context,ops=require('../../server/services/operations/work.cjs')(c),student=f.accounts['示例学生甲'],teacher=f.accounts['示例教师'],admin=f.accounts['示例管理员'];
   const call=(action,payload,account=student)=>ops[action](request,response(c.db),action,payload,account);
-  const input={request_type:'维修',work_content:'示例仪器维修',external_unit:'示例维修机构',workload_quantity:1,workload_unit:'次',cost_repair:80,review_teacher_username:teacher.username};
+  const input={request_type:'维修',work_content:'示例仪器维修',repair_personnel:' 示例维修人员 ',external_unit:'示例维修机构',workload_quantity:1,workload_unit:'次',cost_repair:80,review_teacher_username:teacher.username};
   assert.throws(()=>call('submitWorkRequest',{...input,cost_repair:''}),/预计总维修费/);
-  const submitted=call('submitWorkRequest',input).record;assert.match(submitted.public_id,/^REPAIR-/);assert.equal(submitted.cost_repair,80);assert.equal(submitted.cost_test,0);assert.equal(submitted.cost_processing,0);
+  for(const invalid of [undefined,'','   ',{},'甲'.repeat(101)])assert.throws(()=>call('submitWorkRequest',{...input,repair_personnel:invalid}),/维修人员/);
+  for(const unit of ['小时','其它'])assert.throws(()=>call('submitWorkRequest',{...input,workload_unit:unit}),/只能为“次”/);
+  assert.throws(()=>call('submitWorkRequest',{...input,external_unit:''}),/维修人员单位/);
+  assert.equal(c.listRecords('lab_work_requests').length,0);
+  const submitted=call('submitWorkRequest',input).record;assert.equal(submitted.repair_personnel,'示例维修人员');assert.match(submitted.public_id,/^REPAIR-/);assert.equal(submitted.cost_repair,80);assert.equal(submitted.cost_test,0);assert.equal(submitted.cost_processing,0);
   assert.throws(()=>call('reviewWorkRequest',{id:submitted._id,next_status:'已通过'},admin),/管理员|指定/);
   assert.throws(()=>call('reviewWorkRequest',{id:submitted._id,next_status:'已驳回'},teacher),/意见/);
   call('reviewWorkRequest',{id:submitted._id,next_status:'已驳回',review_note:'请核实内容'},teacher);
-  call('resubmitWorkRequest',{id:submitted._id,patch:{...input,cost_repair:90}});
+  assert.throws(()=>call('resubmitWorkRequest',{id:submitted._id,patch:{...input,repair_personnel:''}}),/维修人员/);
+  assert.throws(()=>call('resubmitWorkRequest',{id:submitted._id,patch:{...input,workload_unit:'小时'}}),/只能为“次”/);
+  assert.equal(c.getRecord('lab_work_requests',submitted._id).status,'已驳回');
+  call('resubmitWorkRequest',{id:submitted._id,patch:{...input,cost_repair:90,repair_personnel:'维修人员乙'}});
   const approved=call('reviewWorkRequest',{id:submitted._id,next_status:'已通过'},teacher).record;
   const final={id:approved._id,confirmed:true,expected_updated_at:approved.updated_at,patch:{workload_quantity:2,workload_unit:'次',cost_repair:120}};
   assert.throws(()=>call('completeWorkRequest',final),/订单状态/);assert.equal(c.getRecord('lab_work_requests',approved._id).status,'已通过');
   const complete=call('completeWorkRequest',{...final,settlement_status:'已挂账'}).record;
+  assert.equal(complete.repair_personnel,'维修人员乙');assert.equal(complete.external_unit,input.external_unit);
   assert.equal(complete.cost_repair,120);assert.equal(complete.completion_original.cost_repair,90);assert.equal(complete.completion_modified,true);assert.equal(complete.settlement_status,'已挂账');
   const {businessMetrics}=await import('../../src/features/dashboard/dashboard-metrics.js');assert.equal(businessMetrics([complete]).find(item=>item.type==='维修').completedAmount,120);
-  const {buildReportExport}=await import('../../src/features/reports/report-export.js');const exported=buildReportExport({workRequests:[complete]});const csv=exported.files.find(file=>file.filename==='维修明细.csv');assert(csv.csv.includes('已挂账'));assert(csv.csv.includes('120'));
-  const {workOptions}=await import('../../src/features/work/work-options.js');assert(workOptions('维修',[complete]).names.includes(input.work_content));assert(workOptions('维修',[complete]).channels.includes(input.external_unit));assert(!workOptions('测试',[complete]).names.includes(input.work_content));
+  const {buildReportExport}=await import('../../src/features/reports/report-export.js');const exported=buildReportExport({workRequests:[complete]});const csv=exported.files.find(file=>file.filename==='维修明细.csv');assert(csv.csv.includes('已挂账'));assert(csv.csv.includes('120'));assert(csv.csv.includes('维修设备'));assert(csv.csv.includes('维修人员单位'));assert(csv.csv.includes('维修人员乙'));assert(!csv.csv.includes('维修渠道'));
+  const {workOptions}=await import('../../src/features/work/work-options.js');assert(workOptions('维修',[complete]).names.includes(input.work_content));assert(workOptions('维修',[complete]).channels.includes(input.external_unit));assert(!workOptions('测试',[complete]).names.includes(input.work_content));assert.deepEqual(workOptions('维修',[{...complete,workload_unit:'小时'}]).billing,['次']);
   assert.equal(c.db.pragma('integrity_check',{simple:true}),'ok');
  }finally{f.close();}
 });

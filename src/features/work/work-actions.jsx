@@ -82,13 +82,14 @@ async function closeRejectedOrder(collection, row) {
 
 async function completeWorkRequest(row) {
     const feeKey = workFeeKey(row.request_type);
+    const isRepair = row.request_type === '维修';
     const options = workOptions(row.request_type, workRequests, units, row).billing;
     const values = await showForm({ title: '确认' + row.request_type + '工单完成', confirmText: '确认完成',
-      message: '是否需要修改工作量、金额或计量单位？请核对后点击“确认完成”。修改会留痕，无需再次审核。',
+      message: `是否需要修改工作量、金额${isRepair ? '' : '或计量单位'}？请核对后点击“确认完成”。修改会留痕，无需再次审核。`,
       details: [{label:'申请编号',value:row.public_id},{label:'申请人',value:row.applicant_name || row.applicant_username},{label:'申请内容',value:row.work_content}],
       fields: [
         {name:'workload_quantity',label:'最终工作量',type:'number',required:true,min:0,value:row.workload_quantity},
-        {name:'workload_unit',label:'计量单位',required:true,value:row.workload_unit,render:({value,onChange}) => <CustomOptionFields required label="" customLabel="其它计量单位" value={value} onChange={onChange} options={options} placeholder="选择计量单位或搜索“其它”" customPlaceholder="请填写具体计量单位" maxLength={60} Field={({label,children}) => <div>{label && <div style={styles.fieldLabel}>{label}</div>}{children}</div>} SearchableSelect={SearchableSelect} styles={styles} />},
+        {name:'workload_unit',label:'计量单位',required:true,value:isRepair ? '次' : row.workload_unit,render:({value,onChange}) => isRepair ? <input aria-label="计量单位" readOnly value="次" style={styles.input} /> : <CustomOptionFields required label="" customLabel="其它计量单位" value={value} onChange={onChange} options={options} placeholder="选择计量单位或搜索“其它”" customPlaceholder="请填写具体计量单位" maxLength={60} Field={({label,children}) => <div>{label && <div style={styles.fieldLabel}>{label}</div>}{children}</div>} SearchableSelect={SearchableSelect} styles={styles} />},
         {name:feeKey,label:'最终总' + row.request_type + '费 / 元',type:'number',required:true,min:0,value:workFee(row)},
         {name:'settlement_status',label:'订单状态',required:true,value:row.settlement_status || '',render:({value,onChange}) => <SearchableSelect required value={value} onChange={onChange} options={['已开票','已挂账']} placeholder="请选择" />},
         {name:'completion_note',label:'完成备注（可选）',wide:true,maxLength:2000,value:row.completion_note || '',placeholder:'可说明费用或工作量调整原因'},

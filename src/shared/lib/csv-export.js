@@ -27,8 +27,8 @@ const attachments = (row, collection, context) => (context.attachments || []).fi
   (collection === 'lab_material_batches' && row.inbound_photo_attachment_id && String(file._id) === String(row.inbound_photo_attachment_id))
 )).map(file => file.original_name).filter(Boolean).join('；');
 const workColumns = type => [
-  numberColumn('申请编号', 'public_id'), column(type + '名称', 'work_content'), column('申请人', row => row.applicant_name || row.applicant_username),
-  column('审核教师', reviewTeacherName), column('系统责任教师','responsible_teacher_name',true),column('实际指导教师','guiding_teacher_name',true),column('毕业年份','graduation_year',true), column(type + '渠道', 'external_unit'), column('工作量', row => numeric(row.workload_quantity)), column('计量单位', 'workload_unit'),
+  numberColumn('申请编号', 'public_id'), column(type === '维修' ? '维修设备' : type + '名称', 'work_content'), column('申请人', row => row.applicant_name || row.applicant_username),
+  column('审核教师', reviewTeacherName), column('系统责任教师','responsible_teacher_name',true),column('实际指导教师','guiding_teacher_name',true),column('毕业年份','graduation_year',true), ...(type === '维修' ? [column('维修人员', row => row.repair_personnel || '未登记')] : []), column(type === '维修' ? '维修人员单位' : type + '渠道', 'external_unit'), column('工作量', row => numeric(row.workload_quantity)), column('计量单位', 'workload_unit'),
   column('预计总' + type + '费（元）', row => numeric(row.completion_original?.[workFeeKey(type)] ?? workFee(row))),
   column('最终总' + type + '费（元）', row => isCompletedWork(row) ? workFee(row) : '', true),
   column('订单状态', row => isCompletedWork(row) ? row.settlement_status || '未登记' : '', true),

@@ -88,7 +88,7 @@ const MATERIAL_FUND_TOTAL = process.env.MATERIAL_FUND_TOTAL ? Number(process.env
 const TEST_FUND_TOTAL = process.env.TEST_FUND_TOTAL ? Number(process.env.TEST_FUND_TOTAL) : null;
 
 const WORK_REQUEST_EDIT_FIELDS = [
-  "request_type", "work_content", "external_unit", "workload_quantity", "workload_unit",
+  "request_type", "work_content", "external_unit", "repair_personnel", "workload_quantity", "workload_unit",
   "safety_notes", "cost_material", "cost_test", "cost_processing", "cost_repair", "remark", "review_teacher_username"
 ];
 

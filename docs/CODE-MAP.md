@@ -14,7 +14,7 @@
 
 测试、加工与维修：`request-sections.js`负责四类工单分组，`work-history.js`负责同学生、同项目、同机构的近半年记录及机构匹配，`work-completion.cjs`校验最终信息与订单状态。`settlement_status`保存在工单记录中；已有未登记记录不自动补值。
 
-`src/config/work-types.json`统一定义工单类型、页面、费用字段和编号前缀；维修复用测试加工流程，通过`cost_repair`单独统计费用。
+`src/config/work-types.json`统一定义工单类型、页面、费用字段和编号前缀；维修复用测试加工流程，通过`cost_repair`单独统计费用。维修设备沿用`work_content`，维修人员保存为`repair_personnel`，维修人员单位沿用`external_unit`，计量单位固定为“次”；专有字段由`repair-fields.cjs`校验。
 
 ## 公共部分
 

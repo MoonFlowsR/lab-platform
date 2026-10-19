@@ -65,7 +65,8 @@ function WorkRequestCard({ row, logs = [], compact = false, completionDetailsOpe
       </div>
     </div>
     <div className="platform-detail-grid" style={styles.detailGrid4}>
-      <Info label={`${row.request_type || "测试/加工/维修"}渠道`} value={row.external_unit} />
+      <Info label={row.request_type === "维修" ? "维修人员单位" : `${row.request_type || "测试/加工/维修"}渠道`} value={row.external_unit} />
+      {row.request_type === "维修" && <Info label="维修人员" value={row.repair_personnel || "未登记"} />}
       <Info label="工作量" value={`${row.workload_quantity || "-"} ${row.workload_unit || ""}`} />
       <Info label={(isCompletedWork(row) ? "最终总" : row.status === "已关闭" ? "原预计总" : "预计总") + row.request_type + "费"} value={money(workFee(row))} />
       {isCompletedWork(row) && <Info label="订单状态" value={row.settlement_status || "未登记"} />}

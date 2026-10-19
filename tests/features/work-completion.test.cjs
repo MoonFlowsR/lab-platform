@@ -3,11 +3,11 @@ const complete=require('../../server/features/work/work-completion.cjs');
 const account={account_type:'student',username:'example-student',display_name:'示例学生'};
 function fixture(type='测试'){
  const key=({测试:'cost_test',加工:'cost_processing',维修:'cost_repair'})[type];
- const before={request_type:type,status:'已通过',applicant_username:account.username,workload_quantity:2,workload_unit:'小时',[key]:100,updated_at:'version-1'};
- const payload={confirmed:true,expected_updated_at:before.updated_at,settlement_status:'已开票',patch:{workload_quantity:2,workload_unit:'小时',[key]:100}};
+ const before={request_type:type,status:'已通过',applicant_username:account.username,workload_quantity:2,workload_unit:type==='维修'?'次':'小时',[key]:100,updated_at:'version-1'};
+ const payload={confirmed:true,expected_updated_at:before.updated_at,settlement_status:'已开票',patch:{workload_quantity:2,workload_unit:type==='维修'?'次':'小时',[key]:100}};
  return {before,payload,key};
 }
-test('testing and processing require an explicit valid settlement choice without changing modification semantics',()=>{
+test('all work types require an explicit valid settlement choice without changing modification semantics',()=>{
  for(const type of ['测试','加工','维修'])for(const status of ['已开票','已挂账']){
   const {before,payload}=fixture(type);payload.settlement_status=status;
   const result=complete(before,payload,account,[],'2026-10-19T00:00:00Z');
@@ -35,4 +35,12 @@ test('CSV includes settlement state and distinguishes old missing data from open
  const rows=[{...fixture().before,status:'已完成',settlement_status:'已挂账'},{...fixture().before,status:'已完成'},{...fixture().before}];
  const result=buildCsv('test',rows);assert(result.headers.includes('订单状态'));assert(result.csv.includes('已挂账'));assert(result.csv.includes('未登记'));
  assert(!buildCsv('test',[rows[2]]).headers.includes('订单状态'));
+});
+
+test('repair completion fixes the unit without restricting other work types',()=>{
+ for(const type of ['测试','加工','维修']){
+  const {before,payload}=fixture(type);payload.patch.workload_unit='样品';
+  if(type==='维修')assert.throws(()=>complete(before,payload,account,[],''),/只能为“次”/);
+  else assert.equal(complete(before,payload,account,[],'').workload_unit,'样品');
+ }
 });
