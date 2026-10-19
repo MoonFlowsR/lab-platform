@@ -69,7 +69,7 @@ function WorkRequestCard({ row, logs = [], compact = false, completionDetailsOpe
       {row.request_type === "维修" && <Info label="维修人员" value={row.repair_personnel || "未登记"} />}
       <Info label="工作量" value={`${row.workload_quantity || "-"} ${row.workload_unit || ""}`} />
       <Info label={(isCompletedWork(row) ? "最终总" : row.status === "已关闭" ? "原预计总" : "预计总") + row.request_type + "费"} value={money(workFee(row))} />
-      {isCompletedWork(row) && <Info label="订单状态" value={row.settlement_status || "未登记"} />}
+      {isCompletedWork(row) && <Info label="工单状态" value={row.settlement_status || "未登记"} />}
     </div>
     {row.status === "已关闭" && <ClosureInfo row={row} />}
     {isCompletedWork(row) && <p style={styles.meta}>完结人：<strong className="platform-identity">{row.completed_by || row.completed_username || "未记录"}</strong> · 完成时间：{formatDate(row.completed_at)}</p>}

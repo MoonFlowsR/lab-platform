@@ -6,7 +6,7 @@ module.exports = function completeWorkValues(before, payload, account, billingMe
   const key = require('../../../src/config/work-types.json').find(item => item.name === before.request_type)?.feeKey;
   if (!key) throw new Error('不支持的申请类型。');
   const settlement = typeof payload.settlement_status === 'string' ? payload.settlement_status.trim() : '';
-  if (!['已开票', '已挂账'].includes(settlement)) throw new Error('请选择订单状态：已开票或已挂账。');
+  if (!['已开票', '已挂账'].includes(settlement)) throw new Error('请选择工单状态：已开票或已挂账。');
   const input = payload.patch;
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('请填写最终工作量、计量单位和总费用。');
   const allowed = ['workload_quantity', 'workload_unit', key];
@@ -20,7 +20,6 @@ module.exports = function completeWorkValues(before, payload, account, billingMe
   const quantity = parse(input.workload_quantity, '最终工作量', true), fee = parse(input[key], '最终总' + before.request_type + '费', false);
   const unit = String(input.workload_unit || '').trim();
   if (typeof input.workload_unit !== 'string' || !unit || unit.length > 60 || ['其它','其他','__custom_option__'].includes(unit)) throw new Error('请选择或填写具体计量单位（不超过60字）。');
-  if (before.request_type === '维修' && unit !== '次') throw new Error('维修计量单位只能为“次”。');
   const note = String(payload.completion_note || '').trim();
   if (note.length > 2000) throw new Error('完成备注不能超过2000字。');
   const numeric = value => Number.isFinite(Number(value)) ? Number(value) : 0;

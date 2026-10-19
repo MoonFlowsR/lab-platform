@@ -31,7 +31,7 @@ const workColumns = type => [
   column('审核教师', reviewTeacherName), column('系统责任教师','responsible_teacher_name',true),column('实际指导教师','guiding_teacher_name',true),column('毕业年份','graduation_year',true), ...(type === '维修' ? [column('维修人员', row => row.repair_personnel || '未登记')] : []), column(type === '维修' ? '维修人员单位' : type + '渠道', 'external_unit'), column('工作量', row => numeric(row.workload_quantity)), column('计量单位', 'workload_unit'),
   column('预计总' + type + '费（元）', row => numeric(row.completion_original?.[workFeeKey(type)] ?? workFee(row))),
   column('最终总' + type + '费（元）', row => isCompletedWork(row) ? workFee(row) : '', true),
-  column('订单状态', row => isCompletedWork(row) ? row.settlement_status || '未登记' : '', true),
+  column('工单状态', row => isCompletedWork(row) ? row.settlement_status || '未登记' : '', true),
   column('完结时修改', row => row.completion_modified ? '是' : '', true),
   column('完结修改明细', completionChangesText, true),
   column('申请状态', row => row.status === '已通过' ? '已通过（待确认完成）' : row.status), column('提交时间', row => date(row.created_at)), ...approval,...closure,
