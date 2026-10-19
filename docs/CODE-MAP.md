@@ -50,3 +50,5 @@
 4. 新增重要流程后补对应业务测试，并更新角色帮助。旧帮助引用按原索引保留为`history`，避免既有评论失去位置。
 
 数据库、上传文件和部署配置是运行数据，不放进业务源码目录。
+
+教师默认查看范围由 `server/features/accounts/view-scope.cjs` 读取数据库 `platform_settings` 的 `account_view_scope:<账号ID>`；值为 `all` 时首页及工单默认查看全组，否则沿用本人范围。该设置随数据库备份，不改变审批权限。
