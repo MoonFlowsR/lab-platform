@@ -1,4 +1,5 @@
 import ReimbursementStatus from '../finance/ReimbursementStatus.jsx';
+import ReimbursementSummary from '../finance/ReimbursementSummary.jsx';
 import { isReceivedPurchase, purchaseWasModified, hasFinalPurchaseAmount, purchaseAmount, purchaseQuantityText } from '../purchases/purchase-values.js';
 import { workFeeKey } from '../work/work-types.js';
 import FilterPanel from '../../shared/components/FilterPanel.jsx';
@@ -70,7 +71,8 @@ export default function ReportsPage({ currentUser, onReimbursementChange, data, 
       <details className="platform-report-basis"><summary>统计口径</summary><ul><li>测试、加工、维修：按已完成工单最终金额统计。</li><li>采购：已入库按确认的最终金额，未入库及未确认最终金额的旧记录按预计金额统计。</li><li>日期范围包含起止当天。</li></ul><a href="/help#exports">完整统计说明</a></details>
 
     </FilterPanel>
-    <DashboardMetrics mode="report" workRequests={workRequests} purchases={purchases} money={money} />
+    {currentUser?.account_type === 'finance' && <ReimbursementSummary workRequests={workRequests} purchases={purchases} money={money} />}
+    <DashboardMetrics mode="report" workRequests={workRequests} purchases={purchases} money={money} showReimbursement={currentUser?.account_type === 'finance'} />
     <div className="platform-report-operations">
       <section className="platform-flow-metrics" aria-label="出入退库与审批统计"><h2>操作记录</h2><dl>{['入库', '出库', '退库'].map(type => <div key={type}><dt>{type}</dt><dd>{stockTransactions.filter(row => row.transaction_type === type).length}<small> 条</small></dd></div>)}<div><dt>库存修正</dt><dd>{stockTransactions.filter(row => !['入库', '出库', '退库'].includes(row.transaction_type)).length}<small> 条</small></dd></div><div><dt>待采购人审批</dt><dd>{stockOutRequests.filter(row=>row.status==='待采购人审批').length}<small> 条</small></dd></div><div><dt>待完成出库</dt><dd>{stockOutRequests.filter(row=>row.status==='已同意待出库').length}<small> 条</small></dd></div><div><dt>审批</dt><dd>{reviewLogs.length}<small> 条</small></dd></div></dl></section>
       <InventoryMetrics inventory={inventoryMetrics(batches)} label="相关库存" />

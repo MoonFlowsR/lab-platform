@@ -9,6 +9,13 @@ async function checkReimbursementHighlight(card, reimbursed, badge = true) {
  if (badge) assert.equal(await card.locator('.platform-reimbursement-badge').count(), Number(reimbursed));
 }
 
+async function checkReimbursementTotals(region, reimbursed, pending, paidAmount, pendingAmount) {
+ await region.locator('.platform-reimbursement-figures>.is-pending dt span').filter({hasText:new RegExp(`^${pending} 条$`)}).waitFor();
+ await region.locator('.platform-reimbursement-figures>.is-reimbursed dt span').filter({hasText:new RegExp(`^${reimbursed} 条$`)}).waitFor();
+ const values=await region.locator('.platform-reimbursement-figures').evaluate(element=>Object.fromEntries([...element.children].map(row=>[row.className,[row.querySelector('dt span').textContent,row.querySelector('dd').textContent]])));
+ assert.deepEqual(values,{'is-reimbursed':[`${reimbursed} 条`,`¥${paidAmount}`],'is-pending':[`${pending} 条`,`¥${pendingAmount}`]});
+}
+
 export async function checkFinance(browser,origin,out,snapshot,users){
  const results=[],finance={username:'qa-finance',display_name:'示例财务',_id:55,account_type:'finance',status:'active',profile_required:false,session_token:'synthetic-finance'};
  const [admin,teacher,student]=users;
@@ -48,12 +55,16 @@ export async function checkFinance(browser,origin,out,snapshot,users){
    assert.match(await page.locator('.platform-metric-scope').innerText(),/团队全部申请/);
    assert.equal(await page.locator('.platform-nav').getByRole('button',{name:'账号管理',exact:true}).count(),0);
    assert.equal(await page.getByRole('checkbox').count(),4);
+   const totals=page.getByRole('region',{name:'报销统计',exact:true});await checkReimbursementTotals(totals,0,12,0,300);
+   const search=page.getByPlaceholder('搜索页面内任意内容');await search.fill('报销核对测试');await checkReimbursementTotals(totals,0,3,0,75);await search.fill('无匹配工单');await checkReimbursementTotals(totals,0,0,0,0);await search.fill('');await checkReimbursementTotals(totals,0,12,0,300);
    const overviewCheck=page.getByRole('checkbox').first();
    const overviewCard=page.locator('.platform-request-record').filter({has:page.getByRole('checkbox')}).first();
    await checkReimbursementHighlight(overviewCard,false);
-   await overviewCheck.check();await checkReimbursementHighlight(overviewCard,true);await page.getByRole('button',{name:'手动同步',exact:true}).waitFor({state:'visible'});
-   await overviewCheck.uncheck();await checkReimbursementHighlight(overviewCard,false);
-  }else assert.equal(await page.getByRole('checkbox').count(),0);
+   await overviewCheck.check();await checkReimbursementHighlight(overviewCard,true);await checkReimbursementTotals(totals,1,11,25,275);await page.getByRole('button',{name:'手动同步',exact:true}).waitFor({state:'visible'});
+   await overviewCheck.uncheck();await checkReimbursementHighlight(overviewCard,false);await checkReimbursementTotals(totals,0,12,0,300);
+   await totals.screenshot({path:path.join(out,`reimbursement-summary-${width}.png`)});
+   await page.locator('.platform-business-metrics').screenshot({path:path.join(out,`reimbursement-categories-${width}.png`)});
+  }else{assert.equal(await page.getByRole('checkbox').count(),0);assert.equal(await page.getByRole('region',{name:'报销统计',exact:true}).count(),0);}
   for(const [t,type]of types.entries()){
    await page.locator('.platform-nav').getByRole('button',{name:tabName(type),exact:true}).click();
    const modified=page.locator('main > .platform-section-modified');await modified.locator('h3').first().waitFor();
@@ -66,10 +77,12 @@ export async function checkFinance(browser,origin,out,snapshot,users){
     await page.waitForFunction(()=>!document.querySelector('.platform-reimbursement-check input:disabled'));
     assert.equal(records.find(row=>row._id===String(8004+t*10)).reimbursed,true);
     await checkReimbursementHighlight(card,true);
+    await checkReimbursementTotals(page.getByRole('region',{name:type+'统计',exact:true}),1,2,25,50);
     await card.scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,`reimbursed-${type}-${width}.png`)});
     const download=page.waitForEvent('download');await page.getByRole('button',{name:/导出.*CSV/}).first().click();const csv=await fs.readFile(await(await download).path(),'utf8');assert(csv.includes('报销状态'));assert(csv.includes('已报销'));assert(csv.includes('未报销'));assert(csv.includes('示例财务'));
     await check.uncheck();await page.waitForFunction(()=>!document.querySelector('.platform-reimbursement-check input:disabled'));assert.equal(await check.isChecked(),false);
     await checkReimbursementHighlight(card,false);
+    await checkReimbursementTotals(page.getByRole('region',{name:type+'统计',exact:true}),0,3,0,75);
     if(t===0){failNext=true;await check.check();const dialog=page.getByRole('dialog');await dialog.getByText('工单已更新，请同步后重试。',{exact:true}).waitFor();await checkReimbursementHighlight(card,false);await dialog.getByRole('button',{name:'知道了',exact:true}).click();assert.equal(await check.isChecked(),false);}
     if(width<641 && await page.getByRole('button',{name:/展开筛选/}).count())await page.getByRole('button',{name:/展开筛选/}).click();
     assert.equal(await page.getByPlaceholder('搜索或选择学生姓名').count(),1);assert.equal(await page.getByPlaceholder('搜索或选择教师姓名').count(),0);
@@ -82,14 +95,17 @@ export async function checkFinance(browser,origin,out,snapshot,users){
    await page.locator('.platform-nav').getByRole('button',{name:'库存',exact:true}).click();assert.equal(await page.getByRole('button',{name:/^(修改库存|修改物品信息|开始录入现有材料|永久删除)/}).count(),0);await page.getByRole('region',{name:'当前筛选库存'}).waitFor();
    await page.locator('.platform-nav').getByRole('button',{name:'出入退库',exact:true}).click();for(const type of ['入库','出库','退库'])assert.equal(await page.getByRole('heading',{name:new RegExp('^'+type+'历史')}).count(),1);assert.equal(await page.getByRole('button',{name:/^(同意出库|驳回出库|新增记录)$/}).count(),0);
    await page.locator('.platform-nav').getByRole('button',{name:'数据报表',exact:true}).click();await page.getByRole('region',{name:'测试统计',exact:true}).waitFor();assert.equal(await page.getByRole('checkbox').count(),1);
+   const reportTotals=page.getByRole('region',{name:'报销统计',exact:true});await checkReimbursementTotals(reportTotals,0,12,0,300);
    const finalAmount=await page.getByRole('region',{name:'测试统计',exact:true}).locator('.platform-business-footer').innerText();
    for(const type of types){
     await page.getByRole('tab',{name:new RegExp('^'+type)}).click();
     const reportCard=page.locator(width<641?'.platform-mobile-record':'.platform-data-table tbody tr').filter({has:page.locator('.platform-reimbursement-state')}).first();
     await checkReimbursementHighlight(reportCard,false,false);
     await page.getByRole('checkbox').check();await checkReimbursementHighlight(reportCard,true,false);
+    await checkReimbursementTotals(reportTotals,1,11,25,275);
     await reportCard.scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,`reimbursed-report-${type}-${width}.png`)});
     await page.getByRole('checkbox').uncheck();await checkReimbursementHighlight(reportCard,false,false);
+    await checkReimbursementTotals(reportTotals,0,12,0,300);
    }
    assert.equal(finalAmount,await page.getByRole('region',{name:'测试统计',exact:true}).locator('.platform-business-footer').innerText());
    await page.goto(origin+'/help');await page.getByRole('heading',{name:'01 财务总览与查看',exact:true}).waitFor();assert.equal(await page.getByText('平台代码已在Github开源 ↗',{exact:true}).count(),1);

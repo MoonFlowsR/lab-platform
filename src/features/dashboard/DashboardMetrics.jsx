@@ -1,7 +1,10 @@
 import { workModule } from '../work/work-types.js';
 import { businessMetrics } from './dashboard-metrics.js';
+import { reimbursementMetrics } from '../finance/reimbursement.js';
+import { ReimbursementFigures } from '../finance/ReimbursementSummary.jsx';
 
-export default function DashboardMetrics({ workRequests, purchases, mode = 'review', money, onOpen, types = ['测试', '加工', '维修', '采购'] }) {
+export default function DashboardMetrics({ workRequests, purchases, mode = 'review', money, onOpen, showReimbursement = false, types = ['测试', '加工', '维修', '采购'] }) {
+  const reimbursement = showReimbursement ? reimbursementMetrics(workRequests, purchases) : null;
   return <div className={`platform-business-metrics${types.length === 1 ? " is-single" : ""}`}>
     {businessMetrics(workRequests, purchases).filter(metric => types.includes(metric.type)).map(metric => {
       const purchase = metric.type === '采购';
@@ -20,6 +23,7 @@ export default function DashboardMetrics({ workRequests, purchases, mode = 'revi
           <span>{purchase ? '实际入库' : '实际完成'} {metric.completed} 条 · {purchase ? '金额' : '最终费用'} <b>{money(metric.completedAmount)}</b></span>
           {purchase && <><span>待入库预计金额 <b>{money(metric.readyAmount)}</b></span><span>待审核预计金额 <b>{money(metric.pendingAmount)}</b></span>{metric.legacyEstimatedCount > 0 && <span>{metric.legacyEstimatedCount} 条旧记录沿用预计金额</span>}</>}
         </div>
+        {reimbursement && <ReimbursementFigures metric={reimbursement.byType.find(row => row.type === metric.type)} money={money} compact />}
       </section>;
     })}
   </div>;
