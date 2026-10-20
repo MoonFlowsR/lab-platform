@@ -1,4 +1,4 @@
-import ReimbursementStatus from '../finance/ReimbursementStatus.jsx';
+import ReimbursementStatus, { ReimbursementBadge } from '../finance/ReimbursementStatus.jsx';
 import { isReceivedPurchase, purchaseWasModified, purchaseAmount, purchaseAmountLabel, purchaseQuantityText, inboundChangesText } from './purchase-values.js';
 import SupplierChangeHistory from "../../shared/components/SupplierChangeHistory.jsx";
 import { useEffect, useState } from "react";
@@ -37,13 +37,13 @@ function PurchasesPage({ onReimbursementChange, registeredTeacherAccounts = [], 
 
   const renderCard = (p) => {
     const rowAttachments = attachments.filter((a) => !a.deleted_at && a.target_collection === "lab_purchase_requests" && (String(a.target_id) === String(p._id) || a.target_public_id === p.public_id));
-    return <div key={p._id} style={styles.listItem}>
+    return <div key={p._id} className="platform-request-record" style={styles.listItem}>
       <div style={styles.rowBetween}>
         <div>
           <h3 style={styles.h3}>{p.material_name}</h3>
           <p style={styles.meta}>{formatPublicNumber(p.public_id)} · 申请人：<strong className="platform-identity">{p.applicant_name}</strong> · 审核教师：<strong className="platform-identity">{reviewTeacherName(p)}</strong> · 提交时间：{formatDate(p.created_at)}</p>
         </div>
-        <div style={styles.badgeRow}><Badge text={p.status} />{purchaseWasModified(p) && <Badge text="完成时已修改" />}{p.is_first_purchase && <Badge text="首次采购" />}</div>
+        <div style={styles.badgeRow}><Badge text={p.status} /><ReimbursementBadge row={p} />{purchaseWasModified(p) && <Badge text="完成时已修改" />}{p.is_first_purchase && <Badge text="首次采购" />}</div>
       </div>
       <div className="platform-detail-grid" style={styles.detailGrid4}>
         <Info label="采购类别" value={p.purchase_category || "未填写"} />
