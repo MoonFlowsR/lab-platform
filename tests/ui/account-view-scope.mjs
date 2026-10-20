@@ -28,7 +28,9 @@ export async function checkAccountViewScope(browser, origin, out, snapshot, teac
       return route.fulfill({ json: { ok: true, rows: [], total: 0 } });
     });
     await page.goto(origin);
+    await page.waitForFunction(()=>document.querySelector('.platform-sync-status > span')?.textContent.includes('同步状态：同步完成'));
     await page.locator('.platform-metric-scope').getByText('团队全部申请', { exact: true }).waitFor();
+    await page.locator('main h3').filter({ hasText: '团队已完成项目' }).nth(2).waitFor();
     assert.equal(await page.locator('main').getByText('申请总数', { exact: true }).count(), 4);
     assert.equal(await page.locator('main').getByText('去审核 →', { exact: true }).count(), 0);
     assert.equal(await page.locator('main h3').filter({ hasText: '团队已完成项目' }).count(), 3);
@@ -47,6 +49,7 @@ export async function checkAccountViewScope(browser, origin, out, snapshot, teac
       assert(csv.includes(type === '采购' ? '团队核对材料' : '团队核对项目'));
       await scope.fill('本人');
       await page.getByRole('option', { name: '本人', exact: true }).click();
+      await page.waitForFunction(() => document.querySelectorAll('main > .platform-section-pending h3').length === 1);
       assert.equal(await pending.locator('h3').count(), 1);
       assert.equal(await scope.inputValue(), '本人');
     }
