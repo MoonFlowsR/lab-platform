@@ -132,6 +132,7 @@ function nowISO() {
 db.prepare("INSERT OR IGNORE INTO id_counters (id, value, updated_at) VALUES (1, 0, ?)").run(nowISO());
 
 require('./migrations/accounts-admin.cjs')({ db, nowISO });
+require('./migrations/accounts-finance.cjs')({ db });
 
 const accountSessions = require('./security/account-sessions.cjs')({ db, nowISO });
 

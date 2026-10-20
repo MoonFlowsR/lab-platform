@@ -1,3 +1,4 @@
+import ReimbursementStatus from '../finance/ReimbursementStatus.jsx';
 import { isReceivedPurchase, purchaseWasModified, purchaseAmount, purchaseAmountLabel, purchaseQuantityText, inboundChangesText } from './purchase-values.js';
 import SupplierChangeHistory from "../../shared/components/SupplierChangeHistory.jsx";
 import { useEffect, useState } from "react";
@@ -24,7 +25,7 @@ import StorageFields from "../../shared/components/StorageFields.jsx";
 import ExpiryDateField from "../../shared/components/ExpiryDateField.jsx";
 import ItemPhotoFields from "../../shared/components/ItemPhotoFields.jsx";
 
-function PurchasesPage({ registeredTeacherAccounts = [], teacherAccounts = [], reviewScope = "mine", onReviewScopeChange, viewScope = "mine", onViewScopeChange, materialCatalog = [], rows, logs = [], attachments = [], batches = [], purchaseHistory = [], purchaseCatalog = [], fundSummary = {}, currentUser, units = [], canSubmit, canReview, isAdmin = false, onAdd, onResubmit, onWithdraw, onReview, onCompleteInbound, onCloseRejected, onDeleteRecord, onHideRecord, onUploadAttachment, onDownloadAttachment, onDeleteAttachment, onExport }) {
+function PurchasesPage({ onReimbursementChange, registeredTeacherAccounts = [], teacherAccounts = [], reviewScope = "mine", onReviewScopeChange, viewScope = "mine", onViewScopeChange, materialCatalog = [], rows, logs = [], attachments = [], batches = [], purchaseHistory = [], purchaseCatalog = [], fundSummary = {}, currentUser, units = [], canSubmit, canReview, isAdmin = false, onAdd, onResubmit, onWithdraw, onReview, onCompleteInbound, onCloseRejected, onDeleteRecord, onHideRecord, onUploadAttachment, onDownloadAttachment, onDeleteAttachment, onExport }) {
   const [editingRow, setEditingRow] = useState(null);
   useEffect(() => { if (editingRow && !rows.some(row => row._id === editingRow._id)) setEditingRow(null); }, [rows, editingRow]);
   const [inboundRow, setInboundRow] = useState(null);
@@ -50,7 +51,7 @@ function PurchasesPage({ registeredTeacherAccounts = [], teacherAccounts = [], r
         <Info label={isReceivedPurchase(p) ? "到货数量" : "数量"} value={purchaseQuantityText(p)} />
         <Info label="采购渠道" value={p.preferred_supplier} />
         <Info label={purchaseAmountLabel(p)} value={money(purchaseAmount(p))} />
-        {isReceivedPurchase(p) && <Info label="工单状态" value={p.settlement_status || "未登记"} />}
+        {isReceivedPurchase(p) && <Info label="工单状态" value={<ReimbursementStatus row={p} currentUser={currentUser} onChange={onReimbursementChange} />} />}
         <Info label="使用目的" value={p.purchase_purpose || "未标注"} />
         {p.received_status === "已入库" && <Info label="有效期" value={p.expiry_date || "未填写"} />}
         <Info label="入库状态" value={p.received_status || (p.status === "已完成" ? "已入库" : "-")} />
@@ -72,7 +73,7 @@ function PurchasesPage({ registeredTeacherAccounts = [], teacherAccounts = [], r
         if (ok !== false) setInboundRow(null);
         return ok;
       }} />}
-      <RecordActions dangerous={isAdmin ? <button style={styles.dangerButton} onClick={() => onDeleteRecord?.("lab_purchase_requests", p)}>永久删除申请</button> : !canReview && <>{studentCanClose(p) && <button style={styles.warningButton} onClick={() => onCloseRejected?.("lab_purchase_requests", p)}>关闭工单</button>}<button style={styles.lightButton} onClick={() => onHideRecord?.("lab_purchase_requests", p)}>从我的列表隐藏</button></>}>
+      <RecordActions dangerous={isAdmin ? <button style={styles.dangerButton} onClick={() => onDeleteRecord?.("lab_purchase_requests", p)}>永久删除申请</button> : currentUser?.account_type === "student" && <>{studentCanClose(p) && <button style={styles.warningButton} onClick={() => onCloseRejected?.("lab_purchase_requests", p)}>关闭工单</button>}<button style={styles.lightButton} onClick={() => onHideRecord?.("lab_purchase_requests", p)}>从我的列表隐藏</button></>}>
         {canReview && canReviewAssignedRequest(p, currentUser) && p.status === "待教师审核" && <>
           <button style={styles.successButton} onClick={() => onReview(p, "已通过")}>同意</button>
           <button style={styles.dangerButton} onClick={() => onReview(p, "已驳回")}>驳回</button>
@@ -86,8 +87,8 @@ function PurchasesPage({ registeredTeacherAccounts = [], teacherAccounts = [], r
 
   return <main>
     <Toolbar
-      title={isAdmin ? "采购记录" : canReview ? "采购审核" : "采购/入库"}
-      description={isAdmin ? "查看团队采购和入库进度，管理记录。" : canReview ? "审核采购申请；到货后由申请人完成入库。" : "提交采购申请，跟进审核和入库。"}
+      title={(isAdmin || currentUser?.account_type === "finance") ? "采购记录" : canReview ? "采购审核" : "采购/入库"}
+      description={(isAdmin || currentUser?.account_type === "finance") ? "查看团队采购和入库进度，管理记录。" : canReview ? "审核采购申请；到货后由申请人完成入库。" : "提交采购申请，跟进审核和入库。"}
       onExport={onExport}
     />
     {canSubmit && !editingRow && <PurchaseForm registeredTeacherAccounts={registeredTeacherAccounts} teacherAccounts={teacherAccounts} materialCatalog={materialCatalog} onSubmit={onAdd} purchaseHistory={purchaseHistory} purchaseCatalog={purchaseCatalog} batches={batches} fundSummary={fundSummary} currentUser={currentUser} units={units} />}

@@ -1,3 +1,4 @@
+import ReimbursementStatus from '../../features/finance/ReimbursementStatus.jsx';
 import { isReceivedPurchase, purchaseAmount, purchaseAmountLabel, purchaseQuantityText } from "../../features/purchases/purchase-values.js";
 import { styles } from "../../app/styles.js";
 import { formatDate, money, sortByCreatedAt } from "../../app/formatters.js";
@@ -10,7 +11,7 @@ import { formatPublicNumber } from "../lib/public-number.js";
 function ClosureInfo({ row }) {
   return <p style={styles.meta}>关闭人：<strong className="platform-identity">{row.closed_by_name || row.closed_by_username || "未记录"}</strong> · 关闭时间：{formatDate(row.closed_at)} · <strong>不计完成费用或入库金额</strong></p>;
 }
-function PurchaseSummaryCard({ row }) {
+function PurchaseSummaryCard({ currentUser, onReimbursementChange, row }) {
   return <div style={styles.listItem}>
     <div style={styles.rowBetween}>
       <div>
@@ -27,7 +28,7 @@ function PurchaseSummaryCard({ row }) {
       <Info label="使用目的" value={row.purchase_purpose || "未标注"} />
       {row.received_status === "已入库" && <Info label="有效期" value={row.expiry_date || "未填写"} />}
       <Info label={purchaseAmountLabel(row)} value={money(purchaseAmount(row))} />
-      {isReceivedPurchase(row) && <Info label="工单状态" value={row.settlement_status || "未登记"} />}
+      {isReceivedPurchase(row) && <Info label="工单状态" value={<ReimbursementStatus row={row} currentUser={currentUser} onChange={onReimbursementChange} />} />}
     </div>
     {row.review_note && <p style={styles.note}><b>审批意见：</b>{row.review_note}{row.reviewed_by && <>（审批人：<strong className="platform-identity">{row.reviewed_by}</strong>）</>}</p>}
   </div>;
@@ -53,7 +54,7 @@ function ReviewHistory({ row, logs = [] }) {
   if (!history.length) return null;
   return <details open style={styles.logBox}><summary>审批记录（{history.length} 条）</summary><RecentRecords rows={sortByCreatedAt(history)}>{shown => <DataTable mobileColumns={["审批人", "审批结果", "审批意见", "审批时间"]} columns={["审批时间", "审批人", "审批结果", "审批意见"]} rows={shown.map(log => [formatDate(log.created_at), log.reviewer_name || log.reviewer_username || "-", log.action, log.review_note || "未填写"])} />}</RecentRecords></details>;
 }
-function WorkRequestCard({ row, logs = [], compact = false, completionDetailsOpen = false, attachmentPanel, actions, historyPanel }) {
+function WorkRequestCard({ currentUser, onReimbursementChange, row, logs = [], compact = false, completionDetailsOpen = false, attachmentPanel, actions, historyPanel }) {
   return <div style={styles.listItem}>
     <div style={styles.rowBetween}>
       <div>
@@ -71,7 +72,7 @@ function WorkRequestCard({ row, logs = [], compact = false, completionDetailsOpe
       {row.request_type === "维修" && <Info label="维修人员" value={row.repair_personnel || "未登记"} />}
       <Info label="工作量" value={`${row.workload_quantity || "-"} ${row.workload_unit || ""}`} />
       <Info label={(isCompletedWork(row) ? "最终总" : row.status === "已关闭" ? "原预计总" : "预计总") + row.request_type + "费"} value={money(workFee(row))} />
-      {isCompletedWork(row) && <Info label="工单状态" value={row.settlement_status || "未登记"} />}
+      {isCompletedWork(row) && <Info label="工单状态" value={<ReimbursementStatus row={row} currentUser={currentUser} onChange={onReimbursementChange} />} />}
     </div>
     {row.status === "已关闭" && <ClosureInfo row={row} />}
     {isCompletedWork(row) && <p style={styles.meta}>完结人：<strong className="platform-identity">{row.completed_by || row.completed_username || "未记录"}</strong> · 完成时间：{formatDate(row.completed_at)}</p>}

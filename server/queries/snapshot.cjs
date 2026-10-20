@@ -56,7 +56,7 @@ function buildFundSummary() {
 
 function listAll(account, { includeAudit = true } = {}) {
   const isAdmin = account.account_type === "admin";
-  const isTeacher = account.account_type === "teacher";
+  const isTeacher = ["teacher", "finance"].includes(account.account_type);
 
   // Signed-in members share work progress; mutations remain restricted to owners/reviewers.
   const workRequests = listRecords("lab_work_requests");

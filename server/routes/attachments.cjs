@@ -1,7 +1,8 @@
 module.exports = function installAttachments(context) {
 const { UPLOAD_DIR, addAudit, app, asyncHandler, authMiddleware, ensureCanAccessAttachmentTarget, ensureCanDownloadAttachment, fs, getMonthFolder, getRecord, insertRecord, listRecords, nowISO, path, requestJson, retiredLocationPhotoIds, safeCollectionName, safeFileName, updateRecord, upload } = context;
+const requireAttachmentWrite = (req, res, next) => req.account.account_type === 'finance' ? res.status(403).json({ok:false,message:'财务账号可查看和下载业务附件。'}) : next();
 const isStockEvidence = require('../security/stock-evidence.cjs');
-app.post("/api/attachments/upload", authMiddleware, upload.single("file"), asyncHandler(async (req, res) => {
+app.post("/api/attachments/upload", authMiddleware, requireAttachmentWrite, upload.single("file"), asyncHandler(async (req, res) => {
   const account = req.account;
   const file = req.file;
   if (!file) throw new Error("请选择需要上传的附件。");
@@ -47,7 +48,7 @@ app.post("/api/attachments/upload", authMiddleware, upload.single("file"), async
   res.json({ ok: true, attachment: record });
 }));
 
-app.post("/api/attachments/uploadJson", authMiddleware, requestJson.attachment, asyncHandler(async (req, res) => {
+app.post("/api/attachments/uploadJson", authMiddleware, requireAttachmentWrite, requestJson.attachment, asyncHandler(async (req, res) => {
   const account = req.account;
 
   const targetCollection = String(req.body.target_collection || "").trim();
@@ -100,7 +101,7 @@ app.post("/api/attachments/uploadJson", authMiddleware, requestJson.attachment, 
   res.json({ ok: true, attachment: record });
 }));
 
-app.post("/api/attachments/uploadDraftJson", authMiddleware, requestJson.attachment, asyncHandler(async (req, res) => {
+app.post("/api/attachments/uploadDraftJson", authMiddleware, requireAttachmentWrite, requestJson.attachment, asyncHandler(async (req, res) => {
   const account = req.account;
   const draftId = String(req.body.draft_id || "").trim();
   if (!draftId) throw new Error("缺少临时附件编号。");
@@ -146,7 +147,7 @@ app.post("/api/attachments/uploadDraftJson", authMiddleware, requestJson.attachm
   res.json({ ok: true, attachment: record });
 }));
 
-app.post("/api/attachments/commitDraft", authMiddleware, asyncHandler(async (req, res) => {
+app.post("/api/attachments/commitDraft", authMiddleware, requireAttachmentWrite, asyncHandler(async (req, res) => {
   const account = req.account;
   const draftId = String(req.body.draft_id || "").trim();
   const targetCollection = String(req.body.target_collection || "").trim();
@@ -178,7 +179,7 @@ app.post("/api/attachments/commitDraft", authMiddleware, asyncHandler(async (req
   res.json({ ok: true, attachments: updated });
 }));
 
-app.post("/api/attachments/delete", authMiddleware, asyncHandler(async (req, res) => {
+app.post("/api/attachments/delete", authMiddleware, requireAttachmentWrite, asyncHandler(async (req, res) => {
   const account = req.account;
   const id = String(req.body.id || "").trim();
   if (!id) throw new Error("缺少附件编号。");

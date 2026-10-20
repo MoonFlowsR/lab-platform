@@ -11,7 +11,7 @@ import { Empty } from "../../shared/components/ui.jsx";
 import { AttachmentPanel } from "../../shared/components/attachments.jsx";
 import { formatPublicNumber } from "../../shared/lib/public-number.js";
 
-function Dashboard({ stockOutRequests = [], accounts = [], stockRows = [], currentUser, workRequests, batches, purchases, attachments = [], onDownloadAttachment, canManageStock = false, setActiveTab }) {
+function Dashboard({ onReimbursementChange, stockOutRequests = [], accounts = [], stockRows = [], currentUser, workRequests, batches, purchases, attachments = [], onDownloadAttachment, canManageStock = false, setActiveTab }) {
   const financeOverview = defaultViewScope(currentUser) === "all";
   const teamOverview = usesTeamOverview(currentUser);
   const emptyRequestText = type => financeOverview ? `团队近期暂无${type}申请。` : currentUser?.account_type === "admin" ? `团队近期暂无需审批的${type}申请。` : canManageStock ? `你近期暂无需审批的${type}申请。` : `你近期暂无${type}申请。`;
@@ -34,7 +34,7 @@ function Dashboard({ stockOutRequests = [], accounts = [], stockRows = [], curre
         <div><h2 style={styles.h2}>待入库提醒</h2><p style={styles.muted}>采购审核通过后，由原申请人到货时上传实物照片并完成入库，入库完成后采购才定义为“已完成”。</p></div>
         <button style={styles.primaryButton} onClick={() => setActiveTab("purchases")}>{financeOverview ? "查看采购记录" : currentUser?.account_type === "teacher" ? "查看采购审核" : currentUser?.account_type === "admin" ? "查看采购记录" : "去入库"}</button>
       </div>
-      <RecentRecords rows={pendingInbound}>{shown => shown.map((row) => <PurchaseSummaryCard key={row._id} row={row} />)}</RecentRecords>
+      <RecentRecords rows={pendingInbound}>{shown => shown.map((row) => <PurchaseSummaryCard currentUser={currentUser} onReimbursementChange={onReimbursementChange} key={row._id} row={row} />)}</RecentRecords>
     </section>}
     <div style={styles.twoColumns}>
       <div style={styles.sideStack}>
@@ -42,12 +42,12 @@ function Dashboard({ stockOutRequests = [], accounts = [], stockRows = [], curre
           const recentRows = recentWorkRows(type);
           return <section key={type} style={styles.card}>
             <div style={styles.cardHeader}><h2 style={styles.h2}>近期{type}</h2><button style={styles.lightButton} onClick={() => setActiveTab(tab)}>进入{type}{financeOverview ? "记录" : currentUser?.account_type === "teacher" ? "审核" : currentUser?.account_type === "admin" ? "记录" : ""}</button></div>
-            {recentRows.length === 0 ? <Empty text={emptyRequestText(type)} /> : <RecentRecords rows={recentRows}>{shown => shown.map((row) => <WorkRequestCard key={row._id} row={row} compact attachmentPanel={<AttachmentPanel attachments={attachments.filter((a) => !a.deleted_at && a.target_collection === "lab_work_requests" && (String(a.target_id) === String(row._id) || (a.target_public_id && a.target_public_id === row.public_id)))} onDownload={onDownloadAttachment} />} />)}</RecentRecords>}
+            {recentRows.length === 0 ? <Empty text={emptyRequestText(type)} /> : <RecentRecords rows={recentRows}>{shown => shown.map((row) => <WorkRequestCard currentUser={currentUser} onReimbursementChange={onReimbursementChange} key={row._id} row={row} compact attachmentPanel={<AttachmentPanel attachments={attachments.filter((a) => !a.deleted_at && a.target_collection === "lab_work_requests" && (String(a.target_id) === String(row._id) || (a.target_public_id && a.target_public_id === row.public_id)))} onDownload={onDownloadAttachment} />} />)}</RecentRecords>}
           </section>;
         })}
         <section style={styles.card}>
           <div style={styles.cardHeader}><h2 style={styles.h2}>近期采购</h2><button style={styles.lightButton} onClick={() => setActiveTab("purchases")}>进入采购{financeOverview ? "记录" : currentUser?.account_type === "teacher" ? "审核" : currentUser?.account_type === "admin" ? "记录" : ""}</button></div>
-          {purchases.length === 0 ? <Empty text={emptyRequestText("采购")} /> : <RecentRecords rows={purchases}>{shown => shown.map((row) => <PurchaseSummaryCard key={row._id} row={row} />)}</RecentRecords>}
+          {purchases.length === 0 ? <Empty text={emptyRequestText("采购")} /> : <RecentRecords rows={purchases}>{shown => shown.map((row) => <PurchaseSummaryCard currentUser={currentUser} onReimbursementChange={onReimbursementChange} key={row._id} row={row} />)}</RecentRecords>}
         </section>
       </div>
       <aside style={styles.sideStack}>

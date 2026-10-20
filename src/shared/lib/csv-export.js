@@ -1,3 +1,4 @@
+import { reimbursementLabel } from '../../features/finance/reimbursement.js';
 import { isReceivedPurchase, purchaseWasModified, hasFinalPurchaseAmount, inboundChangesText } from '../../features/purchases/purchase-values.js';
 import { workFeeKey } from '../../features/work/work-types.js';
 import { collectionName, actionName } from './audit-labels.js';
@@ -34,6 +35,8 @@ const workColumns = type => [
   column('预计总' + type + '费（元）', row => numeric(row.completion_original?.[workFeeKey(type)] ?? workFee(row))),
   column('最终总' + type + '费（元）', row => isCompletedWork(row) ? workFee(row) : '', true),
   column('工单状态', row => isCompletedWork(row) ? row.settlement_status || '未登记' : '', true),
+  column('报销状态', row => isCompletedWork(row) ? reimbursementLabel(row) : '', true),
+  column('报销登记人','reimbursed_by',true),column('报销登记时间',row=>date(row.reimbursed_at),true),
   column('完结时修改', row => row.completion_modified ? '是' : '', true),
   column('完结修改明细', completionChangesText, true),
   column('申请状态', row => row.status === '已通过' ? '已通过（待确认完成）' : row.status), column('提交时间', row => date(row.created_at)), ...approval,...closure,
@@ -41,7 +44,7 @@ const workColumns = type => [
   column('附件文件名', (row, context) => attachments(row, 'lab_work_requests', context), true),
 ];
 const profileColumns = [column('系统责任教师',row=>row.student_profile?.responsible_teacher_name,true),column('实际指导教师',row=>row.student_profile?.guiding_teacher_name,true),column('毕业年份',row=>row.student_profile?.graduation_year,true),column('个人资料状态',row=>row.account_type==='student' ? row.profile_required ? '待完善' : '已完善' : '',true)];
-const role = value => ({student:'学生',teacher:'教师',admin:'管理员',system:'系统维护'})[value] || value;
+const role = value => ({student:'学生',teacher:'教师',admin:'管理员',finance:'财务',system:'系统维护'})[value] || value;
 const definitions = {
   test: { title: '测试申请', columns: workColumns('测试') },
   processing: { title: '加工申请', columns: workColumns('加工') },
@@ -49,7 +52,7 @@ const definitions = {
   purchases: { title: '采购申请', columns: [
     numberColumn('申请编号','public_id'),column('采购物品','material_name'),column('采购类别','purchase_category'),column('规格型号','specification'),
     column('申请人', row => row.applicant_name || row.applicant_username),column('审核教师',reviewTeacherName),column('系统责任教师','responsible_teacher_name',true),column('实际指导教师','guiding_teacher_name',true),column('毕业年份','graduation_year',true),column('采购数量',row => numeric(row.quantity)),column('计量单位','unit'),
-    column('采购渠道','preferred_supplier'),column('采购渠道修改记录',supplierHistory,true),column('使用目的','purchase_purpose'),column('有效期',row => row.received_status === '已入库' ? row.expiry_date : '',true),column('预计金额（元）',row => numeric(row.estimated_price)),column('最终总采购费（元）',row => hasFinalPurchaseAmount(row) ? numeric(row.actual_total_price) : '',true),column('工单状态',row => isReceivedPurchase(row) ? row.settlement_status || '未登记' : '',true),column('完成时修改',row => purchaseWasModified(row) ? '是' : '',true),column('入库修改明细',inboundChangesText,true),
+    column('采购渠道','preferred_supplier'),column('采购渠道修改记录',supplierHistory,true),column('使用目的','purchase_purpose'),column('有效期',row => row.received_status === '已入库' ? row.expiry_date : '',true),column('预计金额（元）',row => numeric(row.estimated_price)),column('最终总采购费（元）',row => hasFinalPurchaseAmount(row) ? numeric(row.actual_total_price) : '',true),column('工单状态',row => isReceivedPurchase(row) ? row.settlement_status || '未登记' : '',true),column('报销状态',row=>isReceivedPurchase(row)?reimbursementLabel(row):'',true),column('报销登记人','reimbursed_by',true),column('报销登记时间',row=>date(row.reimbursed_at),true),column('完成时修改',row => purchaseWasModified(row) ? '是' : '',true),column('入库修改明细',inboundChangesText,true),
     column('申请状态','status'),column('提交时间',row => date(row.created_at)),...approval,...closure,
     column('实际到货数量',row => numeric(row.actual_received_qty),true),column('到货计量单位','actual_received_unit',true),column('入库存放房间',row => row.storage_room || row.storage_location,true),column('入库具体位置简述','storage_detail',true),
     column('入库时间',row => date(row.completed_at),true),column('入库确认人',row => row.completed_by || row.completed_username,true),column('入库备注','inbound_note',true),column('入库状态','received_status',true),column('安全事项','safety_notes',true),column('备注','remark',true),column('附件文件名',(row,context) => attachments(row,'lab_purchase_requests',context),true),

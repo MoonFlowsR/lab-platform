@@ -10,9 +10,10 @@ export default function StockOutRequests({ rows = [], currentUser, batches = [],
   const history = rows.filter(row => !['待采购人审批','已同意待出库'].includes(row.status));
   const operate = async (row,callback) => { if (busy) return; setBusy(row._id); try { await callback?.(); } finally { setBusy(''); } };
   const card = row => {
-    const mine = row.applicant_username === currentUser?.username, reviewer = row.purchaser_username === currentUser?.username, photo = attachments.find(file => String(file._id) === String(row.photo_attachment_id));
+    const finance = currentUser?.account_type === 'finance';
+    const mine = !finance && row.applicant_username === currentUser?.username, reviewer = !finance && row.purchaser_username === currentUser?.username, photo = attachments.find(file => String(file._id) === String(row.photo_attachment_id));
     const selfPurchase = stockRequestIsPurchaserSelf(row, batches, purchaseRequests);
-    const canComplete = canCompleteStockRequest(row, currentUser, batches, purchaseRequests);
+    const canComplete = !finance && canCompleteStockRequest(row, currentUser, batches, purchaseRequests);
     const statusLabel = selfPurchase && row.status === '待采购人审批' ? '待出库登记' : row.status;
     const canWithdraw = mine && ['待采购人审批','已同意待出库','已驳回'].includes(row.status);
     return <article key={row._id} className="platform-stock-request" aria-label={`出库申请 ${formatPublicNumber(row.public_id)}`}>

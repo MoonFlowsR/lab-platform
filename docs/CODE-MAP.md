@@ -5,6 +5,7 @@
 | 业务 | 页面与前端操作 | 服务端实现 |
 | --- | --- | --- |
 | 账号、学生资料 | `src/features/accounts` | `server/routes/auth.cjs`、`server/features/accounts`、`server/services/operations/admin.cjs` |
+| 财务身份与报销 | `src/features/finance` | `server/services/operations/finance.cjs`、`server/features/accounts/account-role.cjs`、`server/migrations/accounts-finance.cjs` |
 | 测试、加工、维修 | `src/features/work` | `server/features/work`、`server/services/operations/work.cjs` |
 | 采购与到货入库 | `src/features/purchases` | `server/services/operations/purchase.cjs` |
 | 材料建库、批次修改 | `src/features/inventory` | `server/features/inventory`、`server/services/operations/inventory.cjs` |
@@ -39,7 +40,7 @@
 | `server/security` | 登录限流、会话撤销、学生到期停用和请求限制 |
 | `server/migrations`、`server/legacy` | 现有部署的数据兼容；删除前查调用及历史数据 |
 | `tests/features`、`tests/security` | 业务一致性、身份匹配与安全回归测试 |
-| `tests/ui/platform.mjs` | 使用虚构数据检查三种角色及电脑、手机页面 |
+| `tests/ui/platform.mjs` | 使用虚构数据检查四种角色及电脑、手机页面 |
 | `scripts` | 构建、备份和更新工具 |
 
 ## 改动顺序

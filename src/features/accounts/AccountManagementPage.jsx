@@ -22,6 +22,13 @@ function AccountManagementPage({ accounts = [], allAccounts = [], teachers = [],
       await onReload();
     } catch(error) {showAlert(error.message);}
   }
+  async function changeRole(row) {
+    const next = row.account_type === 'finance' ? 'teacher' : 'finance';
+    const label = next === 'finance' ? '财务' : '教师';
+    if (!await showConfirm('将此账号切换为' + label + '？切换后需重新登录。', {title:'切换账号身份',details:[{label:'账号',value:row.display_name || row.username},{label:'新身份',value:label}]})) return;
+    try { await callLabOps('adminSetAccountRole',{id:row.id || row._id,account_type:next,expected_updated_at:row.updated_at},auditProps.account);await onReload(); }
+    catch(error) { await showAlert(error.message); }
+  }
   const [showAllAccounts, setShowAllAccounts] = useState(false);
   const newestFirst = (a, b) => (Date.parse(b.created_at) || 0) - (Date.parse(a.created_at) || 0) || Number(b.id || b._id) - Number(a.id || a._id);
   const orderedAccounts = [...accounts].sort(newestFirst);
@@ -52,6 +59,7 @@ function AccountManagementPage({ accounts = [], allAccounts = [], teachers = [],
           <td data-label="个人资料" style={styles.td}>{a.account_type === "student" ? a.student_profile ? <>{a.student_profile.graduation_year}年毕业 / 合作结束</> : <strong style={{color:"#b91c1c"}}>待完善</strong> : "—"}</td>
           <td data-label="创建时间" style={styles.td}>{formatDate(a.created_at)}</td>
           <td data-label="操作" style={styles.td}><div style={styles.buttonRowCompact}>
+            {["teacher","finance"].includes(a.account_type) && <button style={styles.lightButton} onClick={()=>changeRole(a)}>{a.account_type === "finance" ? "设为教师" : "设为财务"}</button>}
             {a.account_type === "student" && <button style={styles.lightButton} onClick={()=>setEditing(a)}>修改学生资料</button>}
             {a.account_type !== "admin" && <button style={styles.lightButton} onClick={()=>transfer(a)}>移交出库审批</button>}
             {a.status === "pending" && <button style={styles.successButton} onClick={() => onSetAccountStatus(a, "active")}>审核通过</button>}

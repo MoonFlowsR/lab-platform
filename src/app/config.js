@@ -9,7 +9,7 @@ const accountTypes = [
   { value: "teacher", label: "教师账号" },
   { value: "admin", label: "管理员账号" },
 ];
-const accountTypeLabels = { student: "学生账号", teacher: "教师账号", admin: "管理员账号" };
+const accountTypeLabels = { student: "学生账号", teacher: "教师账号", admin: "管理员账号", finance: "财务账号" };
 const accountStatusLabels = { active: "启用中", pending: "待审核", disabled: "已停用" };
 const PLATFORM_TITLE = platformSettings.title;
 const ACCOUNT_STORAGE_KEY = "surface_lab_account";
