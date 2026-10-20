@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS accounts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT NOT NULL UNIQUE,
   display_name TEXT NOT NULL,
-  account_type TEXT NOT NULL CHECK(account_type IN ('student', 'teacher', 'admin')),
+  account_type TEXT NOT NULL CHECK(account_type IN ('student', 'teacher', 'admin', 'finance')),
   direction TEXT DEFAULT '',
   teacher_name TEXT DEFAULT '',
   status TEXT NOT NULL DEFAULT 'active',

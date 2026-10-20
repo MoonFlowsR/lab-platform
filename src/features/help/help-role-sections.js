@@ -3,6 +3,7 @@ import { helpTextLeaves, sectionAnnotations } from './help-annotations.js';
 export const HELP_ROLES = [
   { value: 'student', label: '学生' },
   { value: 'teacher', label: '教师' },
+  { value: 'finance', label: '财务' },
   { value: 'admin', label: '管理员' },
 ];
 

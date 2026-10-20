@@ -3,8 +3,8 @@ const assert = require('node:assert/strict');
 
 test('maintenance is a help category and never becomes an account role or changes student defaults', async () => {
   const { HELP_ROLES, HELP_VIEWS, helpRoleForAccount, helpSectionsForView, roleHelpSections } = await import('../../src/features/help/help-role-sections.js');
-  assert.deepEqual(HELP_ROLES.map(role => role.value), ['student', 'teacher', 'admin']);
-  assert.deepEqual(HELP_VIEWS.map(view => view.value), ['student', 'teacher', 'admin', 'maintenance']);
+  assert.deepEqual(HELP_ROLES.map(role => role.value), ['student', 'teacher', 'finance', 'admin']);
+  assert.deepEqual(HELP_VIEWS.map(view => view.value), ['student', 'teacher', 'finance', 'admin', 'maintenance']);
   assert.equal(helpRoleForAccount('maintenance'), 'student');
   const sections = [{ id: 'student-test', role: 'student' }, { id: 'maintenance-storage', role: 'maintenance' }];
   assert.deepEqual(helpSectionsForView(sections, 'maintenance'), [sections[1]]);
@@ -42,7 +42,7 @@ const comment = (id, sectionId, blockId, extra = {}) => ({ id, section_id: secti
 const visible = row => row.blocks.flatMap((block, index) => block.hidden ? [] : [index]);
 
 test('help roles have distinct Chinese labels and account selection safely defaults to student', () => {
-  assert.deepEqual(HELP_ROLES, [{ value: 'student', label: '学生' }, { value: 'teacher', label: '教师' }, { value: 'admin', label: '管理员' }]);
+  assert.deepEqual(HELP_ROLES, [{ value: 'student', label: '学生' }, { value: 'teacher', label: '教师' }, { value: 'finance', label: '财务' }, { value: 'admin', label: '管理员' }]);
   for (const role of HELP_ROLES) assert.equal(helpRoleForAccount(role.value), role.value);
   for (const unknown of [undefined, null, '', 'visitor', 'Student', 'constructor', {}, 1]) assert.equal(helpRoleForAccount(unknown), 'student');
 });

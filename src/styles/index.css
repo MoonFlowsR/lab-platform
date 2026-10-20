@@ -271,3 +271,5 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
 @media(max-width:640px){.platform-shell .platform-filter-bar.has-inventory-category,.platform-shell .platform-filter-bar.has-inventory-category:has(.platform-date-filter){grid-template-columns:minmax(0,1fr)!important}}
 
 .platform-business-card.is-repair{--business-color:#0e7490}
+
+.platform-reimbursement-state{display:inline-flex;align-items:center;flex-wrap:wrap;gap:6px 12px;min-width:0}.platform-reimbursement-check{display:inline-flex;align-items:center;gap:6px;min-height:32px;cursor:pointer;font-weight:700;color:#64748b}.platform-reimbursement-check:has(input:checked){color:#15803d}.platform-reimbursement-check input{width:18px;height:18px;margin:0;accent-color:#15803d}.platform-reimbursement-state .is-reimbursed{color:#15803d}.platform-reimbursement-state .is-unreimbursed{color:#64748b;font-weight:500}

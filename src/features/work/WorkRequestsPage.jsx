@@ -16,7 +16,7 @@ import { showAlert } from "../../shared/components/platform-dialog.jsx";
 import CustomOptionFields from "../../shared/components/CustomOptionFields.jsx";
 import { ALLOWED_ATTACHMENT_LABEL } from "../../app/attachment-validation.js";
 
-function WorkRequestsPage({ workHistory = [], teacherAccounts = [], reviewScope = "mine", onReviewScopeChange, fixedType, rows, logs, attachments = [], currentUser, units = [], canSubmit, canReview, isAdmin = false, onAdd, onResubmit, onWithdraw, onReview, onComplete, onCloseRejected, onDeleteRecord, onHideRecord, onUploadAttachment, onDownloadAttachment, onDeleteAttachment, onExport }) {
+function WorkRequestsPage({ onReimbursementChange, workHistory = [], teacherAccounts = [], reviewScope = "mine", onReviewScopeChange, fixedType, rows, logs, attachments = [], currentUser, units = [], canSubmit, canReview, isAdmin = false, onAdd, onResubmit, onWithdraw, onReview, onComplete, onCloseRejected, onDeleteRecord, onHideRecord, onUploadAttachment, onDownloadAttachment, onDeleteAttachment, onExport }) {
   const historyIndex = useMemo(() => canReview ? indexWorkHistory(workHistory) : new Map(), [canReview, workHistory]);
   const [editingRow, setEditingRow] = useState(null);
   useEffect(() => { if (editingRow && !rows.some(row => row._id === editingRow._id)) setEditingRow(null); }, [rows, editingRow]);
@@ -29,12 +29,13 @@ function WorkRequestsPage({ workHistory = [], teacherAccounts = [], reviewScope 
     const rowAttachments = attachments.filter((a) => !a.deleted_at && a.target_collection === "lab_work_requests" && (String(a.target_id) === String(row._id) || a.target_public_id === row.public_id));
     return <WorkRequestCard
       key={row._id}
+      currentUser={currentUser} onReimbursementChange={onReimbursementChange}
       row={row}
       completionDetailsOpen={row.completion_modified === true}
       historyPanel={canReview && row.status === "待教师审核" && <WorkHistory type={fixedType} rows={recentSameWork(row, historyIndex)} />}
       logs={logs.filter((log) => String(log.target_id) === String(row._id) || log.target_public_id === row.public_id)}
       attachmentPanel={<AttachmentPanel targetCollection="lab_work_requests" row={row} attachments={rowAttachments} onUpload={onUploadAttachment} onDownload={onDownloadAttachment} />}
-      actions={<RecordActions dangerous={isAdmin ? <button style={styles.dangerButton} onClick={() => onDeleteRecord?.("lab_work_requests", row)}>永久删除申请</button> : !canReview && <>{studentCanClose(row) && <button style={styles.warningButton} onClick={() => onCloseRejected?.("lab_work_requests", row)}>关闭工单</button>}<button style={styles.lightButton} onClick={() => onHideRecord?.("lab_work_requests", row)}>从我的列表隐藏</button></>}>
+      actions={<RecordActions dangerous={isAdmin ? <button style={styles.dangerButton} onClick={() => onDeleteRecord?.("lab_work_requests", row)}>永久删除申请</button> : currentUser?.account_type === "student" && <>{studentCanClose(row) && <button style={styles.warningButton} onClick={() => onCloseRejected?.("lab_work_requests", row)}>关闭工单</button>}<button style={styles.lightButton} onClick={() => onHideRecord?.("lab_work_requests", row)}>从我的列表隐藏</button></>}>
         {canReview && canReviewAssignedRequest(row, currentUser) && row.status === "待教师审核" && <>
           <button style={styles.successButton} onClick={() => onReview(row, "已通过")}>同意</button>
           <button style={styles.dangerButton} onClick={() => onReview(row, "已驳回")}>驳回</button>
@@ -46,8 +47,8 @@ function WorkRequestsPage({ workHistory = [], teacherAccounts = [], reviewScope 
     />;
   };
 
-  const title = isAdmin ? `${fixedType}记录` : canReview ? `${fixedType}审核` : fixedType;
-  const description = isAdmin
+  const title = (isAdmin || currentUser?.account_type === "finance") ? `${fixedType}记录` : canReview ? `${fixedType}审核` : fixedType;
+  const description = (isAdmin || currentUser?.account_type === "finance")
     ? `查看全部申请及审批记录。`
     : canReview
       ? `同意或驳回待审核申请，保留审批记录。`
