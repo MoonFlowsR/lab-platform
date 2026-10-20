@@ -1,5 +1,5 @@
 module.exports = function installAuth(context) {
-const { authAttempts, ADMIN_INVITE_CODE, STUDENT_INVITE_CODE, TEACHER_INVITE_CODE, addAudit, app, asyncHandler, authMiddleware, bcrypt, db, getInitialAccountStatus, getRegisteredTeacherAccountsForDropdown, graduationExpiry, isValidLoginId, nowISO, publicAccount, recordChanges, signToken, studentProfiles } = context;
+const { authAttempts, ADMIN_INVITE_CODE, FINANCE_INVITE_CODE, STUDENT_INVITE_CODE, TEACHER_INVITE_CODE, addAudit, app, asyncHandler, authMiddleware, bcrypt, db, getInitialAccountStatus, getRegisteredTeacherAccountsForDropdown, graduationExpiry, isValidLoginId, nowISO, publicAccount, recordChanges, signToken, studentProfiles } = context;
 // Unknown accounts perform the same password check without revealing their existence.
 const missingAccountHash = bcrypt.hashSync(require('node:crypto').randomBytes(32).toString('hex'), 12);
 app.post("/api/auth/register", authAttempts.byAccount, asyncHandler(async (req, res) => {
@@ -12,10 +12,11 @@ app.post("/api/auth/register", authAttempts.byAccount, asyncHandler(async (req, 
 
   if (!isValidLoginId(username)) throw new Error("请按页面提示填写有效的登录账号。");
   if (!password || password.length < 6) throw new Error("密码至少 6 位。");
-  if (!["student", "teacher", "admin"].includes(accountType)) throw new Error("账号类型不合法。");
+  if (!["student", "teacher", "finance", "admin"].includes(accountType)) throw new Error("账号类型不合法。");
 
   const studentCode = String(req.body.student_code || req.body.invite_code || "").trim();
   const teacherCode = String(req.body.teacher_code || "").trim();
+  const financeCode = String(req.body.finance_code || "").trim();
   const adminCode = String(req.body.admin_code || "").trim();
 
   if (accountType === "student" && studentCode !== STUDENT_INVITE_CODE) {
@@ -24,6 +25,11 @@ app.post("/api/auth/register", authAttempts.byAccount, asyncHandler(async (req, 
 
   if (accountType === "teacher" && teacherCode !== TEACHER_INVITE_CODE) {
     throw new Error("教师注册码错误，不能注册教师账号。");
+  }
+
+  if (accountType === "finance") {
+    if (!FINANCE_INVITE_CODE) throw new Error("财务注册码尚未配置，请联系管理员。");
+    if (financeCode !== FINANCE_INVITE_CODE) throw new Error("财务注册码错误，不能注册财务账号。");
   }
 
   if (accountType === "admin" && adminCode !== ADMIN_INVITE_CODE) {

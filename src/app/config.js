@@ -7,6 +7,7 @@ const API_BASE = "";
 const accountTypes = [
   { value: "student", label: "学生账号" },
   { value: "teacher", label: "教师账号" },
+  { value: "finance", label: "财务账号" },
   { value: "admin", label: "管理员账号" },
 ];
 const accountTypeLabels = { student: "学生账号", teacher: "教师账号", admin: "管理员账号", finance: "财务账号" };
