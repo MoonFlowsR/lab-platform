@@ -79,7 +79,10 @@ const ADMIN_INVITE_CODE = requiredSecret('ADMIN_INVITE_CODE', 12);
 
 const STUDENT_INVITE_CODE = requiredSecret('STUDENT_INVITE_CODE', 12);
 
-if (new Set([TEACHER_INVITE_CODE, ADMIN_INVITE_CODE, STUDENT_INVITE_CODE]).size !== 3) throw new Error('三个角色的注册码必须互不相同。');
+// Existing deployments keep running until a separate finance code is configured.
+const FINANCE_INVITE_CODE = String(process.env.FINANCE_INVITE_CODE || '').trim() ? requiredSecret('FINANCE_INVITE_CODE', 12) : '';
+const inviteCodes = [STUDENT_INVITE_CODE, TEACHER_INVITE_CODE, FINANCE_INVITE_CODE, ADMIN_INVITE_CODE].filter(Boolean);
+if (new Set(inviteCodes).size !== inviteCodes.length) throw new Error('各角色的注册码必须互不相同。');
 
 
 
@@ -403,7 +406,7 @@ function getInitialAccountStatus(accountType) {
     return existingAdmin ? "pending" : "active";
   }
 
-  if (accountType === "teacher") return "pending";
+  if (["teacher", "finance"].includes(accountType)) return "pending";
   return "active";
 }
 
@@ -600,5 +603,5 @@ const syncResponse = require("./services/sync-response.cjs")({ db, listAll });
 const deletionService = createDeletionService({ db, uploadDir: UPLOAD_DIR, nowISO, addAudit });
 
 const stockOutService = createStockOutService({ db, getRecord, listRecords, insertRecord, updateRecord, nextPublicId, addAudit, nowISO, storageDetails, requireItemPhoto, bindStockEvidence, batchPurchasePurpose, selectedStockTeachers });
-return { graduationExpiry, accountSessions, authAttempts, ADMIN_INVITE_CODE, BACKUP_DIR, DB_PATH, DIST_DIR, HOST, PORT, PURCHASE_EDIT_FIELDS, STUDENT_INVITE_CODE, TEACHER_INVITE_CODE, UPLOAD_DIR, WORK_REQUEST_EDIT_FIELDS, addAudit, addReviewLog, app, asyncHandler, authMiddleware, batchPurchasePurpose, bcrypt, bindStockEvidence, closeRejectedRequest, completeWorkValues, db, deletionService, ensureCanAccessAttachmentTarget, ensureCanDownloadAttachment, express, fs, getInitialAccountStatus, getMonthFolder, getPreviousPurchases, getRecord, getRegisteredTeacherAccountsForDropdown, initializeMaterialStock, insertRecord, isValidLoginId, isImageAttachmentRecord, listRecords, nextPublicId, normalizeItemName, nowISO, num, path, pickFields, publicAccount, publicAccountForAdmin, purchaseCategory, purchasePurpose, recordChanges, requestJson, requireAdmin, requireAssignedReviewer, requireItemPhoto, requireOwner, requireStockEvidence, requireStudentSubmission, requireTeacherOrAdmin, requiredPurchaseExpiryDate, retiredLocationPhotoIds, safeCollectionName, safeFileName, saveWorkWithAttachments, selectedReviewTeacher, selectedStockTeachers, signToken, stockOutService, storageDetails, studentProfiles, syncResponse, updateBatchInformation, updateRecord, upload, validatePersonalHiddenCollection, workRequestCosts };
+return { graduationExpiry, accountSessions, authAttempts, ADMIN_INVITE_CODE, FINANCE_INVITE_CODE, BACKUP_DIR, DB_PATH, DIST_DIR, HOST, PORT, PURCHASE_EDIT_FIELDS, STUDENT_INVITE_CODE, TEACHER_INVITE_CODE, UPLOAD_DIR, WORK_REQUEST_EDIT_FIELDS, addAudit, addReviewLog, app, asyncHandler, authMiddleware, batchPurchasePurpose, bcrypt, bindStockEvidence, closeRejectedRequest, completeWorkValues, db, deletionService, ensureCanAccessAttachmentTarget, ensureCanDownloadAttachment, express, fs, getInitialAccountStatus, getMonthFolder, getPreviousPurchases, getRecord, getRegisteredTeacherAccountsForDropdown, initializeMaterialStock, insertRecord, isValidLoginId, isImageAttachmentRecord, listRecords, nextPublicId, normalizeItemName, nowISO, num, path, pickFields, publicAccount, publicAccountForAdmin, purchaseCategory, purchasePurpose, recordChanges, requestJson, requireAdmin, requireAssignedReviewer, requireItemPhoto, requireOwner, requireStockEvidence, requireStudentSubmission, requireTeacherOrAdmin, requiredPurchaseExpiryDate, retiredLocationPhotoIds, safeCollectionName, safeFileName, saveWorkWithAttachments, selectedReviewTeacher, selectedStockTeachers, signToken, stockOutService, storageDetails, studentProfiles, syncResponse, updateBatchInformation, updateRecord, upload, validatePersonalHiddenCollection, workRequestCosts };
 };

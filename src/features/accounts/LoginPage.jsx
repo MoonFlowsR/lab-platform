@@ -6,7 +6,7 @@ import { Field, SearchableSelect } from "../../shared/components/ui.jsx";
 
 function LoginPage({ onLogin, onRegister, message }) {
   const [mode, setMode] = useState(() => new URLSearchParams(window.location.search).get("register") === "1" ? "register" : "login");
-  const [form, setForm] = useState({ username: "", password: "", account_type: "student", student_code: "", teacher_code: "", admin_code: "" });
+  const [form, setForm] = useState({ username: "", password: "", account_type: "student", student_code: "", teacher_code: "", finance_code: "", admin_code: "" });
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
   return (
     <div className="platform-shell platform-login" style={styles.page}>
@@ -24,8 +24,9 @@ function LoginPage({ onLogin, onRegister, message }) {
           {mode === "register" && <Field label="账号类型"><SearchableSelect required value={form.account_type} onChange={value => set("account_type", value)} options={accountTypes} placeholder="搜索或选择账号类型" /></Field>}
           {mode === "register" && form.account_type === "student" && <Field required label="学生注册码"><input required style={styles.input} value={form.student_code} onChange={(e) => set("student_code", e.target.value)} placeholder="由平台管理员提供" /></Field>}
           {mode === "register" && form.account_type === "teacher" && <Field required label="教师注册码"><input required style={styles.input} value={form.teacher_code} onChange={(e) => set("teacher_code", e.target.value)} placeholder="由平台管理员提供" /></Field>}
+          {mode === "register" && form.account_type === "finance" && <Field required label="财务注册码"><input required style={styles.input} value={form.finance_code} onChange={(e) => set("finance_code", e.target.value)} placeholder="由平台管理员提供" /></Field>}
           {mode === "register" && form.account_type === "admin" && <Field required label="管理员注册码"><input required style={styles.input} value={form.admin_code} onChange={(e) => set("admin_code", e.target.value)} placeholder="由平台负责人提供" /></Field>}
-          <button style={styles.primaryButton}>{mode === "login" ? "登录" : "注册并登录"}</button>
+          <button style={styles.primaryButton}>{mode === "login" ? "登录" : "注册"}</button>
         </form>
         {message}
         <div style={{ ...styles.securityBox, display: "flex", alignItems: "flex-end", gap: 12 }}><span style={{ flex: 1, minWidth: 0 }}>忘记密码请联系管理员重置。</span><a className="platform-login-help" href="/help">帮助文档</a></div>

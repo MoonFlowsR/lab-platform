@@ -11,7 +11,7 @@ for(const rel of files){
   const full=path.join(root,rel);if(!fs.existsSync(full))continue;
   const text=fs.readFileSync(full,'utf8');
   if(/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\b(?:ghp_|github_pat_)[A-Za-z0-9_]{20,}|\bAKIA[A-Z0-9]{16}\b/.test(text))findings.push(rel+': possible secret');
-  if(rel!=='.env.example' && /^(?:JWT_SECRET|(?:STUDENT|TEACHER|ADMIN)_INVITE_CODE)\s*=\s*\S+/m.test(text))findings.push(rel+': populated runtime configuration');
+  if(rel!=='.env.example' && /^(?:JWT_SECRET|(?:STUDENT|TEACHER|FINANCE|ADMIN)_INVITE_CODE)\s*=\s*\S+/m.test(text))findings.push(rel+': populated runtime configuration');
 }
 if(findings.length){console.error(findings.join('\n'));process.exit(1);}
 console.log('Git 待发布文件检查通过（'+files.length+' 个文件）：未包含数据库、附件、真实配置、日志、备份或常见密钥。发布前仍须查看 git diff --cached。');

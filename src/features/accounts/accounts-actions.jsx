@@ -50,11 +50,12 @@ async function registerAccount(form) {
     if (password.length < 6) return showAlert("密码至少 6 位。");
     if (form.account_type === "student" && !String(form.student_code || "").trim()) return showAlert("请填写学生注册码。");
     if (form.account_type === "teacher" && !String(form.teacher_code || "").trim()) return showAlert("请填写教师注册码。");
+    if (form.account_type === "finance" && !String(form.finance_code || "").trim()) return showAlert("请填写财务注册码。");
     if (form.account_type === "admin" && !String(form.admin_code || "").trim()) return showAlert("请填写管理员注册码。");
     try {
       const account = displayStudentAccount(await callAccountAuth("register", {
         username, display_name:form.display_name, password, account_type: form.account_type,
-        student_code: form.student_code || "", teacher_code: form.teacher_code || "", admin_code: form.admin_code || ""
+        student_code: form.student_code || "", teacher_code: form.teacher_code || "", finance_code: form.finance_code || "", admin_code: form.admin_code || ""
       }));
       if (account?.pending) {
         setCurrentUser(null);

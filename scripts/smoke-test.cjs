@@ -2,7 +2,7 @@
 const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),net=require('node:net'),crypto=require('node:crypto'),assert=require('node:assert/strict'),{spawn}=require('node:child_process');
 const root=path.resolve(__dirname,'..'),testRoot=fs.mkdtempSync(path.join(os.tmpdir(),'lab-platform-test-'));
 const random=()=>crypto.randomBytes(24).toString('hex');
-const configuration={JWT_SECRET:random(),STUDENT_INVITE_CODE:random(),TEACHER_INVITE_CODE:random(),ADMIN_INVITE_CODE:random()};
+const configuration={JWT_SECRET:random(),STUDENT_INVITE_CODE:random(),TEACHER_INVITE_CODE:random(),FINANCE_INVITE_CODE:random(),ADMIN_INVITE_CODE:random()};
 const password=random();let child,db,base;
 const port=()=>new Promise(resolve=>{const socket=net.createServer();socket.listen(0,'127.0.0.1',()=>{const selected=socket.address().port;socket.close(()=>resolve(selected));});});
 async function post(route,body={},token,ok=true){const response=await fetch(base+route,{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify(body)});const json=await response.json();assert.equal(json.ok,ok,json.message);return json;}
@@ -26,6 +26,9 @@ async function post(route,body={},token,ok=true){const response=await fetch(base
   assert.match((await post('auth/login',{username:'示例教师',password},undefined,false)).message,/待管理员审核/);
   await post('ops/adminSetAccountStatus',{id:registration.account.id||registration.account._id,status:'active'},admin);
   const teacher=(await post('auth/login',{username:'示例教师',password})).session_token;
+  const financeRegistration=await post('auth/register',{username:'示例财务',password,account_type:'finance',finance_code:configuration.FINANCE_INVITE_CODE});assert.equal(financeRegistration.pending,true);assert.equal(financeRegistration.account.account_type,'finance');
+  await post('ops/adminSetAccountStatus',{id:financeRegistration.account._id,status:'active'},admin);
+  const finance=(await post('auth/login',{username:'示例财务',password})).session_token;assert.equal((await post('ops/listAll',{},finance)).data.current_account.default_view_scope,'all');
   const student=(await post('auth/register',{username:'示例学生',password,account_type:'student',student_code:configuration.STUDENT_INVITE_CODE})).session_token;
   assert.equal((await post('ops/listAll',{},student,false)).code,'PROFILE_REQUIRED');
   await post('profile/save',{responsible_teacher_username:'示例教师',guiding_teacher_username:'示例教师',graduation_year:2028},student);
@@ -34,6 +37,7 @@ async function post(route,body={},token,ok=true){const response=await fetch(base
   const snapshot=(await post('ops/listAll',{},student)).data;
   const approved=snapshot.lab_work_requests.find(row=>String(row._id)===String(work._id));
   const completed=(await post('ops/completeWorkRequest',{id:work._id,confirmed:true,expected_updated_at:approved.updated_at,settlement_status:'已开票',patch:{workload_quantity:2,workload_unit:'按组',cost_test:20}},student)).record;assert.equal(completed.status,'已完成');assert.equal(completed.completion_modified,true);
+  const reimbursed=await post('ops/setReimbursementStatus',{collection:'lab_work_requests',id:completed._id,expected_updated_at:completed.updated_at,reimbursed:true},finance);assert.equal(reimbursed.record.reimbursed,true);assert.equal(reimbursed.record.cost_test,20);
   const purchase=(await post('ops/submitPurchaseRequest',{material_name:'示例物品',specification:'示例规格',quantity:2,unit:'套',preferred_supplier:'示例供应商',purchase_category:'耗材',purchase_purpose:'公用',estimated_price:10,safety_notes:'示例安全说明',review_teacher_username:'示例教师'},student)).record;
   assert.equal(purchase.expiry_date,undefined);const approvedPurchase=(await post('ops/reviewPurchaseRequest',{id:purchase._id,next_status:'已通过'},teacher)).record;
   const image='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==';
