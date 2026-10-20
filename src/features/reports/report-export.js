@@ -1,4 +1,5 @@
-import { buildCsv, buildCsvTable, downloadFile } from '../../shared/lib/csv-export.js';
+import { buildExportTable, buildCsvTable, downloadFile } from '../../shared/lib/csv-export.js';
+import { buildWorkbook, xlsxMime } from '../../shared/lib/xlsx-export.js';
 import { chinaDate, selectReportData } from './report-data.js';
 import { storeZip } from '../../shared/lib/zip-store.js';
 import { reportSummaryRows } from '../dashboard/dashboard-metrics.js';
@@ -8,7 +9,7 @@ import { reportSummaryRows } from '../dashboard/dashboard-metrics.js';
 const filenamePart = value => String(value).replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_');
 const timestamp = value => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false }).format(value);
 
-export function buildReportExport(data, filters = {}, now = new Date()) {
+function buildReportTables(data, filters = {}, now = new Date()) {
   const { student = '', studentName = student, teacher = '', teacherName = teacher, query = '', startDate = '', endDate = '' } = filters;
   if (startDate && endDate && startDate > endDate) throw new Error('开始日期不能晚于结束日期，请调整后导出。');
   // Use the same selector as the report page, on the already authorized account dataset.
@@ -31,13 +32,30 @@ export function buildReportExport(data, filters = {}, now = new Date()) {
     for (const [label, count] of counts) statuses.push([title, label, count]);
   }
   const files = [
-    { ...buildCsvTable('筛选条件', ['学生姓名','教师姓名','搜索内容','开始日期','结束日期','库存统计口径','费用统计口径','导出时间'], [[student ? studentName : '全部', teacher ? teacherName : '全部', query.trim() || '不限', startDate || '不限开始', endDate || '不限结束', '相关批次的当前库存', '测试加工维修按已完成最终费用；采购已入库按最终金额，未入库及未确认最终金额的旧记录按预计金额', timestamp(now)]]), filename:'筛选条件.csv' },
-    { ...buildCsvTable('统计汇总', ['统计项目','数值','单位'], summary), filename:'统计汇总.csv' },
-    { ...buildCsvTable('状态统计', ['统计类别','分类','记录数'], statuses), filename:'状态统计.csv' },
-    ...details.map(([title, kind, rows]) => ({ ...buildCsv(kind, rows, context), filename:title+'.csv' })),
+    { title:'筛选条件', headers:['学生姓名','教师姓名','搜索内容','开始日期','结束日期','库存统计口径','费用统计口径','导出时间'], rows:[[student ? studentName : '全部', teacher ? teacherName : '全部', query.trim() || '不限', startDate || '不限开始', endDate || '不限结束', '相关批次的当前库存', '测试加工维修按已完成最终费用；采购已入库按最终金额，未入库及未确认最终金额的旧记录按预计金额', timestamp(now)]] },
+    { title:'统计汇总', headers:['统计项目','数值','单位'], rows:summary },
+    { title:'状态统计', headers:['统计类别','分类','记录数'], rows:statuses },
+    ...details.map(([title, kind, rows]) => ({ ...buildExportTable(kind, rows, context), title })),
   ];
   const range = startDate || endDate ? `${startDate || '不限开始'}至${endDate || '不限结束'}` : '全部时间';
-  return { files, selected, filename:`数据报表_${filenamePart(student ? studentName : '全部学生')}_${filenamePart(teacher ? teacherName : '全部教师')}_${range}_${chinaDate(now)}.zip` };
+  return { tables:files, selected, basename:`数据报表_${filenamePart(student ? studentName : '全部学生')}_${filenamePart(teacher ? teacherName : '全部教师')}_${range}_${chinaDate(now)}` };
+}
+
+export function buildReportExport(data, filters = {}, now = new Date()) {
+  const result = buildReportTables(data, filters, now);
+  return { files:result.tables.map(table => ({ ...buildCsvTable(table.title, table.headers, table.rows), filename:table.title + '.csv' })), selected:result.selected, filename:result.basename + '.zip' };
+}
+
+export function buildReportWorkbook(data, filters = {}, now = new Date()) {
+  const result = buildReportTables(data, filters, now);
+  return { ...result, bytes:buildWorkbook(result.tables, now), filename:result.basename + '.xlsx' };
+}
+
+export function downloadReport(data, filters, format = 'xlsx') {
+  if (format === 'csv') return downloadReportCsvs(data, filters);
+  const result = buildReportWorkbook(data, filters);
+  downloadFile(result.filename, new Blob([result.bytes], { type:xlsxMime }));
+  return result;
 }
 
 export function downloadReportCsvs(data, filters) {

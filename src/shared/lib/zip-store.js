@@ -1,4 +1,4 @@
-// Standard ZIP with UTF-8 filenames and stored entries, so CSV contents stay byte-for-byte intact.
+// Standard ZIP with UTF-8 filenames and stored entries for CSV bundles and XLSX parts.
 const encoder = new TextEncoder();
 const crcTable = Uint32Array.from({ length: 256 }, (_, index) => {
   let crc = index;
@@ -13,7 +13,7 @@ function crc32(bytes) {
 export function storeZip(files, createdAt = new Date()) {
   if (files.length > 65535) throw new Error('导出文件数量过多。');
   const entries = files.map(file => {
-    const name = encoder.encode(file.filename), content = encoder.encode(file.csv);
+    const name = encoder.encode(file.filename), content = encoder.encode(file.content ?? file.csv);
     if (name.length > 65535 || content.length > 0xffffffff) throw new Error('导出文件过大。');
     return { name, content, crc: crc32(content) };
   });

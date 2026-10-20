@@ -1,3 +1,4 @@
+import { checkExcelExports } from './excel-exports.mjs';
 import { checkRegistration } from './registration.mjs';
 import { checkFinance } from './finance.mjs';
 import { checkDashboardCounts } from './dashboard-counts.mjs';
@@ -160,6 +161,7 @@ try {
   await page.goto(origin+'/help');await page.locator('.help-page').waitFor();await page.screenshot({path:path.join(out,role+'-'+width+'-help.png'),fullPage:true});
   results.push({role,width,help:true,overflow:await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),errors});await page.close();
  }
+ results.push(...await checkExcelExports(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkRegistration(browser,origin,out));
  results.push(...await checkFinance(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkDashboardCounts(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
@@ -171,7 +173,7 @@ try {
  const anonymous=await browser.newPage({viewport:{width:390,height:850}});let deniedReads=0;
  await anonymous.route('**/*',route=>{const u=new URL(route.request().url());if(u.origin!==origin)return route.abort();if(!u.pathname.startsWith('/api/'))return route.continue();if(u.pathname==='/api/help-comments'){deniedReads++;return route.fulfill({status:401,json:{ok:false,message:'请先登录。'}});}return route.fulfill({json:{ok:true,comments:[]}});});
  await anonymous.goto(origin+'/help');await anonymous.getByText('后查看留言和评论。',{exact:false}).waitFor();
- assert.equal(await anonymous.locator('.help-composer-error').count(),0);await anonymous.waitForTimeout(10500);assert.equal(deniedReads,1,'Anonymous authorization failure must not keep polling');
+ assert.equal(await anonymous.locator('.help-composer-error').count(),0);await anonymous.waitForTimeout(A10100);assert.equal(deniedReads,1,'Anonymous authorization failure must not keep polling');
  results.push({anonymousHelpNoError:true,anonymousRequests:deniedReads});await anonymous.close();
  assert.equal(results.filter(r=>r.scrollWidth>r.viewport||r.overflow).length,0,'page must fit the viewport');assert.deepEqual(results.flatMap(r=>r.errors||[]),[],'no browser errors');
  await fs.writeFile(path.join(out,'results.json'),JSON.stringify(results,null,2));console.log(JSON.stringify({cases:results.length,overflow:results.filter(r=>r.scrollWidth>r.viewport||r.overflow),errors:results.flatMap(r=>r.errors||[]),out},null,2));

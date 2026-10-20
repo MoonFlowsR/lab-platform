@@ -3,6 +3,7 @@ import { styles } from "../../app/styles.js";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { groupDropdownOptions } from "../lib/dropdown-order.js";
 import { formatPublicNumbers } from "../lib/public-number.js";
+import ExportButtons from './ExportButtons.jsx';
 
 function DateInput({ value, onChange, required = false, min = "2000-01-01", max = "2099-12-31" }) {
   const currentValue = toDateInputValue(value);
@@ -40,7 +41,7 @@ function DateInput({ value, onChange, required = false, min = "2000-01-01", max 
   </div>;
 }
 function Toolbar({ title, description, onExport }) {
-  return <section style={styles.toolbar}><div><h2 style={styles.h2}>{title}</h2>{description && <p style={styles.muted}>{description}</p>}</div>{onExport && <button style={styles.secondaryButton} onClick={onExport}>导出CSV（当前筛选）</button>}</section>;
+  return <section style={styles.toolbar}><div><h2 style={styles.h2}>{title}</h2>{description && <p style={styles.muted}>{description}</p>}</div>{onExport && <ExportButtons onExport={onExport} />}</section>;
 }
 function StatCard({ title, value, tone = "gray" }) {
   const toneStyle = { gray: { background: "#f8fafc", color: "#0f172a" }, blue: { background: "#eff6ff", color: "#1d4ed8" }, green: { background: "#ecfdf5", color: "#047857" }, orange: { background: "#fff7ed", color: "#c2410c" }, red: { background: "#fef2f2", color: "#b91c1c" }, purple: { background: "#f5f3ff", color: "#6d28d9" } }[tone];

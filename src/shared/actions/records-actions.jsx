@@ -1,11 +1,15 @@
 import { callLabOps } from "../../app/api.js";
 import { showAlert, showConfirm } from "../components/platform-dialog.jsx";
-import { downloadCsv } from "../lib/csv-export.js";
+import { downloadTable } from "../lib/table-export.js";
 
 export function createRecordsActions({ attachments, setMessage, isAdmin, currentUser, loadAll }) {
-function exportModule(kind, rows) {
-    const count = downloadCsv(kind, rows, { attachments });
+async function exportModule(kind, rows, format = 'xlsx') {
+  try {
+    const count = await downloadTable(kind, rows, { attachments }, format);
     setMessage(`已导出 ${count} 条当前筛选数据，列标题均为中文。`);
+  } catch (error) {
+    setMessage(error.message || '导出失败，请重试。', { persistent: true });
+  }
   }
 
 async function deleteRecordPermanently(collection, row) {
