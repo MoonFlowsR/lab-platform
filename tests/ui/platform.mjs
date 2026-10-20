@@ -85,7 +85,7 @@ try {
    const u=new URL(route.request().url());if(u.origin!==origin)return route.abort();
    if(!u.pathname.startsWith('/api/'))return route.continue();
    if(u.pathname==='/api/auth/me')return route.fulfill({json:{ok:true,account,teachers}});
-   if(u.pathname==='/api/ops/listAudit')return route.fulfill({json:{ok:true,rows:auditLogs.slice(0,route.request().postDataJSON()?.limit || auditLogs.length).map(row=>({...row,object_label:'示例对象'})),total:auditLogs.length}});
+   if(u.pathname==='/api/ops/listAudit')return route.fulfill({json:{ok:true,rows:(route.request().postDataJSON()?.all?auditLogs:auditLogs.slice(route.request().postDataJSON()?.offset||0,(route.request().postDataJSON()?.offset||0)+10)).map(row=>({...row,object_label:'示例对象'})),total:auditLogs.length}});
    if(u.pathname==='/api/ops/listAll')return route.fulfill({json:{ok:true,data:{...snapshot,current_account:account},revision:'synthetic-review'}});
    if(u.pathname==='/api/events')return route.fulfill({contentType:'text/event-stream',body:': fixture\n\n'});
    if(u.pathname==='/api/help-comments/session')return route.fulfill({json:{ok:true,account,student_name_labels:nameLabels}});
