@@ -16,6 +16,14 @@ async function checkReimbursementTotals(region, reimbursed, pending, paidAmount,
  assert.deepEqual(values,{'is-reimbursed':[`${reimbursed} 条`,`¥${paidAmount}`],'is-pending':[`${pending} 条`,`¥${pendingAmount}`]});
 }
 
+async function checkReimbursementBreakdown(region, paidType = '', selectedType = '') {
+ for(const [key,label] of [['reimbursed','已报销'],['pending','待报销']]){
+  const actual=await region.getByRole('list',{name:label+'分类明细',exact:true}).evaluate(list=>[...list.children].map(row=>({type:row.dataset.category,count:row.querySelector('small').textContent,amount:row.querySelector('strong').textContent})));
+  const expected=['测试','加工','维修','采购'].map(type=>{const paid=type===paidType?1:0,count=key==='reimbursed'?paid:(!selectedType||selectedType===type?3:0)-paid;return {type,count:`${count} 条`,amount:`¥${count*25}`};});
+  assert.deepEqual(actual,expected,'Each reimbursement state lists all four categories and their current final amounts');
+ }
+}
+
 export async function checkFinance(browser,origin,out,snapshot,users){
  const results=[],finance={username:'qa-finance',display_name:'示例财务',_id:55,account_type:'finance',status:'active',profile_required:false,session_token:'synthetic-finance'};
  const [admin,teacher,student]=users;
@@ -56,12 +64,15 @@ export async function checkFinance(browser,origin,out,snapshot,users){
    assert.equal(await page.locator('.platform-nav').getByRole('button',{name:'账号管理',exact:true}).count(),0);
    assert.equal(await page.getByRole('checkbox').count(),4);
    const totals=page.getByRole('region',{name:'报销统计',exact:true});await checkReimbursementTotals(totals,0,12,0,300);
-   const search=page.getByPlaceholder('搜索页面内任意内容');await search.fill('报销核对测试');await checkReimbursementTotals(totals,0,3,0,75);await search.fill('无匹配工单');await checkReimbursementTotals(totals,0,0,0,0);await search.fill('');await checkReimbursementTotals(totals,0,12,0,300);
+   await checkReimbursementBreakdown(totals);
+   const search=page.getByPlaceholder('搜索页面内任意内容');await search.fill('报销核对测试');await checkReimbursementTotals(totals,0,3,0,75);await checkReimbursementBreakdown(totals,'','测试');await search.fill('无匹配工单');await checkReimbursementTotals(totals,0,0,0,0);await checkReimbursementBreakdown(totals,'','none');await search.fill('');await checkReimbursementTotals(totals,0,12,0,300);await checkReimbursementBreakdown(totals);
    const overviewCheck=page.getByRole('checkbox').first();
    const overviewCard=page.locator('.platform-request-record').filter({has:page.getByRole('checkbox')}).first();
    await checkReimbursementHighlight(overviewCard,false);
    await overviewCheck.check();await checkReimbursementHighlight(overviewCard,true);await checkReimbursementTotals(totals,1,11,25,275);await page.getByRole('button',{name:'手动同步',exact:true}).waitFor({state:'visible'});
+   await checkReimbursementBreakdown(totals,'测试');
    await overviewCheck.uncheck();await checkReimbursementHighlight(overviewCard,false);await checkReimbursementTotals(totals,0,12,0,300);
+   await checkReimbursementBreakdown(totals);
    await totals.screenshot({path:path.join(out,`reimbursement-summary-${width}.png`)});
    await page.locator('.platform-business-metrics').screenshot({path:path.join(out,`reimbursement-categories-${width}.png`)});
   }else{assert.equal(await page.getByRole('checkbox').count(),0);assert.equal(await page.getByRole('region',{name:'报销统计',exact:true}).count(),0);}
@@ -96,6 +107,7 @@ export async function checkFinance(browser,origin,out,snapshot,users){
    await page.locator('.platform-nav').getByRole('button',{name:'出入退库',exact:true}).click();for(const type of ['入库','出库','退库'])assert.equal(await page.getByRole('heading',{name:new RegExp('^'+type+'历史')}).count(),1);assert.equal(await page.getByRole('button',{name:/^(同意出库|驳回出库|新增记录)$/}).count(),0);
    await page.locator('.platform-nav').getByRole('button',{name:'数据报表',exact:true}).click();await page.getByRole('region',{name:'测试统计',exact:true}).waitFor();assert.equal(await page.getByRole('checkbox').count(),1);
    const reportTotals=page.getByRole('region',{name:'报销统计',exact:true});await checkReimbursementTotals(reportTotals,0,12,0,300);
+   await checkReimbursementBreakdown(reportTotals);
    const finalAmount=await page.getByRole('region',{name:'测试统计',exact:true}).locator('.platform-business-footer').innerText();
    for(const type of types){
     await page.getByRole('tab',{name:new RegExp('^'+type)}).click();
@@ -103,9 +115,11 @@ export async function checkFinance(browser,origin,out,snapshot,users){
     await checkReimbursementHighlight(reportCard,false,false);
     await page.getByRole('checkbox').check();await checkReimbursementHighlight(reportCard,true,false);
     await checkReimbursementTotals(reportTotals,1,11,25,275);
+    await checkReimbursementBreakdown(reportTotals,type);
     await reportCard.scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,`reimbursed-report-${type}-${width}.png`)});
     await page.getByRole('checkbox').uncheck();await checkReimbursementHighlight(reportCard,false,false);
     await checkReimbursementTotals(reportTotals,0,12,0,300);
+    await checkReimbursementBreakdown(reportTotals);
    }
    assert.equal(finalAmount,await page.getByRole('region',{name:'测试统计',exact:true}).locator('.platform-business-footer').innerText());
    await page.goto(origin+'/help');await page.getByRole('heading',{name:'01 财务总览与查看',exact:true}).waitFor();assert.equal(await page.getByText('平台代码已在Github开源 ↗',{exact:true}).count(),1);
