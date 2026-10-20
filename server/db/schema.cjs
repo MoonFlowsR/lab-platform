@@ -47,7 +47,12 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   after_json TEXT,
   ip_address TEXT,
   user_agent TEXT,
+  client_type TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL
 );
 `);
+// Older rows retain their raw browser information; classify them when reading.
+if(!db.pragma('table_info(audit_logs)').some(column=>column.name==='client_type')){
+  db.exec("ALTER TABLE audit_logs ADD COLUMN client_type TEXT NOT NULL DEFAULT ''");
+}
 };

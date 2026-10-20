@@ -55,3 +55,5 @@
 表格导出：`export-columns.js` 定义各业务的中文列和数据口径，`xlsx-export.js` 生成带筛选、冻结表头的工作簿，`table-export.js` 处理 Excel 下载；数据报表由 `report-export.js` 复用相同列定义，生成多工作表 Excel。
 
 教师默认查看范围由 `server/features/accounts/view-scope.cjs` 读取数据库 `platform_settings` 的 `account_view_scope:<账号ID>`；值为 `all` 时首页及工单默认查看全组，否则沿用本人范围。该设置随数据库备份，不改变审批权限。
+
+日志操作端：`server/db/records.cjs`统一写入`audit_logs.client_type`；`server/security/audit-client.cjs`识别请求与旧记录，`src/shared/api/client-platform.js`补充手机、平板和PC的浏览器终端信息。管理员日志页面、搜索和Excel共用接口返回的操作端；原浏览器信息保留，旧日志在读取时识别。

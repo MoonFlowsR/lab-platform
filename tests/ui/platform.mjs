@@ -1,3 +1,4 @@
+import { checkAuditClients } from './audit-clients.mjs';
 import { readWorkbookText } from './workbook.mjs';
 import { checkExcelExports } from './excel-exports.mjs';
 import { checkRegistration } from './registration.mjs';
@@ -163,7 +164,8 @@ try {
   results.push({role,width,help:true,overflow:await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),errors});await page.close();
  }
  results.push(...await checkExcelExports(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
- results.push(...await checkRegistration(browser,origin,out));
+ results.push(...await checkAuditClients(browser,origin,out,snapshot,admin));
+  results.push(...await checkRegistration(browser,origin,out));
  results.push(...await checkFinance(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkDashboardCounts(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkPurchaseFilters(browser,origin,out,snapshot,[teachers[0],admin]));
