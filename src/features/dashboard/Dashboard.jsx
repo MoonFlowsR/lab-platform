@@ -3,6 +3,7 @@ import { isReceivedPurchase } from "../purchases/purchase-values.js";
 import { expiryWarnings } from "../reports/report-data.js";
 import { formatDate, money, num } from "../../app/formatters.js";
 import DashboardMetrics, { InventoryMetrics, MovementMetrics } from "./DashboardMetrics.jsx";
+import ReimbursementSummary from '../finance/ReimbursementSummary.jsx';
 import { inventoryMetrics } from "./dashboard-metrics.js";
 import { styles } from "../../app/styles.js";
 import RecentRecords from "../../shared/components/RecentRecords.jsx";
@@ -25,7 +26,8 @@ function Dashboard({ onReimbursementChange, stockOutRequests = [], accounts = []
 
   return <main>
     <p className="platform-metric-scope">当前统计：<strong>{currentUser?.account_type === "student" ? "本人申请" : teamOverview ? "团队全部申请" : "指定本人审核的申请"}</strong> · 随页面搜索更新</p>
-    <DashboardMetrics workRequests={workRequests} purchases={purchases} mode={financeOverview ? "report" : currentUser?.account_type === "student" ? "student" : currentUser?.account_type === "teacher" ? "review" : "team"} money={money} onOpen={setActiveTab} />
+    {currentUser?.account_type === 'finance' && <ReimbursementSummary workRequests={workRequests} purchases={purchases} money={money} />}
+    <DashboardMetrics workRequests={workRequests} purchases={purchases} showReimbursement={currentUser?.account_type === 'finance'} mode={financeOverview ? "report" : currentUser?.account_type === "student" ? "student" : currentUser?.account_type === "teacher" ? "review" : "team"} money={money} onOpen={setActiveTab} />
     <InventoryMetrics inventory={inventoryMetrics(batches)} label="团队库存" onOpen={() => setActiveTab("materials")} />
     <MovementMetrics label={currentUser?.account_type === "student" ? "本人库存流水" : "团队库存流水"} rows={stockRows} onOpen={() => setActiveTab("stock")} />
     {(pendingStockApprovals > 0 || pendingStockCompletion > 0) && <section style={styles.card}><div style={styles.cardHeader}><h2 style={styles.h2}>私用/项目用物品出库待办</h2><button style={styles.secondaryButton} onClick={() => setActiveTab('stock')}>查看出库申请</button></div><p style={styles.meta}>{teamOverview ? '团队待采购人审批' : '待你审批'}：<strong>{pendingStockApprovals}</strong> 条 · {teamOverview ? '团队待完成出库' : '你待完成出库'}：<strong>{pendingStockCompletion}</strong> 条</p></section>}

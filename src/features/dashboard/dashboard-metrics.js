@@ -2,6 +2,7 @@ import { purchaseWasModified, purchaseAmount, hasFinalPurchaseAmount, isReceived
 import { splitReviewedWorkSections, splitReviewedPurchaseSections } from '../../shared/lib/request-sections.js';
 import { completedWorkFee, isCompletedWork, workFee } from '../work/work-values.js';
 import { expiryWarnings } from '../reports/report-data.js';
+import { reimbursementMetrics } from '../finance/reimbursement.js';
 
 const number = value => Number.isFinite(Number(value)) ? Number(value) : 0;
 const sum = (rows, get) => rows.reduce((total, row) => total + number(get(row)), 0);
@@ -45,6 +46,7 @@ export function inventoryMetrics(batches = [], today) {
 
 export function reportSummaryRows(data, today) {
   const summary = [];
+  const reimbursement = reimbursementMetrics(data.workRequests, data.purchases);
   for (const metric of businessMetrics(data.workRequests, data.purchases)) {
     const { type } = metric;
     for (const [label, value] of [
@@ -61,7 +63,10 @@ export function reportSummaryRows(data, today) {
     } else {
       summary.push([type + '已完成最终费用', metric.completedAmount, '元']);
     }
+    const paid = reimbursement.byType.find(row => row.type === type);
+    summary.push([type + '已报销工单数', paid.reimbursed.count, '条'], [type + '已报销金额', paid.reimbursed.amount, '元'], [type + '待报销工单数', paid.pending.count, '条'], [type + '待报销金额', paid.pending.amount, '元']);
   }
+  summary.push(['已报销工单合计', reimbursement.reimbursed.count, '条'], ['已报销金额合计', reimbursement.reimbursed.amount, '元'], ['待报销工单合计', reimbursement.pending.count, '条'], ['待报销金额合计', reimbursement.pending.amount, '元']);
   const stock = data.stockTransactions || [];
   summary.push(['出入退库记录数', stock.length, '条']);
   for (const type of ['入库', '出库', '退库']) summary.push([type + '记录数', stock.filter(row => row.transaction_type === type).length, '条']);
