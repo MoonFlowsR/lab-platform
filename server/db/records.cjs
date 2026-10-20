@@ -1,3 +1,4 @@
+const { requestClient } = require('../security/audit-client.cjs');
 module.exports = function createService({ db, nowISO, dateStampCN, padSerial }) {
 function nextPublicId(typeCode) {
   const tx = db.transaction(() => {
@@ -92,8 +93,8 @@ function listRecords(collection, filterFn = null) {
 function addAudit(req, account, action, targetType, targetId, beforeData, afterData) {
   db.prepare(`
     INSERT INTO audit_logs
-    (operator_username, operator_role, action, target_type, target_id, before_json, after_json, ip_address, user_agent, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    (operator_username, operator_role, action, target_type, target_id, before_json, after_json, ip_address, user_agent, client_type, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     account?.username || "",
     account?.account_type || "",
@@ -104,6 +105,7 @@ function addAudit(req, account, action, targetType, targetId, beforeData, afterD
     afterData ? JSON.stringify(afterData) : "",
     req.ip || "",
     req.headers["user-agent"] || "",
+    requestClient(req, account),
     nowISO()
   );
 }

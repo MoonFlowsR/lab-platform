@@ -1,3 +1,4 @@
+import { clientHeaders } from './client-platform.js';
 const CHUNK_SIZE = 1024 * 1024;
 
 async function downloadError(response) {
@@ -11,7 +12,7 @@ async function downloadError(response) {
 
 // Keep each tunnel request small while preserving authentication and byte order.
 export async function downloadAttachmentBlob(url, size, token) {
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const headers = { ...clientHeaders(), ...(token ? { Authorization: `Bearer ${token}` } : {}) };
   const total = Number(size);
   if (!Number.isSafeInteger(total) || total <= 4 * CHUNK_SIZE) {
     const response = await fetch(url, { headers });

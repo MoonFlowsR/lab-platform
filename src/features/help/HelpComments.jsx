@@ -1,6 +1,7 @@
 import { searchTerms, textMatchesTerms, commentMatchesTerms, commentBranchMatches } from './help-search.js';
 import { useEffect, useState } from 'react';
 import { displayStudentComment, studentNameLabel } from '../accounts/student-name-display.js';
+import { clientHeaders } from '../../shared/api/client-platform.js';
 
 const date = value => new Date(value).toLocaleString('zh-CN', { hour12: false });
 const actions = { createHelpComment: '发表评论', replyHelpComment: '回复评论', deleteHelpComment: '删除评论', createHelpMessage: '发表留言', replyHelpMessage: '回复留言', deleteHelpMessage: '删除留言' };
@@ -8,7 +9,7 @@ const roles = { student: '学生', teacher: '教师', admin: '管理员' };
 
 export async function commentRequest(path, token, options = {}) {
   const response = await fetch(`/api/help-comments${path}`, {
-    ...options, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    ...options, headers: { 'Content-Type': 'application/json', ...clientHeaders(), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
   const json = await response.json();
   if (!response.ok || !json.ok) { const error = new Error(json.message || '评论操作失败，请重试。'); error.status = response.status; throw error; }

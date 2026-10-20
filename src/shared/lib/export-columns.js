@@ -1,7 +1,7 @@
 import { reimbursementLabel } from '../../features/finance/reimbursement.js';
 import { isReceivedPurchase, purchaseWasModified, hasFinalPurchaseAmount, inboundChangesText } from '../../features/purchases/purchase-values.js';
 import { workFeeKey } from '../../features/work/work-types.js';
-import { collectionName, actionName } from './audit-labels.js';
+import { collectionName, actionName, clientName } from './audit-labels.js';
 import { reviewTeacherName } from './review-scope.js';
 import { stockApprovalExemptionText } from '../../features/stock/stock-out-policy.js';
 // Export only the data already visible to the signed-in account.
@@ -70,7 +70,7 @@ const definitions = {
   batches: { title: '库存批次', columns: [column('关联教师','associated_teacher_names',true),numberColumn('批次编号',row => row.batch_code || row.public_id),column('材料名称','material_name'),column('采购人',row => row.purchaser_name || row.purchaser_username),column('入库人',row => row.inbound_by_name || row.created_by_name || row.inbound_by_username || row.created_by_username),column('系统责任教师','responsible_teacher_name',true),column('实际指导教师','guiding_teacher_name',true),column('毕业年份','graduation_year',true),column('材料类别','purchase_category',true),column('规格','spec',true),column('采购渠道','supplier',true),column('采购渠道修改记录',supplierHistory,true),column('使用目的','purchase_purpose',true),column('当前库存',row => numeric(row.current_qty)),column('计量单位','unit'),column('存放房间',row => row.storage_room || row.storage_location),column('具体位置简述','storage_detail',true),column('有效期','expiry_date'),column('预警数量',row => numeric(row.min_qty)),column('建立时间',row => date(row.created_at)),column('安全事项','safety_notes',true),column('备注','remark',true),column('入库证明文件名',(row,context) => attachments(row,'lab_material_batches',context),true)] },
   reviews: { title: '审批明细', columns: [numberColumn('申请编号','target_public_id'),column('申请类型',row => collectionName(row.target_collection)),column('审批人',row => row.reviewer_name || row.reviewer_username),column('审批结果','action'),column('审批意见','review_note',true),column('审批时间',row => date(row.created_at))] },
   accounts: { title: '账号列表', columns: [column('用户名','username'),column('姓名','display_name'),column('账号类型',row => role(row.account_type)),column('账号状态',row => ({active:'启用',pending:'待审核',disabled:'停用'})[row.status] || row.status),...profileColumns,column('注册时间',row => date(row.created_at))] },
-  audit: { title: '操作记录', columns: [column('操作时间',row => date(row.created_at)),column('操作人',row => row.operator_name || row.operator_username),column('账号类型',row => role(row.operator_role)),column('操作',row => actionName(row.action)),column('记录类型',row => collectionName(row.target_type)),column('操作对象',row => row.object_label || row.target_id)] },
+  audit: { title: '操作记录', columns: [column('操作时间',row => date(row.created_at)),column('操作人',row => row.operator_name || row.operator_username),column('账号类型',row => role(row.operator_role)),column('操作端',row => row.client_label || clientName(row.client_type)),column('操作',row => actionName(row.action)),column('记录类型',row => collectionName(row.target_type)),column('操作对象',row => row.object_label || row.target_id)] },
 };
 export function buildExportTable(kind, rows = [], context = {}) {
   if (kind === 'materials' && rows.some(row => !row.stock_by_spec)) rows = summarizeMaterials(rows, context.batches || []);

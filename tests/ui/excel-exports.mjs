@@ -36,7 +36,7 @@ export async function checkExcelExports(browser,origin,out,snapshot,users) {
     const sheets=[...parts].filter(([file])=>file.startsWith('xl/worksheets/'));
     assert.equal(sheets.length,tab==='数据报表'?12:1);
     for(const [,sheet] of sheets){assert.match(sheet,/<autoFilter ref="A1:[A-Z]+[0-9]+"\/>/);assert(sheet.includes('topLeftCell="A2"'));assert(!sheet.includes('<f'));}
-    if(await button.textContent()==='导出日志Excel')assert.match(sheets[0][1],/<autoFilter ref="A1:F6"\/>/,'Audit export includes every row, not just the three visible rows');
+    if(await button.textContent()==='导出日志Excel')assert.match(sheets[0][1],/<autoFilter ref="A1:G6"\/>/,'Audit export includes every row, not just the three visible rows');
     if(width===320&&role==='admin')await fs.writeFile(path.join(out,`xlsx-${downloads}.xlsx`),bytes);
     downloads++;
    }
