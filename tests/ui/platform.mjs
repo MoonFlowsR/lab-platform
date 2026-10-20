@@ -132,9 +132,9 @@ try {
     if(tabs[i]==='账号管理'){
      const accountsSection=page.locator('main > section').filter({has:page.getByRole('heading',{name:'账号列表',exact:true})});
      assert.equal(await accountsSection.locator('tbody tr').count(),1);
-     const audit=page.getByRole('region',{name:'最近操作日志'});await audit.locator('tbody tr').first().waitFor();
-     assert.equal(await audit.locator('tbody tr').count(),3);
-     results.push({accountsLatestOneAuditLatestThree:true});
+     const audit=page.getByRole('region',{name:'最近操作日志'});await page.waitForFunction(()=>document.querySelectorAll('[aria-label="最近操作日志"] tbody tr').length===10);
+     assert.equal(await audit.locator('tbody tr').count(),10);
+     results.push({accountsLatestOneAuditPageTen:true});
     }
    }
    if(tabs[i]==='账号管理'&&width===390){
