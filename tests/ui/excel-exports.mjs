@@ -10,13 +10,13 @@ export async function checkExcelExports(browser,origin,out,snapshot,users) {
   const account={...person,profile_required:false,session_token:'synthetic-export'},role=account.account_type;
   const page=await browser.newPage({viewport:{width,height:960},acceptDownloads:true}),errors=[];
   page.on('pageerror',error=>errors.push(error.message));let auditExports=0,downloads=0;
-  const auditRows=Array.from({length:5},(_,i)=>({id:i+1,created_at:'2026-10-20T00:00:00Z',operator_username:'示例管理员',operator_role:'admin',action:'login',target_type:'accounts',target_id:String(i+1),object_label:'示例对象'}));
+  const auditRows=Array.from({length:25},(_,i)=>({id:i+1,created_at:'2026-10-20T00:00:00Z',operator_username:'示例管理员',operator_role:'admin',action:'login',target_type:'accounts',target_id:String(i+1),object_label:'示例对象'}));
   await page.addInitScript(value=>sessionStorage.setItem('surface_lab_account',JSON.stringify(value)),account);
   await page.route('**/*',route=>{
    const url=new URL(route.request().url());if(url.origin!==origin)return route.abort();if(!url.pathname.startsWith('/api/'))return route.continue();
    if(url.pathname==='/api/auth/me')return route.fulfill({json:{ok:true,account,teachers:snapshot.lab_registered_teacher_accounts}});
    if(url.pathname==='/api/ops/listAll')return route.fulfill({json:{ok:true,revision:'excel-exports',data:{...snapshot,current_account:account,lab_user_hidden_records:[]}}});
-   if(url.pathname==='/api/ops/listAudit'){const payload=route.request().postDataJSON();if(payload.all)auditExports++;return route.fulfill({json:{ok:true,rows:payload.all?auditRows:auditRows.slice(0,3),total:auditRows.length}});}
+   if(url.pathname==='/api/ops/listAudit'){const payload=route.request().postDataJSON();if(payload.all)auditExports++;return route.fulfill({json:{ok:true,rows:payload.all?auditRows:auditRows.slice(payload.offset||0,(payload.offset||0)+10),total:auditRows.length}});}
    if(url.pathname==='/api/events'){return route.fulfill({contentType:'text/event-stream',body:': fixture\n\n'});}
    return route.fulfill({json:{ok:true,rows:[],total:0,comments:[]}});
   });
@@ -36,7 +36,7 @@ export async function checkExcelExports(browser,origin,out,snapshot,users) {
     const sheets=[...parts].filter(([file])=>file.startsWith('xl/worksheets/'));
     assert.equal(sheets.length,tab==='数据报表'?12:1);
     for(const [,sheet] of sheets){assert.match(sheet,/<autoFilter ref="A1:[A-Z]+[0-9]+"\/>/);assert(sheet.includes('topLeftCell="A2"'));assert(!sheet.includes('<f'));}
-    if(await button.textContent()==='导出日志Excel')assert.match(sheets[0][1],/<autoFilter ref="A1:G6"\/>/,'Audit export includes every row, not just the three visible rows');
+    if(await button.textContent()==='导出日志Excel')assert.match(sheets[0][1],/<autoFilter ref="A1:G26"\/>/,'Audit export includes every matching row across all pages');
     if(width===320&&role==='admin')await fs.writeFile(path.join(out,`xlsx-${downloads}.xlsx`),bytes);
     downloads++;
    }

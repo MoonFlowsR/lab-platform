@@ -57,11 +57,19 @@ test('real HTTP audit writes, administrator search, pagination and Excel use the
  const post=(route,body,headers={})=>fetch(`http://127.0.0.1:${server.address().port}${route}`,{method:'POST',headers:{'Content-Type':'application/json',...headers},body:JSON.stringify(body)});
  try{
   for(const [action,headers]of [['login',{'user-agent':pc}],['initializeMaterialStock',{'user-agent':mobile}],['createHelpMessage',{'user-agent':mac,'x-platform-client':'mobile'}],['deleteAttachment',{'user-agent':'unrecognized'}]])assert.equal((await post('/operate',{action},headers)).status,200);
-  const first=await(await post('/logs',{limit:3})).json();assert.equal(first.total,4);assert.equal(first.rows.length,3);
+  const first=await(await post('/logs',{})).json();assert.equal(first.total,4);assert.equal(first.rows.length,4);assert.equal(first.limit,10);
   const all=await(await post('/logs',{all:true})).json();assert.equal(all.rows.length,4);assert(all.rows.every(row=>!Object.hasOwn(row,'user_agent')&&!Object.hasOwn(row,'after_json')));
   const selected=await(await post('/logs',{query:'移动端',all:true})).json();assert.equal(selected.total,2);assert(selected.rows.every(row=>row.client_type==='mobile'&&row.client_label==='移动端'));
   const pcOnly=await(await post('/logs',{query:'PC端',all:true})).json();assert.equal(pcOnly.total,1);assert.equal(pcOnly.rows[0].client_label,'PC端');
   assert.equal((await post('/logs',{nonAdmin:true})).status,403);
   const table=buildExportTable('audit',all.rows),index=table.headers.indexOf('操作端');assert(index>=0);assert.deepEqual(table.rows.map(row=>row[index]),all.rows.map(row=>clientName(row.client_type)));
+  for(let index=0;index<21;index++)service.addAudit({headers:{'user-agent':pc}},account,'login','accounts',account.id,null,{username:account.username});
+  const pages=[];
+  for(const offset of [0,10,20]){const page=await(await post('/logs',{offset,limit:9999})).json();assert.equal(page.limit,10);assert.equal(page.total,25);assert.equal(page.rows.length,offset===20?5:10);pages.push(...page.rows.map(row=>row.id));}
+  assert.equal(new Set(pages).size,25);assert.deepEqual(pages,[...pages].sort((a,b)=>b-a));
+  const filtered=await(await post('/logs',{query:'移动端'})).json();assert.equal(filtered.total,2);assert.equal(filtered.rows.length,2);
+  const exported=await(await post('/logs',{all:true})).json();assert.equal(exported.rows.length,25);assert.equal(buildExportTable('audit',exported.rows).rows.length,25);
+  const empty=await(await post('/logs',{query:'no-matching-audit-record'})).json();assert.equal(empty.total,0);assert.deepEqual(empty.rows,[]);
+  for(const offset of [-10,'Infinity','invalid']){const page=await(await post('/logs',{offset})).json();assert.equal(page.offset,0);assert.equal(page.rows.length,10);}
  }finally{await new Promise(resolve=>server.close(resolve));db.close();}
 });
