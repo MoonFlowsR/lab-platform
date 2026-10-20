@@ -23,7 +23,7 @@ function StockPage({ movementType = "", currentUser, purchaseRequests = [], teac
   const otherRows = selectedRows.filter(row => !movementTypes.includes(row.transaction_type));
   const historyProps = { attachments, isAdmin, onDeleteRecord, onDownloadAttachment };
   return <main>
-    <Toolbar title={isManager ? "出入退库" : "出/退库"} description={isManager ? "按学生、日期和出入退库类型筛选，分别查看入库、出库、退库。" : "登记出库和退库，查看库存流水及证明。"} onExport={format => onExport(selectedRows, format)} />
+    <Toolbar title={isManager ? "出入退库" : "出/退库"} description={isManager ? "按学生、日期和出入退库类型筛选，分别查看入库、出库、退库。" : "登记出库和退库，查看库存流水及证明。"} onExport={() => onExport(selectedRows)} />
     {canSubmit && <StockForm currentUser={currentUser} purchaseRequests={purchaseRequests} teacherAccounts={teacherAccounts} materialCatalog={materialCatalog} batches={batches} isManager={isManager} onSubmit={onAdd} />}
     {canSubmit && <section aria-label="出退库查看范围" className="platform-purchase-scope" style={styles.card}>
       <Field label="查看范围"><SearchableSelect value={viewScope} onChange={onViewScopeChange} clearOnInput={false} options={[{ value: "mine", label: "本人" }, { value: "all", label: "全部" }]} placeholder="搜索或选择查看范围" /></Field>

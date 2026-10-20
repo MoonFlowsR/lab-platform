@@ -3,21 +3,17 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-let numbers, buildCsv, recordMatchesSearch;
+let numbers, buildExportTable, recordMatchesSearch;
 test.before(async () => {
   numbers = await import('../../src/shared/lib/public-number.js');
-  ({ buildCsv } = await import('../../src/shared/lib/csv-export.js'));
+  ({ buildExportTable } = await import('../../src/shared/lib/export-columns.js'));
   ({ recordMatchesSearch } = await import('../../src/shared/lib/teacher-filter.js'));
 });
 
 const prefixes = ['TEST', 'PROC', 'PUR', 'OUT', 'IO', 'MAT', 'BATCH', 'UNIT', 'REV'];
 const oldNumber = prefix => `${prefix}-20261016-000123`;
 const shortNumber = prefix => `${prefix}-261016-000123`;
-const csvRows = result => {
-  const rows = result.csv.replace(/^\uFEFF/, '').split('\r\n').map(line =>
-    [...line.matchAll(/"((?:[^"]|"")*)"(?:,|$)/g)].map(match => match[1].replaceAll('""', '"')));
-  return rows.slice(1).map(row => Object.fromEntries(rows[0].map((header, index) => [header, row[index]])));
-};
+const tableRows = result => result.rows.map(row => Object.fromEntries(result.headers.map((header, index) => [header, row[index]])));
 
 test('all nine public number types show two-digit years and formatting is idempotent', () => {
   for (const prefix of prefixes) {
@@ -60,7 +56,7 @@ test('record search accepts old and new number formats and highlight terms match
   assert.deepEqual(numbers.publicNumberHighlightTerms('2026-10-16'), ['2026-10-16']);
 });
 
-test('work and purchase CSV shorten identifier columns while preserving filenames and ordinary field values', () => {
+test('work and purchase Excel shorten identifier columns while preserving filenames and ordinary field values', () => {
   const filename = `${oldNumber('TEST')}.pdf`;
   for (const [kind, prefix] of [['test', 'TEST'], ['processing', 'PROC'], ['purchases', 'PUR']]) {
     const row = { _id: '1', public_id: oldNumber(prefix), request_type: kind === 'processing' ? '加工' : '测试',
@@ -70,20 +66,20 @@ test('work and purchase CSV shorten identifier columns while preserving filename
       created_at: '2026-10-16T00:00:00.000Z', remark: `保留原始资料 ${oldNumber('PUR')}` };
     const collection = kind === 'purchases' ? 'lab_purchase_requests' : 'lab_work_requests';
     const before = JSON.stringify(row);
-    const [cells] = csvRows(buildCsv(kind, [row], { attachments: [{ target_collection: collection,
+    const [cells] = tableRows(buildExportTable(kind, [row], { attachments: [{ target_collection: collection,
       target_id: row._id, target_public_id: row.public_id, original_name: filename }] }));
     assert.equal(cells['申请编号'], shortNumber(prefix));
     assert.equal(cells[kind === 'purchases' ? '采购物品' : kind === 'processing' ? '加工名称' : '测试名称'], oldNumber('MAT'));
     assert.equal(cells['附件文件名'], filename);
     assert.equal(cells['备注'], row.remark);
     assert.ok(cells['提交时间'].startsWith('2026-10-16'));
-    assert.ok(Object.values(cells).includes('2026.2'));
+    assert.ok(Object.values(cells).includes(2026.2));
     if (kind === 'purchases') assert.equal(cells['有效期'], '2030-12-31');
     assert.equal(JSON.stringify(row), before, 'export must not mutate IDs used by actions and links');
   }
 });
 
-test('stock, outgoing approval, batch and review CSV use the same shortened reference numbers', () => {
+test('stock, outgoing approval, batch and review Excel use the same shortened reference numbers', () => {
   const rows = [
     ['stock', { public_id: oldNumber('IO'), batch_code: oldNumber('BATCH'), stock_out_request_public_id: oldNumber('OUT') },
       { '流水编号': shortNumber('IO'), '库存批次': shortNumber('BATCH'), '出库申请编号': shortNumber('OUT') }],
@@ -93,18 +89,18 @@ test('stock, outgoing approval, batch and review CSV use the same shortened refe
     ['reviews', { target_public_id: oldNumber('PUR') }, { '申请编号': shortNumber('PUR') }],
   ];
   for (const [kind, row, expected] of rows) {
-    const before = JSON.stringify(row), [cells] = csvRows(buildCsv(kind, [row]));
+    const before = JSON.stringify(row), [cells] = tableRows(buildExportTable(kind, [row]));
     for (const [column, value] of Object.entries(expected)) assert.equal(cells[column], value);
     assert.equal(JSON.stringify(row), before);
   }
 });
 
-test('material and inventory summary CSV shorten batch lists without changing grouping identity', () => {
+test('material and inventory summary Excel shorten batch lists without changing grouping identity', () => {
   const batch_codes = [oldNumber('BATCH'), 'BATCH-261015-000124'];
   const materials = { name_cn: '示例材料', batch_codes, storage_locations: ['A101'], stock_by_spec: [] };
-  const [materialCells] = csvRows(buildCsv('materials', [materials]));
+  const [materialCells] = tableRows(buildExportTable('materials', [materials]));
   assert.equal(materialCells['所有批次编号'], `${shortNumber('BATCH')}；BATCH-261015-000124`);
-  const [inventoryCells] = csvRows(buildCsv('inventorySummary', [{ material_name: '示例材料', spec: '无',
+  const [inventoryCells] = tableRows(buildExportTable('inventorySummary', [{ material_name: '示例材料', spec: '无',
     storage_room: 'A101', current_qty: 1, unit: '瓶', batches: [{ _id: '7' }], batch_codes }]));
   assert.equal(inventoryCells['批次编号'], `${shortNumber('BATCH')}；BATCH-261015-000124`);
   assert.deepEqual(batch_codes, [oldNumber('BATCH'), 'BATCH-261015-000124']);

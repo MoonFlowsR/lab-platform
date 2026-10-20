@@ -78,12 +78,12 @@ test('finance marking rejects open/closed/unsettled/deleted records, invalid pay
 
 test('finance defaults to all records without gaining reviewer authorization; reimbursement is searchable and exported for every completed type',async()=>{
  const {defaultViewScope,usesTeamOverview,canReviewAssignedRequest}=await import('../../src/shared/lib/review-scope.js');
- const {buildCsv}=await import('../../src/shared/lib/csv-export.js');const {recordMatchesSearch}=await import('../../src/shared/lib/teacher-filter.js');
+ const {buildExportTable}=await import('../../src/shared/lib/export-columns.js');const {recordMatchesSearch}=await import('../../src/shared/lib/teacher-filter.js');
  const account={account_type:'finance',username:'example-finance'};assert.equal(defaultViewScope(account),'all');assert.equal(usesTeamOverview(account),true);assert.equal(canReviewAssignedRequest({review_teacher_username:account.username},account),false);
  for(const [kind,type] of [['test','测试'],['processing','加工'],['repair','维修'],['purchases',null]]){
   const row={status:'已完成',...(type?{request_type:type}:{}),settlement_status:'已挂账',estimated_price:100,cost_test:20,cost_processing:30,cost_repair:40};
-  assert(buildCsv(kind,[row]).csv.includes('未报销'));assert(recordMatchesSearch(row,'未报销'));
+  assert(JSON.stringify(buildExportTable(kind,[row])).includes('未报销'));assert(recordMatchesSearch(row,'未报销'));
   const marked={...row,reimbursed:true,reimbursed_by:'示例财务',reimbursed_at:'2026-10-20T00:00:00Z'};
-  assert(buildCsv(kind,[marked]).csv.includes('已报销'));assert(recordMatchesSearch(marked,'已报销'));assert(!recordMatchesSearch(marked,'未报销'));
+  assert(JSON.stringify(buildExportTable(kind,[marked])).includes('已报销'));assert(recordMatchesSearch(marked,'已报销'));assert(!recordMatchesSearch(marked,'未报销'));
  }
 });

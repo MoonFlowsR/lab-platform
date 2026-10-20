@@ -1,14 +1,8 @@
+import { workbookParts } from './workbook.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-function zipParts(buffer) {
- const files=new Map();let offset=0;
- while(buffer.readUInt32LE(offset)===0x04034b50){const size=buffer.readUInt32LE(offset+18),nameLength=buffer.readUInt16LE(offset+26),extra=buffer.readUInt16LE(offset+28),start=offset+30+nameLength+extra;
-  files.set(buffer.toString('utf8',offset+30,offset+30+nameLength),buffer.toString('utf8',start,start+size));offset=start+size;
- }
- assert.equal(buffer.readUInt32LE(offset),0x02014b50);return files;
-}
 
 export async function checkExcelExports(browser,origin,out,snapshot,users) {
  const results=[],finance={username:'qa-finance',display_name:'示例财务',_id:55,account_type:'finance',status:'active'};
@@ -31,13 +25,14 @@ export async function checkExcelExports(browser,origin,out,snapshot,users) {
   for(const tab of tabs){
    await page.locator('.platform-nav button').getByText(tab,{exact:true}).click();
    if(tab==='数据报表')await page.getByRole('heading',{name:'数据报表',exact:true}).waitFor();
-   const actions=page.locator('.platform-export-buttons');
+   assert.equal(await page.getByRole('button',{name:/CSV/i}).count(),0);
+   const actions=page.locator('.platform-export-button');
    for(let index=0;index<await actions.count();index++){
-    const button=actions.nth(index).getByRole('button',{name:/Excel$/});await button.waitFor({state:'visible'});
-    await page.waitForFunction(()=>![...document.querySelectorAll('.platform-export-buttons button')].some(button=>button.disabled));
+    const button=actions.nth(index);await button.waitFor({state:'visible'});
+    await page.waitForFunction(()=>![...document.querySelectorAll('.platform-export-button')].some(button=>button.disabled));
     const pending=page.waitForEvent('download');await button.click();const downloaded=await pending;
     assert(downloaded.suggestedFilename().endsWith('.xlsx'),role+' '+tab);
-    const bytes=await fs.readFile(await downloaded.path()),parts=zipParts(bytes);
+    const bytes=await fs.readFile(await downloaded.path()),parts=workbookParts(bytes);
     const sheets=[...parts].filter(([file])=>file.startsWith('xl/worksheets/'));
     assert.equal(sheets.length,tab==='数据报表'?12:1);
     for(const [,sheet] of sheets){assert.match(sheet,/<autoFilter ref="A1:[A-Z]+[0-9]+"\/>/);assert(sheet.includes('topLeftCell="A2"'));assert(!sheet.includes('<f'));}

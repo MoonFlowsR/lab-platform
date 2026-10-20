@@ -73,8 +73,8 @@ for(const boundary of ['purchase-audit','batch-write','stock-write','final-audit
  }finally{f.db.close();}
 });
 
-test('purchase and batch CSV export every channel change, including blank values and backfilled evidence',async()=>{
- const {buildCsv}=await import('../../src/shared/lib/csv-export.js');
+test('purchase and batch Excel export every channel change, including blank values and backfilled evidence',async()=>{
+ const {buildExportTable}=await import('../../src/shared/lib/export-columns.js');
  const row={supplier_change_history:[{before:'原渠道',after:'新渠道',created_at:'2026-10-19T01:00:00Z',operator_name:'示例学生',reason:'第一次核对'},{before:'新渠道',after:'',created_at:'2026-10-19T02:00:00Z',operator_name:'示例管理员',reason:'第二次核对',synced_at:'2026-10-19T03:00:00Z'}]};
- for(const kind of ['purchases','batches']){const {csv}=buildCsv(kind,[row]);for(const value of ['采购渠道修改记录','原渠道','新渠道','未填写','示例学生','示例管理员','第一次核对','第二次核对','补同步于'])assert(csv.includes(value),kind+': '+value);}
+ for(const kind of ['purchases','batches']){const table=JSON.stringify(buildExportTable(kind,[row]));for(const value of ['采购渠道修改记录','原渠道','新渠道','未填写','示例学生','示例管理员','第一次核对','第二次核对','补同步于'])assert(table.includes(value),kind+': '+value);}
 });

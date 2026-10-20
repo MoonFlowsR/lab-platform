@@ -1,9 +1,9 @@
 const {test,before}=require('node:test');
 const assert=require('node:assert/strict');
-let buildWorkbook,buildExportTable,buildCsv,buildReportExport,buildReportWorkbook;
+let buildWorkbook,buildExportTable,buildReportExport,buildReportWorkbook;
 before(async()=>{
  ({buildWorkbook}=await import('../../src/shared/lib/xlsx-export.js'));
- ({buildExportTable,buildCsv}=await import('../../src/shared/lib/csv-export.js'));
+ ({buildExportTable}=await import('../../src/shared/lib/export-columns.js'));
  ({buildReportExport,buildReportWorkbook}=await import('../../src/features/reports/report-export.js'));
 });
 function parts(bytes){
@@ -38,7 +38,7 @@ test('all module formats share the same Chinese column selection without changin
  const sample={public_id:'WORK-261020-000001',request_type:'测试',work_content:'示例测试',status:'已完成',cost_test:35,quantity:2,unit:'次',workload_quantity:2,workload_unit:'次',current_qty:3,material_name:'示例材料',name_cn:'示例材料',batch_codes:['BATCH-261020-000001'],storage_locations:['示例房间'],stock_by_spec:[{spec:'示例规格',quantity:3,unit:'瓶'}],batches:[],created_at:'2026-10-20T00:00:00Z'};
  const original=JSON.stringify(sample);
  for(const kind of ['test','processing','repair','purchases','stock','stockRequests','materials','inventorySummary','batches','reviews','accounts','audit']){
-  const table=buildExportTable(kind,[sample]);assert.deepEqual(table.headers,buildCsv(kind,[sample]).headers);assert.equal(table.rows.length,1);
+  const table=buildExportTable(kind,[sample]);assert(table.headers.every(header=>/[\u4e00-\u9fff]/.test(header)));assert.equal(table.rows.length,1);
   const sheet=parts(buildWorkbook([table])).get('xl/worksheets/sheet1.xml');assert(sheet.includes('<autoFilter ref="A1:'));assert(sheet.includes('2"/>'));
  }
  assert.equal(JSON.stringify(sample),original);
@@ -48,16 +48,16 @@ test('Excel report exports every filtered record across all sheets and uses fina
  const row={request_type:'测试',work_content:'示例项目',applicant_username:'example-a',status:'已完成',workload_quantity:1,workload_unit:'次',cost_test:25,completion_original:{cost_test:10},completion_modified:true,created_at:at,completed_at:at};
  const data={workRequests:[{...row,_id:1},{...row,_id:2},{...row,_id:3,applicant_username:'example-b'},{...row,_id:4,created_at:'2026-09-01T00:00:00Z'}]};
  const filters={student:'example-a',startDate:'2026-10-20',endDate:'2026-10-20'};
- const result=buildReportWorkbook(data,filters,new Date(at)),csv=buildReportExport(data,filters,new Date(at));
- assert.equal(result.tables.length,csv.files.length);assert.equal(result.tables.length,12);assert(result.filename.endsWith('.xlsx'));assert(csv.filename.endsWith('.zip'));
- const table=result.tables.find(table=>table.title==='测试明细');assert.equal(table.rows.length,2);assert.deepEqual(table.headers,csv.files.find(file=>file.filename==='测试明细.csv').headers);
+ const result=buildReportWorkbook(data,filters,new Date(at)),definition=buildReportExport(data,filters,new Date(at));
+ assert.equal(result.tables.length,definition.tables.length);assert.equal(result.tables.length,12);assert(result.filename.endsWith('.xlsx'));
+ const table=result.tables.find(table=>table.title==='测试明细');assert.equal(table.rows.length,2);assert.deepEqual(table.headers,definition.tables.find(table=>table.title==='测试明细').headers);
  assert(table.rows.every(row=>row[table.headers.indexOf('最终总测试费（元）')]===25));
  const files=parts(result.bytes);assert.equal([...files.keys()].filter(name=>name.startsWith('xl/worksheets/')).length,12);
  assert(files.get('xl/worksheets/sheet4.xml').includes(`autoFilter ref="A1:${String.fromCharCode(65+table.headers.length-1)}3"`));
 });
 test('Excel limits produce an explicit error instead of a corrupt download',()=>{
  assert.throws(()=>buildWorkbook([]),/没有可导出/);
- assert.throws(()=>buildWorkbook([{headers:['名称'],rows:[['x'.repeat(32768)]]}]),/内容过长/);
+ assert.throws(()=>buildWorkbook([{headers:['名称'],rows:[['x'.repeat(32768)]]}]),/长度限制/);
  assert.throws(()=>buildWorkbook([{headers:['名称'],rows:[[]]}]),/列数/);
  assert.throws(()=>buildWorkbook([{headers:['名称'],rows:{length:1048576}}]),/范围/);
 });

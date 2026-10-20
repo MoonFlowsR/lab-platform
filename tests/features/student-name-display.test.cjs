@@ -4,12 +4,12 @@ const Database = require('better-sqlite3');
 const labelsFor = require('../../server/features/accounts/student-name-labels.cjs');
 const fs = require('node:fs');
 const path = require('node:path');
-let display, studentFilterOptions, recordMatchesStudent, canReviewAssignedRequest, buildCsv;
+let display, studentFilterOptions, recordMatchesStudent, canReviewAssignedRequest, buildExportTable;
 test.before(async () => {
   display = await import('../../src/features/accounts/student-name-display.js');
   ({ studentFilterOptions, recordMatchesStudent } = await import('../../src/shared/lib/student-filter.js'));
   ({ canReviewAssignedRequest } = await import('../../src/shared/lib/review-scope.js'));
-  ({ buildCsv } = await import('../../src/shared/lib/csv-export.js'));
+  ({ buildExportTable } = await import('../../src/shared/lib/export-columns.js'));
 });
 const labels = [
   { username: 'student-a', display_name: '示例学生', responsible_teacher_name: '示例责任教师', guiding_teacher_name: '示例指导教师' },
@@ -83,7 +83,7 @@ test('cached old duplicate mentor suffix is replaced before the first snapshot r
   assert.equal(cached.display_name, '示例学生（示例教师，示例教师）');
 });
 
-test('same-teacher labels propagate to records, filters, CSV, comments and cache updates', () => {
+test('same-teacher labels propagate to records, filters, Excel, comments and cache updates', () => {
   const render = display.createStudentNameDisplay();
   const rows = [{ _id: 1, applicant_username: 'student-a', applicant_name: '示例学生', public_id: 'WORK-EXAMPLE', request_type: '测试' }];
   const original = JSON.stringify(rows);
@@ -93,7 +93,7 @@ test('same-teacher labels propagate to records, filters, CSV, comments and cache
   const name = '示例学生（示例责任教师）';
   assert.equal(shown.lab_work_requests[0].applicant_name, name);
   assert.equal(studentFilterOptions(shown.lab_student_accounts)[0].label, name);
-  assert.ok(buildCsv('test', shown.lab_work_requests).csv.includes(name));
+  assert.ok(JSON.stringify(buildExportTable('test', shown.lab_work_requests)).includes(name));
   const comment = display.displayStudentComment({ author_username: 'student-a', reply_to_username: 'student-a' }, display.createStudentNameIndex(directory));
   assert.equal(comment.author_name, name); assert.equal(comment.reply_to_name, name);
   assert.equal(comment.author_username, 'student-a'); assert.equal(comment.reply_to_username, 'student-a');
@@ -181,11 +181,11 @@ test('audit and comment display names never replace usernames used by owner chec
   assert.equal(row.author_name, '示例学生');
 });
 
-test('Chinese CSV uses the same student display name without changing its record keys', () => {
+test('Chinese Excel uses the same student display name without changing its record keys', () => {
   const raw = { lab_student_name_labels: labels, lab_stock_transactions: [{ _id: 9, public_id: 'IO-EXAMPLE', transaction_type: '出库', material_name: '示例材料', batch_code: 'BATCH-EXAMPLE', quantity: 1, unit: 'g', stock_before: 3, stock_after: 2, operator_username: 'student-a', operator_name: '示例学生' }] };
   const shown = display.createStudentNameDisplay()(raw);
-  const result = buildCsv('stock', shown.lab_stock_transactions);
-  assert.ok(result.csv.includes(expectedName)); assert.ok(result.csv.includes('IO-EXAMPLE'));
+  const result = buildExportTable('stock', shown.lab_stock_transactions);
+  assert.ok(JSON.stringify(result).includes(expectedName)); assert.ok(JSON.stringify(result).includes('IO-EXAMPLE'));
   assert.equal(shown.lab_stock_transactions[0].operator_username, 'student-a');
 });
 

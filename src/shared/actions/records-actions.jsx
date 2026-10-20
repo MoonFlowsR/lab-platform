@@ -3,9 +3,9 @@ import { showAlert, showConfirm } from "../components/platform-dialog.jsx";
 import { downloadTable } from "../lib/table-export.js";
 
 export function createRecordsActions({ attachments, setMessage, isAdmin, currentUser, loadAll }) {
-async function exportModule(kind, rows, format = 'xlsx') {
+async function exportModule(kind, rows) {
   try {
-    const count = await downloadTable(kind, rows, { attachments }, format);
+    const count = await downloadTable(kind, rows, { attachments });
     setMessage(`已导出 ${count} 条当前筛选数据，列标题均为中文。`);
   } catch (error) {
     setMessage(error.message || '导出失败，请重试。', { persistent: true });
@@ -32,7 +32,7 @@ ${preview.note}
 
 async function hideRecordForMe(collection, row) {
     const title = row.public_id || row.work_content || row.material_name || row.batch_code || "该记录";
-    if (!await showConfirm(`确定从当前账号列表中删除“${title}”吗？\n\n这只会隐藏在你自己的账号里，不会删除数据库原始记录，也不会影响其他用户查看。`)) return;
+    if (!await showConfirm(`确定从当前账号列表中删除“${title}”吗？\n\n这只会在你自己的账号里隐藏，不会删除数据库原始记录，也不会影响其他用户查看。`)) return;
     try {
       await callLabOps("hideRecordForMe", { collection, id: row._id, public_id: row.public_id || "" }, currentUser);
       setMessage("该记录已从当前账号列表中隐藏，不影响其他用户和数据库原始记录。");

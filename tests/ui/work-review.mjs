@@ -1,3 +1,4 @@
+import { readWorkbookText } from './workbook.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -53,8 +54,8 @@ export async function checkWorkReview(browser, origin, out, snapshot, users) {
         assert.equal(await page.getByRole('option').count(),1);await page.getByRole('option').click();assert.equal(await page.getByRole('listbox').count(),0);
         await page.getByRole('heading',{name:'已完成'+type+'工单（1）',exact:true}).waitFor();
         assert.equal(await pending.locator('h3').count(),0);
-        const download=page.waitForEvent('download');await page.getByRole('button',{name:/导出.*CSV/}).first().click();
-        const csv=await fs.readFile(await(await download).path(),'utf8');assert(csv.includes('示例机构乙'));assert(!csv.includes('示例机构甲'));
+        const download=page.waitForEvent('download');await page.getByRole('button',{name:/导出.*Excel/}).first().click();
+        const worksheetText=await readWorkbookText(await(await download).path());assert(worksheetText.includes('示例机构乙'));assert(!worksheetText.includes('示例机构甲'));
         await page.getByRole('button',{name:'重置筛选',exact:true}).click();
         await page.getByRole('heading',{name:'已完成'+type+'工单（3）',exact:true}).waitFor();
         if(width<640)await page.getByRole('button',{name:/收起筛选/}).click();

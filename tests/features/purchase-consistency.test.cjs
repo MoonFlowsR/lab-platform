@@ -140,11 +140,11 @@ test('arrival confirmation keeps the approved estimate and records final quantit
   assert.deepEqual(record.inbound_original,{quantity:2,unit:'瓶',estimated_price:100});
   assert.equal(batch.total_price,60);assert.equal(batch.unit_price,15);assert.equal(batch.current_qty,4);assert.equal(transaction.quantity,4);
   const {businessMetrics,reportSummaryRows}=await import('../../src/features/dashboard/dashboard-metrics.js');
-  const {buildCsv}=await import('../../src/shared/lib/csv-export.js');
+  const {buildExportTable}=await import('../../src/shared/lib/export-columns.js');
   const metric=businessMetrics([],[record]).find(r=>r.type==='采购');assert.equal(metric.completedAmount,60);assert.equal(metric.modified,1);
   const summary=require('../../server/queries/snapshot.cjs')({num:Number,listRecords:collection=>collection==='lab_purchase_requests'?[record]:[]}).buildFundSummary();
   assert.equal(summary.material_committed,60);
-  const csv=buildCsv('purchases',[record]).csv;for(const text of ['最终总采购费','已开票','100','60','入库修改明细','实际采购调整'])assert(csv.includes(text));
+  const table=JSON.stringify(buildExportTable('purchases',[record]));for(const text of ['最终总采购费','已开票','100','60','入库修改明细','实际采购调整'])assert(table.includes(text));
   assert.equal(reportSummaryRows({purchases:[record]}).find(r=>r[0]==='采购已入库金额')[1],60);
  }finally{f.db.close();}
 });

@@ -78,33 +78,5 @@ export function buildExportTable(kind, rows = [], context = {}) {
   if (!definition) throw new Error('不支持的导出模块。');
   const values = rows.map(row => definition.columns.map(col => col.get(row, context) ?? ''));
   const selected = definition.columns.map((col,index) => ({...col,index})).filter(col => !col.optional || values.some(row => text(row[col.index]).trim() !== ''));
-  return { title: definition.title, headers: selected.map(col => col.title), rows: values.map(row => selected.map(col => row[col.index])) };
-}
-export function buildCsv(kind, rows = [], context = {}) {
-  const table = buildExportTable(kind, rows, context);
-  return buildCsvTable(table.title, table.headers, table.rows);
-}
-export function buildCsvTable(title, headers, rows) {
-  if (rows.some(row => row.length !== headers.length)) throw new Error('导出列数与数据不一致。');
-  const escape = value => {
-    let output = text(value);
-    if (typeof value === 'string' && /^[\s]*[=+\-@]/.test(output)) output = "'" + output;
-    return '"' + output.replaceAll('"','""') + '"';
-  };
-  const csv = '\uFEFF' + [headers.map(escape).join(','), ...rows.map(row => row.map(escape).join(','))].join('\r\n');
-  const today = date(new Date()).slice(0,10);
-  return { csv, headers, rowCount: rows.length, filename: `${title}_${today}.csv` };
-}
-export function downloadCsv(kind, rows, context = {}) {
-  const result = buildCsv(kind, rows, context);
-  const blob = new Blob([result.csv],{type:'text/csv;charset=utf-8;'});
-  downloadFile(result.filename, blob);
-  return result.rowCount;
-}
-export function downloadFile(filename, blob) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url; link.download = filename;
-  document.body.appendChild(link); link.click(); link.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return { title: definition.title, rowCount: rows.length, headers: selected.map(col => col.title), rows: values.map(row => selected.map(col => row[col.index])) };
 }

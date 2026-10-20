@@ -45,7 +45,7 @@ test('inventory filters use this record participants while keeping associated te
   assert(recordMatchesSearch({ ...stock, associated_teacher_names: recordTeacherNames(stock, 'stock', context) }, '教师甲'));
 });
 
-test('report selection and CSV share direct teacher participation, exact student intersection, dates and full-text search', () => {
+test('report selection and Excel share direct teacher participation, exact student intersection, dates and full-text search', () => {
   const common = { created_at: at, applicant_username: 'student-a', applicant_name: '学生甲（教师甲）', responsible_teacher_username: 'teacher-a', status: '已完成', request_type: '测试' };
   const data = {
     teachers,
@@ -74,9 +74,9 @@ test('report selection and CSV share direct teacher participation, exact student
   assert.deepEqual(selectReportData(data, { ...options, student: 'student-a' }).stockTransactions, []);
   assert(selectReportData(data, { query: '教师甲' }).workRequests.some(row => row._id === 12));
   const exported = buildReportExport(data, options, new Date(at));
-  const workCsv = exported.files.find(file => file.filename === '测试明细.csv').csv;
-  assert(workCsv.includes('本人审批测试'));
-  assert(!workCsv.includes('仅导师关联测试'));
-  assert(!workCsv.includes('较早本人审批'));
+  const workText = JSON.stringify(exported.tables.find(table => table.title === '测试明细'));
+  assert(workText.includes('本人审批测试'));
+  assert(!workText.includes('仅导师关联测试'));
+  assert(!workText.includes('较早本人审批'));
   assert.equal(JSON.stringify(data), before);
 });

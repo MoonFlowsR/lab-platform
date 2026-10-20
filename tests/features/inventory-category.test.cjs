@@ -1,10 +1,10 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-let filterInventoryCategory, normalizeInventoryCategory, summarizeMaterials, groupMaterialBatches, buildCsv, recordInDateRange, recordMatchesStudent, containsQuery, recordMatchesTeacher, createTeacherContext, inventoryMetrics, expiryWarnings;
+let filterInventoryCategory, normalizeInventoryCategory, summarizeMaterials, groupMaterialBatches, buildExportTable, recordInDateRange, recordMatchesStudent, containsQuery, recordMatchesTeacher, createTeacherContext, inventoryMetrics, expiryWarnings;
 test.before(async () => {
   ({ filterInventoryCategory, normalizeInventoryCategory } = await import('../../src/features/inventory/inventory-category.js'));
   ({ summarizeMaterials, groupMaterialBatches } = await import('../../src/features/inventory/material-summary.js'));
-  ({ buildCsv } = await import('../../src/shared/lib/csv-export.js'));
+  ({ buildExportTable } = await import('../../src/shared/lib/export-columns.js'));
   ({ recordInDateRange } = await import('../../src/shared/lib/module-date.js'));
   ({ recordMatchesStudent } = await import('../../src/shared/lib/student-filter.js'));
   ({ containsQuery } = await import('../../src/app/formatters.js'));
@@ -66,14 +66,14 @@ test('category composes with student, teacher, date and text filters without cha
   assert.deepEqual(scope.map(row => row._id), [1]); assert.strictEqual(scope[0], batches[0]);
   assert.equal(scope[0].inbound_photo_attachment_id, 'sample-photo');
 });
-test('warnings and all three inventory CSVs contain only the category selection', () => {
+test('warnings and all three inventory exports contain only the category selection', () => {
   const materials = [master(1), master(2, '耗材')], batches = [batch(1, materials[0], { current_qty: 0, min_qty: 1 }), batch(2, materials[1], { current_qty: 1, min_qty: 2, expiry_date: '2020-01-01' })];
   const chosen = filterInventoryCategory(materials, batches, '耗材');
   const metrics = inventoryMetrics(chosen.batches);
   assert.equal(metrics.total, 1); assert.equal(metrics.low, 1); assert.equal(metrics.expired, 1);
   assert.deepEqual(expiryWarnings(chosen.batches, '2026-10-14').map(row => row._id), [2]);
   const rows = [['materials', summarizeMaterials(chosen.materials, chosen.batches)], ['batches', chosen.batches], ['inventorySummary', groupMaterialBatches(chosen.batches)]];
-  for (const [kind, records] of rows) { const csv = buildCsv(kind, records); assert.equal(csv.rowCount, 1); assert(csv.csv.includes('示例材料2')); assert(!csv.csv.includes('示例材料1')); }
+  for (const [kind, records] of rows) { const table = buildExportTable(kind, records); assert.equal(table.rowCount, 1); assert(JSON.stringify(table).includes('示例材料2')); assert(!JSON.stringify(table).includes('示例材料1')); }
 });
 test('cached category selections reuse immutable arrays and refresh when a new snapshot arrives', () => {
   const materials = [master(1), master(2, '耗材')], batches = materials.map((row, index) => batch(index, row));

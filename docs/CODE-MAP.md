@@ -47,11 +47,11 @@
 
 1. 先确认业务操作名和数据字段，再改相应页面与服务；读写权限由服务端检查。
 2. 库存、审批、附件绑定及审计的关联写入放在同一个数据库事务中。
-3. 修改筛选时同步检查屏幕、统计和 Excel/CSV 导出；姓名筛选使用账号身份，全文搜索使用文本。
+3. 修改筛选时同步检查屏幕、统计和 Excel 导出；姓名筛选使用账号身份，全文搜索使用文本。
 4. 新增重要流程后补对应业务测试，并更新角色帮助。旧帮助引用按原索引保留为`history`，避免既有评论失去位置。
 
 数据库、上传文件和部署配置是运行数据，不放进业务源码目录。
 
-表格导出：`csv-export.js` 定义各业务的中文列和数据口径，`xlsx-export.js` 生成带筛选、冻结表头的工作簿，`table-export.js` 处理格式选择和下载；数据报表由 `report-export.js` 复用相同列定义，生成多工作表 Excel 或 CSV 压缩包。
+表格导出：`export-columns.js` 定义各业务的中文列和数据口径，`xlsx-export.js` 生成带筛选、冻结表头的工作簿，`table-export.js` 处理 Excel 下载；数据报表由 `report-export.js` 复用相同列定义，生成多工作表 Excel。
 
 教师默认查看范围由 `server/features/accounts/view-scope.cjs` 读取数据库 `platform_settings` 的 `account_view_scope:<账号ID>`；值为 `all` 时首页及工单默认查看全组，否则沿用本人范围。该设置随数据库备份，不改变审批权限。

@@ -1,3 +1,4 @@
+import { readWorkbookText } from './workbook.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -44,9 +45,9 @@ export async function checkAccountViewScope(browser, origin, out, snapshot, teac
       assert.equal(await pending.locator('h3').count(), 2);
       assert.equal(await pending.getByRole('button', { name: '同意', exact: true }).count(), 1);
       const download = page.waitForEvent('download');
-      await page.getByRole('button', { name: /导出.*CSV/ }).first().click();
-      const csv = await fs.readFile(await (await download).path(), 'utf8');
-      assert(csv.includes(type === '采购' ? '团队核对材料' : '团队核对项目'));
+      await page.getByRole('button', { name: /导出.*Excel/ }).first().click();
+      const worksheetText = await readWorkbookText(await (await download).path());
+      assert(worksheetText.includes(type === '采购' ? '团队核对材料' : '团队核对项目'));
       await scope.fill('本人');
       await page.getByRole('option', { name: '本人', exact: true }).click();
       await page.waitForFunction(() => document.querySelectorAll('main > .platform-section-pending h3').length === 1);

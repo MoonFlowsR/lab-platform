@@ -93,7 +93,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/service.ps1 -Action 
 | 目录 | 用途 |
 | --- | --- |
 | `src/features` | 按账号、测试加工、采购、库存、出退库、报表、帮助划分的页面 |
-| `src/shared` | 搜索、筛选、表格、同步及CSV等共享功能 |
+| `src/shared` | 搜索、筛选、表格、同步及Excel导出等共享功能 |
 | `server/features`、`server/services/operations` | 相应业务规则与数据库写操作 |
 | `server/db`、`server/queries` | 数据存储、同步快照和日志查询 |
 | `tests` | 业务、安全和手机/电脑界面检查 |
