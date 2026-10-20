@@ -26,7 +26,7 @@ function sheetName(value, used) {
 function cell(value, reference, header = false) {
   if (!header && typeof value === 'number' && Number.isFinite(value) && Math.abs(value) < 1e15) return `<c r="${reference}"><v>${value}</v></c>`;
   const text = String(value ?? '');
-  if (text.length > 32767) throw new Error('单元格内容过长，请缩小导出范围或使用 CSV。');
+  if (text.length > 32767) throw new Error('单元格内容超过 Excel 长度限制，请精简该字段后导出。');
   return `<c r="${reference}" t="inlineStr"${header ? ' s="1"' : ''}><is><t xml:space="preserve">${xml(text)}</t></is></c>`;
 }
 function worksheet({ headers, rows }) {

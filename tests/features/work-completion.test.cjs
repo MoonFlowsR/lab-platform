@@ -30,11 +30,11 @@ test('completion retains owner, role, workflow and concurrency protections',()=>
  assert.throws(()=>complete(before,{...payload,expected_updated_at:'old'},account,[],''),/已更新/);
  assert.throws(()=>complete(before,{...payload,confirmed:false},account,[],''),/确认完成/);
 });
-test('CSV includes settlement state and distinguishes old missing data from open orders',async()=>{
- const {buildCsv}=await import('../../src/shared/lib/csv-export.js');
+test('Excel includes settlement state and distinguishes old missing data from open orders',async()=>{
+ const {buildExportTable}=await import('../../src/shared/lib/export-columns.js');
  const rows=[{...fixture().before,status:'已完成',settlement_status:'已挂账'},{...fixture().before,status:'已完成'},{...fixture().before}];
- const result=buildCsv('test',rows);assert(result.headers.includes('工单状态'));assert(result.csv.includes('已挂账'));assert(result.csv.includes('未登记'));
- assert(!buildCsv('test',[rows[2]]).headers.includes('工单状态'));
+ const result=buildExportTable('test',rows);assert(result.headers.includes('工单状态'));assert(JSON.stringify(result).includes('已挂账'));assert(JSON.stringify(result).includes('未登记'));
+ assert(!buildExportTable('test',[rows[2]]).headers.includes('工单状态'));
 });
 
 test('all work types accept custom completion units and reject placeholder values',()=>{

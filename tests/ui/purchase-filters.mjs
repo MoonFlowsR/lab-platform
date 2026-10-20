@@ -1,3 +1,4 @@
+import { readWorkbookText } from './workbook.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -47,9 +48,9 @@ export async function checkPurchaseFilters(browser, origin, out, snapshot, users
     assert.match(await page.locator('.platform-business-footer').innerText(), /待审核预计金额\s*¥40/);
     assert.equal(await page.locator('main').getByRole('heading', { name: '示例材料乙', exact: true }).count(), 0);
     const download = page.waitForEvent('download');
-    await page.getByRole('button', { name: /导出.*CSV/ }).first().click();
-    const csv = await fs.readFile(await (await download).path(), 'utf8');
-    assert(csv.includes('示例材料甲') && csv.includes('示例材料丙') && !csv.includes('示例材料乙'));
+    await page.getByRole('button', { name: /导出.*Excel/ }).first().click();
+    const worksheetText = await readWorkbookText(await (await download).path());
+    assert(worksheetText.includes('示例材料甲') && worksheetText.includes('示例材料丙') && !worksheetText.includes('示例材料乙'));
     await page.screenshot({ path: path.join(out, 'purchase-unit-filter-' + role + '-' + width + '.png'), fullPage: true });
     await page.locator('.platform-nav').getByRole('button', { name: role === 'admin' ? '测试记录' : '测试审核', exact: true }).click();
     assert.equal(await page.getByPlaceholder('搜索或选择测试机构').inputValue(), '全部');

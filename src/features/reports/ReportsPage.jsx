@@ -51,10 +51,10 @@ export default function ReportsPage({ currentUser, onReimbursementChange, data, 
   const workRows = rows => rows.map(row => [row.public_id, row.work_content, ...(row.request_type === "维修" ? [row.repair_personnel || "未登记", row.external_unit || "—"] : []), row.applicant_name || row.applicant_username, reviewTeacherName(row), row.status === '已通过' ? '已通过（待确认完成）' : row.status,
     `${row.workload_quantity ?? '—'} ${row.workload_unit || ''}`, money(row.completion_original?.[workFeeKey(row.request_type)] ?? workFee(row)),
     isCompletedWork(row) ? money(completedWorkFee(row)) : '—', row.completion_modified ? '有修改' : '—', isCompletedWork(row) ? <ReimbursementStatus row={row} currentUser={currentUser} onChange={onReimbursementChange} /> : '—', formatDate(row.created_at), ...closureCells(row)]);
-  function exportReport(format = 'xlsx') {
+  function exportReport() {
     try {
-      const result = downloadReport(data, { student, teacher: canFilterTeacher ? teacher : "", teacherName: selectedTeacher?.display_name || teacher, query, studentName: selectedStudent?.display_name || student, startDate: range === 'custom' ? startDate : '', endDate: range === 'custom' ? endDate : '' }, format);
-      onMessage?.(format === 'csv' ? `已导出当前筛选下的全部数据，共 ${result.files.length} 个中文 CSV，已打包下载。` : `已导出当前筛选下的全部数据，共 ${result.tables.length} 个工作表，表头可直接筛选。`);
+      const result = downloadReport(data, { student, teacher: canFilterTeacher ? teacher : "", teacherName: selectedTeacher?.display_name || teacher, query, studentName: selectedStudent?.display_name || student, startDate: range === 'custom' ? startDate : '', endDate: range === 'custom' ? endDate : '' });
+      onMessage?.(`已导出当前筛选下的全部数据，共 ${result.tables.length} 个工作表，表头可直接筛选。`);
     } catch (error) { onMessage?.(error.message || '导出失败，请重试。', { persistent: true }); }
   }
   return <main>

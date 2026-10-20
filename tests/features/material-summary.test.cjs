@@ -68,19 +68,19 @@ test('case-sensitive specifications and unknown rooms do not accidentally merge'
 });
 
 
-test('summary CSV exports all filtered groups and labels room and unit', async () => {
-  const { buildCsv } = await import('../../src/shared/lib/csv-export.js');
+test('summary Excel exports all filtered groups and labels room and unit', async () => {
+  const { buildExportTable } = await import('../../src/shared/lib/export-columns.js');
   const rows = [batch(1),batch(2,{current_qty:3}),batch(3,{storage_room:'A101'}),batch(4,{unit:'kg'})];
   const groups = groupMaterialBatches(rows);
-  const result = buildCsv('inventorySummary',groups);
+  const result = buildExportTable('inventorySummary',groups);
   assert.equal(result.rowCount,3);
   assert.deepEqual(result.headers,['材料名称','规格','存放房间','库存合计','计量单位','批次数','批次编号']);
-  assert.ok(result.csv.includes('A102'));
-  assert.ok(result.csv.includes('A101'));
+  assert.ok(JSON.stringify(result).includes('A102'));
+  assert.ok(JSON.stringify(result).includes('A101'));
   const materials = summarizeMaterials([{_id:'material',name_cn:'示例材料'}],rows);
-  const detail = buildCsv('materials',materials);
-  assert.ok(detail.csv.includes('Mn-200 · A102'));
-  assert.ok(detail.csv.includes('Mn-200 · A101'));
+  const detail = buildExportTable('materials',materials);
+  assert.ok(JSON.stringify(detail).includes('Mn-200 · A102'));
+  assert.ok(JSON.stringify(detail).includes('Mn-200 · A101'));
 });
 
 

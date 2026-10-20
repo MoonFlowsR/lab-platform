@@ -1,3 +1,4 @@
+import { readWorkbookText } from './workbook.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -90,7 +91,7 @@ export async function checkFinance(browser,origin,out,snapshot,users){
     await checkReimbursementHighlight(card,true);
     await checkReimbursementTotals(page.getByRole('region',{name:type+'统计',exact:true}),1,2,25,50);
     await card.scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,`reimbursed-${type}-${width}.png`)});
-    const download=page.waitForEvent('download');await page.getByRole('button',{name:/导出.*CSV/}).first().click();const csv=await fs.readFile(await(await download).path(),'utf8');assert(csv.includes('报销状态'));assert(csv.includes('已报销'));assert(csv.includes('未报销'));assert(csv.includes('示例财务'));
+    const download=page.waitForEvent('download');await page.getByRole('button',{name:/导出.*Excel/}).first().click();const worksheetText=await readWorkbookText(await(await download).path());assert(worksheetText.includes('报销状态'));assert(worksheetText.includes('已报销'));assert(worksheetText.includes('未报销'));assert(worksheetText.includes('示例财务'));
     await check.uncheck();await page.waitForFunction(()=>!document.querySelector('.platform-reimbursement-check input:disabled'));assert.equal(await check.isChecked(),false);
     await checkReimbursementHighlight(card,false);
     await checkReimbursementTotals(page.getByRole('region',{name:type+'统计',exact:true}),0,3,0,75);

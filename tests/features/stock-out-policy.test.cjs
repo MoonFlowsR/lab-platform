@@ -1,9 +1,9 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-let policy, buildCsv;
+let policy, buildExportTable;
 test.before(async () => {
   policy = await import('../../src/features/stock/stock-out-policy.js');
-  ({ buildCsv } = await import('../../src/shared/lib/csv-export.js'));
+  ({ buildExportTable } = await import('../../src/shared/lib/export-columns.js'));
 });
 const student = { username: 'student-one', display_name: '示例学生（示例教师）', account_type: 'student' };
 const batch = { _id: 23, purchaser_username: 'student-one', purchaser_name: '示例学生（示例教师）', created_by_username: 'student-other', related_purchase_record_id: 12, related_purchase_id: 'PUR-SAMPLE-12' };
@@ -42,20 +42,20 @@ test('approved requests retain completion and rejected, withdrawn or completed r
   for (const status of ['已驳回', '已撤回', '已出库']) assert.equal(policy.canCompleteStockRequest(request({ status }), student, [batch], purchases), false);
 });
 
-test('CSV presents backend exemption separately without fabricating approval or losing existing history', () => {
+test('Excel presents backend exemption separately without fabricating approval or losing existing history', () => {
   const evidence = { purchaser_approval_exempt: true, purchaser_approval_exempt_reason: 'purchaser_self' };
   assert.equal(policy.stockApprovalExemptionText(evidence), '采购人本人，无需审批');
   assert.equal(policy.stockApprovalExemptionText({ ...evidence, purchaser_approval_exempt: 'true' }), '');
   assert.equal(policy.stockApprovalExemptionText({ ...evidence, purchaser_approval_exempt_reason: 'other' }), '');
   for (const kind of ['stock', 'stockRequests']) {
     const row = { ...request(), ...evidence, material_name: '示例材料', status: '已出库' };
-    const before = structuredClone(row), csv = buildCsv(kind, [row]);
-    assert(csv.headers.includes('出库审批说明')); assert(csv.csv.includes('采购人本人，无需审批'));
-    assert(!csv.headers.includes('审批人')); assert(!csv.headers.includes('采购人审批人')); assert(!csv.headers.includes('审批时间'));
+    const before = structuredClone(row), table = buildExportTable(kind, [row]);
+    assert(table.headers.includes('出库审批说明')); assert(JSON.stringify(table).includes('采购人本人，无需审批'));
+    assert(!table.headers.includes('审批人')); assert(!table.headers.includes('采购人审批人')); assert(!table.headers.includes('审批时间'));
     assert.deepEqual(row, before);
     const reviewed = kind === 'stock' ? { ...row, purchaser_approved_by: '原审批人', purchaser_approved_at: '2026-10-14T01:00:00Z' } : { ...row, reviewed_by: '原审批人', reviewed_at: '2026-10-14T01:00:00Z' };
-    const retained = buildCsv(kind, [reviewed]);
-    assert(retained.csv.includes('原审批人')); assert(retained.csv.includes('采购人本人，无需审批'));
-    assert(!buildCsv(kind, [{ ...row, purchaser_approval_exempt: false }]).headers.includes('出库审批说明'));
+    const retained = buildExportTable(kind, [reviewed]);
+    assert(JSON.stringify(retained).includes('原审批人')); assert(JSON.stringify(retained).includes('采购人本人，无需审批'));
+    assert(!buildExportTable(kind, [{ ...row, purchaser_approval_exempt: false }]).headers.includes('出库审批说明'));
   }
 });

@@ -1,7 +1,7 @@
-import { buildExportTable, buildCsvTable, downloadFile } from '../../shared/lib/csv-export.js';
+import { buildExportTable } from '../../shared/lib/export-columns.js';
+import { downloadFile } from '../../shared/lib/table-export.js';
 import { buildWorkbook, xlsxMime } from '../../shared/lib/xlsx-export.js';
 import { chinaDate, selectReportData } from './report-data.js';
-import { storeZip } from '../../shared/lib/zip-store.js';
 import { reportSummaryRows } from '../dashboard/dashboard-metrics.js';
 
 // Control characters are intentionally removed from downloadable filenames.
@@ -9,7 +9,7 @@ import { reportSummaryRows } from '../dashboard/dashboard-metrics.js';
 const filenamePart = value => String(value).replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_');
 const timestamp = value => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false }).format(value);
 
-function buildReportTables(data, filters = {}, now = new Date()) {
+export function buildReportExport(data, filters = {}, now = new Date()) {
   const { student = '', studentName = student, teacher = '', teacherName = teacher, query = '', startDate = '', endDate = '' } = filters;
   if (startDate && endDate && startDate > endDate) throw new Error('开始日期不能晚于结束日期，请调整后导出。');
   // Use the same selector as the report page, on the already authorized account dataset.
@@ -41,25 +41,13 @@ function buildReportTables(data, filters = {}, now = new Date()) {
   return { tables:files, selected, basename:`数据报表_${filenamePart(student ? studentName : '全部学生')}_${filenamePart(teacher ? teacherName : '全部教师')}_${range}_${chinaDate(now)}` };
 }
 
-export function buildReportExport(data, filters = {}, now = new Date()) {
-  const result = buildReportTables(data, filters, now);
-  return { files:result.tables.map(table => ({ ...buildCsvTable(table.title, table.headers, table.rows), filename:table.title + '.csv' })), selected:result.selected, filename:result.basename + '.zip' };
-}
-
 export function buildReportWorkbook(data, filters = {}, now = new Date()) {
-  const result = buildReportTables(data, filters, now);
+  const result = buildReportExport(data, filters, now);
   return { ...result, bytes:buildWorkbook(result.tables, now), filename:result.basename + '.xlsx' };
 }
 
-export function downloadReport(data, filters, format = 'xlsx') {
-  if (format === 'csv') return downloadReportCsvs(data, filters);
+export function downloadReport(data, filters) {
   const result = buildReportWorkbook(data, filters);
   downloadFile(result.filename, new Blob([result.bytes], { type:xlsxMime }));
-  return result;
-}
-
-export function downloadReportCsvs(data, filters) {
-  const result = buildReportExport(data, filters);
-  downloadFile(result.filename, new Blob([storeZip(result.files)], { type:'application/zip' }));
   return result;
 }

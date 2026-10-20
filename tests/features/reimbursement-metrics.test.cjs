@@ -37,5 +37,5 @@ test('mark/unmark moves exactly one final amount; zero, unregistered, empty and 
  const workRequests=[{...row,applicant_username:'example-a',created_at:'2026-10-20T00:00:00Z'},{...row,applicant_username:'example-b',created_at:'2026-10-19T00:00:00Z',reimbursed:true}];
  const result=buildReportExport({workRequests},{student:'example-a',startDate:'2026-10-20',endDate:'2026-10-20'});
  const summary=new Map(reportSummaryRows(result.selected).map(([key,value])=>[key,value]));assert.equal(summary.get('待报销金额合计'),20);assert.equal(summary.get('已报销金额合计'),0);
- const csv=result.files.find(file=>file.filename==='统计汇总.csv').csv;assert(csv.includes('"待报销金额合计","20","元"'));assert(csv.includes('"已报销金额合计","0","元"'));
+ const rows=result.tables.find(table=>table.title==='统计汇总').rows;assert(rows.some(row=>row[0]==='待报销金额合计'&&row[1]===20&&row[2]==='元'));assert(rows.some(row=>row[0]==='已报销金额合计'&&row[1]===0&&row[2]==='元'));
 });

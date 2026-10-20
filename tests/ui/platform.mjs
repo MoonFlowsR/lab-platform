@@ -1,3 +1,4 @@
+import { readWorkbookText } from './workbook.mjs';
 import { checkExcelExports } from './excel-exports.mjs';
 import { checkRegistration } from './registration.mjs';
 import { checkFinance } from './finance.mjs';
@@ -103,9 +104,9 @@ try {
      assert.equal(await pending.locator('h3').count(),1);
      await pending.getByRole('button',{name:'查看全部',exact:true}).click();assert.equal(await pending.locator('h3').count(),3);
      await pending.getByRole('button',{name:'仅显示最近1条',exact:true}).click();assert.equal(await pending.locator('h3').count(),1);
-     const downloaded=page.waitForEvent('download');await page.getByRole('button',{name:/导出.*CSV/}).first().click();
-     const csv=await fs.readFile(await (await downloaded).path(),'utf8');
-     for(const name of ['直接指定教师甲测试','仅导师关系对照测试','教师甲本人申请测试'])assert(csv.includes(name),'CSV must include hidden matching records');
+     const downloaded=page.waitForEvent('download');await page.getByRole('button',{name:/导出.*Excel/}).first().click();
+     const worksheetText=await readWorkbookText(await (await downloaded).path());
+     for(const name of ['直接指定教师甲测试','仅导师关系对照测试','教师甲本人申请测试'])assert(worksheetText.includes(name),'Excel must include hidden matching records');
      results.push({latestOneAndExpand:true,exportNotTruncated:true});
     }
     if(tabs[i]==='采购记录'){
@@ -136,7 +137,7 @@ try {
     }
    }
    if(tabs[i]==='账号管理'&&width===390){
-    await page.getByRole('button',{name:'导出账号CSV',exact:true}).click();
+    await page.getByRole('button',{name:'导出账号Excel',exact:true}).click();
     assert.match(await page.locator('.platform-sync-status').innerText(),/同步完成/);
     await page.getByRole('button',{name:/查看全部账号/}).click();
     await page.getByRole('button',{name:'修改学生资料',exact:true}).first().click();
