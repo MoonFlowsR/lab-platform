@@ -72,13 +72,17 @@ const definitions = {
   accounts: { title: '账号列表', columns: [column('用户名','username'),column('姓名','display_name'),column('账号类型',row => role(row.account_type)),column('账号状态',row => ({active:'启用',pending:'待审核',disabled:'停用'})[row.status] || row.status),...profileColumns,column('注册时间',row => date(row.created_at))] },
   audit: { title: '操作记录', columns: [column('操作时间',row => date(row.created_at)),column('操作人',row => row.operator_name || row.operator_username),column('账号类型',row => role(row.operator_role)),column('操作',row => actionName(row.action)),column('记录类型',row => collectionName(row.target_type)),column('操作对象',row => row.object_label || row.target_id)] },
 };
-export function buildCsv(kind, rows = [], context = {}) {
+export function buildExportTable(kind, rows = [], context = {}) {
   if (kind === 'materials' && rows.some(row => !row.stock_by_spec)) rows = summarizeMaterials(rows, context.batches || []);
   const definition = definitions[kind];
   if (!definition) throw new Error('不支持的导出模块。');
   const values = rows.map(row => definition.columns.map(col => col.get(row, context) ?? ''));
   const selected = definition.columns.map((col,index) => ({...col,index})).filter(col => !col.optional || values.some(row => text(row[col.index]).trim() !== ''));
-  return buildCsvTable(definition.title, selected.map(col => col.title), values.map(row => selected.map(col => row[col.index])));
+  return { title: definition.title, headers: selected.map(col => col.title), rows: values.map(row => selected.map(col => row[col.index])) };
+}
+export function buildCsv(kind, rows = [], context = {}) {
+  const table = buildExportTable(kind, rows, context);
+  return buildCsvTable(table.title, table.headers, table.rows);
 }
 export function buildCsvTable(title, headers, rows) {
   if (rows.some(row => row.length !== headers.length)) throw new Error('导出列数与数据不一致。');

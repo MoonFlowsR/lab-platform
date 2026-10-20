@@ -1,3 +1,5 @@
+import ExportButtons from '../../shared/components/ExportButtons.jsx';
+import { showAlert } from '../../shared/components/platform-dialog.jsx';
 import SupplierChangeHistory from "../../shared/components/SupplierChangeHistory.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { styles } from "../../app/styles.js";
@@ -7,7 +9,7 @@ import { DataTable, Empty, Info, Toolbar } from "../../shared/components/ui.jsx"
 import InventoryWarnings from "./InventoryWarnings.jsx";
 import { groupMaterialBatches } from "./material-summary.js";
 import { materialModelTerms } from "./material-model-search.js";
-import { downloadCsv } from "../../shared/lib/csv-export.js";
+import { downloadTable } from "../../shared/lib/table-export.js";
 import MaterialInitialization from "./MaterialInitialization.jsx";
 import RecentRecords from "../../shared/components/RecentRecords.jsx";
 import { formatPublicNumber } from "../../shared/lib/public-number.js";
@@ -25,6 +27,10 @@ function InventoryPage({ canInitialize = false, materialCatalog = [], isAdmin = 
   const showRemarks = batches.some(batch => batch.remark);
   const showAssociatedTeachers = batches.some(batch => batch.associated_teacher_names);
   const batchGroups = useMemo(() => groupMaterialBatches(batches).map(group => ({ ...group, created_at: group.latest_created_at })), [batches]);
+  async function exportSummary(format) {
+    try { await downloadTable("inventorySummary", batchGroups, {}, format); }
+    catch (error) { showAlert(error.message || '导出失败，请重试。'); }
+  }
   const batchColumns = ["批次", "材料", "材料类别", "采购人", "入库人", "采购渠道", "规格", "使用目的", "当前库存", "位置", "有效期", ...(showSafetyNotes ? ["安全事项"] : []), ...(showRemarks ? ["备注"] : []), ...(showAssociatedTeachers ? ["关联教师"] : []), "建立时间", "入库证明", ...((canManageStock || canEditBatchInformation) ? ["操作"] : [])];
   const batchRow = (b) => [
     b.batch_code,
@@ -50,11 +56,11 @@ function InventoryPage({ canInitialize = false, materialCatalog = [], isAdmin = 
     <InventoryWarnings batches={batches} Table={DataTable} cardStyle={styles.card} renderPhoto={row => <StockPhotoLinks batch row={row} attachments={attachments} onDownload={onDownloadAttachment} />} />
     {canInitialize && <MaterialInitialization materialCatalog={materialCatalog} materials={initializationMaterials} batches={initializationBatches} units={initializationUnits} onSave={onInitialize}       />}
     <section style={styles.card}>
-      <div style={styles.cardHeader}><h2 style={styles.h2}>材料汇总</h2><button style={styles.secondaryButton} onClick={onExportMaterials}>导出材料CSV</button></div>
+      <div style={styles.cardHeader}><h2 style={styles.h2}>材料汇总</h2><ExportButtons subject="材料" onExport={onExportMaterials} /></div>
       <RecentRecords rows={materials}>{shown => <div style={styles.cardGrid}>{shown.length === 0 ? <Empty text="暂无材料汇总。" /> : shown.map((m) => <MaterialCard key={m._id} row={m} isAdmin={isAdmin} onDeleteRecord={onDeleteRecord} searchQuery={searchQuery} />)}</div>}</RecentRecords>
     </section>
     <section style={styles.card}>
-      <div style={styles.cardHeader}><h2 style={styles.h2}>材料批次库存</h2><div className="platform-stock-export-actions"><button style={styles.lightButton} onClick={() => downloadCsv("inventorySummary", batchGroups)}>导出汇总CSV</button><button style={styles.secondaryButton} onClick={onExportBatches}>导出批次CSV</button></div></div>
+      <div style={styles.cardHeader}><h2 style={styles.h2}>材料批次库存</h2><div className="platform-stock-export-actions"><ExportButtons subject="汇总" onExport={exportSummary} /><ExportButtons subject="批次" onExport={onExportBatches} /></div></div>
       <p className="platform-stock-group-note">同材料、规格和房间汇总；展开查看原批次、照片及操作。</p>
       <RecentRecords rows={batchGroups}>{shown => <div className="platform-stock-groups">{shown.length ? shown.map(group => <BatchGroup key={`${group._id}:${searchQuery.trim()}`} group={group} searchQuery={searchQuery}>
         <DataTable desktopColumns={["批次", "当前库存", "位置", "有效期", "采购人", "入库人", "入库证明"]} mobileColumns={["批次", "当前库存", "位置", "有效期", "采购人", "入库人", "入库证明"]} columns={batchColumns} rows={group.batches.map(batchRow)} />

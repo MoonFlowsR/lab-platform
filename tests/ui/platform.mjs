@@ -1,3 +1,4 @@
+import { checkExcelExports } from './excel-exports.mjs';
 import { checkRegistration } from './registration.mjs';
 import { checkFinance } from './finance.mjs';
 import { checkDashboardCounts } from './dashboard-counts.mjs';
@@ -160,6 +161,7 @@ try {
   await page.goto(origin+'/help');await page.locator('.help-page').waitFor();await page.screenshot({path:path.join(out,role+'-'+width+'-help.png'),fullPage:true});
   results.push({role,width,help:true,overflow:await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),errors});await page.close();
  }
+ results.push(...await checkExcelExports(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkRegistration(browser,origin,out));
  results.push(...await checkFinance(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkDashboardCounts(browser,origin,out,snapshot,[admin,teachers[0],studentA]));

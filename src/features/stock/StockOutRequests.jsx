@@ -1,3 +1,4 @@
+import ExportButtons from '../../shared/components/ExportButtons.jsx';
 import { useState } from 'react';
 import RecentRecords from '../../shared/components/RecentRecords.jsx';
 import RecordActions from '../../shared/components/RecordActions.jsx';
@@ -31,7 +32,7 @@ export default function StockOutRequests({ rows = [], currentUser, batches = [],
     </article>;
   };
   return <>
-    <section className="platform-section-pending" style={styles.card}><div style={styles.cardHeader}><h2 style={styles.h2}>私用/项目用物品出库申请（{ongoing.length}）</h2><button type="button" style={styles.secondaryButton} onClick={()=>onExport?.(rows)}>导出出库申请CSV</button></div><p style={styles.muted}>采购人本人可直接登记；其他人经采购人审批后完成出库。完成登记时扣减库存。</p>{ongoing.length ? <RecentRecords rows={ongoing}>{shown => shown.map(card)}</RecentRecords> : <p style={styles.muted}>当前范围暂无待处理出库申请。</p>}</section>
+    <section className="platform-section-pending" style={styles.card}><div style={styles.cardHeader}><h2 style={styles.h2}>私用/项目用物品出库申请（{ongoing.length}）</h2><ExportButtons subject="出库申请" onExport={format=>onExport?.(rows,format)} /></div><p style={styles.muted}>采购人本人可直接登记；其他人经采购人审批后完成出库。完成登记时扣减库存。</p>{ongoing.length ? <RecentRecords rows={ongoing}>{shown => shown.map(card)}</RecentRecords> : <p style={styles.muted}>当前范围暂无待处理出库申请。</p>}</section>
     {history.length>0 && <section style={styles.card}><div style={styles.cardHeader}><h2 style={styles.h2}>出库申请历史（{history.length}）</h2></div><RecentRecords rows={history}>{shown => shown.map(card)}</RecentRecords></section>}
   </>;
 }
