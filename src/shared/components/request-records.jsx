@@ -1,4 +1,4 @@
-import ReimbursementStatus from '../../features/finance/ReimbursementStatus.jsx';
+import ReimbursementStatus, { ReimbursementBadge } from '../../features/finance/ReimbursementStatus.jsx';
 import { isReceivedPurchase, purchaseAmount, purchaseAmountLabel, purchaseQuantityText } from "../../features/purchases/purchase-values.js";
 import { styles } from "../../app/styles.js";
 import { formatDate, money, sortByCreatedAt } from "../../app/formatters.js";
@@ -12,13 +12,13 @@ function ClosureInfo({ row }) {
   return <p style={styles.meta}>关闭人：<strong className="platform-identity">{row.closed_by_name || row.closed_by_username || "未记录"}</strong> · 关闭时间：{formatDate(row.closed_at)} · <strong>不计完成费用或入库金额</strong></p>;
 }
 function PurchaseSummaryCard({ currentUser, onReimbursementChange, row }) {
-  return <div style={styles.listItem}>
+  return <div className="platform-request-record" style={styles.listItem}>
     <div style={styles.rowBetween}>
       <div>
         <h3 style={styles.h3}>{row.material_name || formatPublicNumber(row.public_id)}</h3>
         <p style={styles.meta}>{formatPublicNumber(row.public_id)} · 申请人：<strong className="platform-identity">{row.applicant_name}</strong> · 审核教师：<strong className="platform-identity">{reviewTeacherName(row)}</strong> · 提交时间：{formatDate(row.created_at)}</p>
       </div>
-      <Badge text={row.status} />
+      <div style={styles.badgeRow}><Badge text={row.status} /><ReimbursementBadge row={row} /></div>
     </div>
     {row.status === "已关闭" && <ClosureInfo row={row} />}
     <div className="platform-detail-grid" style={styles.detailGrid4}>
@@ -55,7 +55,7 @@ function ReviewHistory({ row, logs = [] }) {
   return <details open style={styles.logBox}><summary>审批记录（{history.length} 条）</summary><RecentRecords rows={sortByCreatedAt(history)}>{shown => <DataTable mobileColumns={["审批人", "审批结果", "审批意见", "审批时间"]} columns={["审批时间", "审批人", "审批结果", "审批意见"]} rows={shown.map(log => [formatDate(log.created_at), log.reviewer_name || log.reviewer_username || "-", log.action, log.review_note || "未填写"])} />}</RecentRecords></details>;
 }
 function WorkRequestCard({ currentUser, onReimbursementChange, row, logs = [], compact = false, completionDetailsOpen = false, attachmentPanel, actions, historyPanel }) {
-  return <div style={styles.listItem}>
+  return <div className="platform-request-record" style={styles.listItem}>
     <div style={styles.rowBetween}>
       <div>
         <h3 style={styles.h3}>{row.work_content || formatPublicNumber(row.public_id)}</h3>
@@ -63,6 +63,7 @@ function WorkRequestCard({ currentUser, onReimbursementChange, row, logs = [], c
       </div>
       <div style={styles.badgeRow}>
         <Badge text={row.status === "已通过" ? "已通过 · 待确认完成" : row.status} />
+        <ReimbursementBadge row={row} />
         {row.completion_modified && <Badge text="完结时已修改" />}
         {compact && row.reviewed_by && <strong className="platform-identity">审批人：{row.reviewed_by}</strong>}
       </div>

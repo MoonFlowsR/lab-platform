@@ -2,11 +2,15 @@ import { useState } from 'react';
 import { isReimbursementEligible, reimbursementLabel } from './reimbursement.js';
 import { showAlert } from '../../shared/components/platform-dialog.jsx';
 
+export function ReimbursementBadge({ row }) {
+  return row.reimbursed === true ? <span className="platform-reimbursement-badge"><span aria-hidden="true">✓</span> 已报销</span> : null;
+}
+
 export default function ReimbursementStatus({ row, currentUser, onChange }) {
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState(false);
   const editable = currentUser?.account_type === 'finance' && isReimbursementEligible(row) && onChange;
-  return <span className="platform-reimbursement-state">
+  return <span className="platform-reimbursement-state" data-reimbursed={row.reimbursed === true}>
     <span>{row.settlement_status || '未登记'}</span>
     {editable ? <label className="platform-reimbursement-check"><input type="checkbox" checked={busy ? pending : row.reimbursed === true} disabled={busy} aria-label={`已报销 ${row.public_id}`} onChange={async event => {
       const value = event.target.checked;
