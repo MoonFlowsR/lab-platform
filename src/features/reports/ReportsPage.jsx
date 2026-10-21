@@ -68,7 +68,7 @@ export default function ReportsPage({ currentUser, onReimbursementChange, data, 
       </div>
       {invalidRange && <p role="alert" style={{ ...styles.note, color: '#b91c1c', fontWeight: 700 }}>开始日期不能晚于结束日期，请调整时间范围。</p>}
       <p className="platform-metric-scope">当前统计：<strong>{scope}</strong></p>
-      <details className="platform-report-basis"><summary>统计口径</summary><ul><li>测试、加工、维修：按已完成工单最终金额统计。</li><li>采购：已入库按确认的最终金额，未入库及未确认最终金额的旧记录按预计金额统计。</li><li>日期范围包含起止当天。</li></ul><a href="/help#exports">完整统计说明</a></details>
+      <details className="platform-report-basis"><summary>统计口径</summary><ul><li>测试、加工、维修：按已完成工单最终金额统计。</li><li>采购：已入库按确认的最终金额，未入库及未确认最终金额的旧记录按预计金额统计。</li><li>日期范围包含起止当天。</li></ul><a href={`/help#${({ admin: 'admin-reports', teacher: 'teacher-reports', finance: 'finance-reimbursement' })[currentUser?.account_type] || 'student-exports'}`}>完整统计说明</a></details>
 
     </FilterPanel>
     {currentUser?.account_type === 'finance' && <ReimbursementSummary workRequests={workRequests} purchases={purchases} money={money} />}

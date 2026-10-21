@@ -1,4 +1,5 @@
 import { showModuleRecords } from './module-records.mjs';
+import { checkHelp } from './help.mjs';
 import { checkTasks } from './tasks.mjs';
 import { checkRecordVisibility } from './record-visibility.mjs';
 import { checkAuditClients } from './audit-clients.mjs';
@@ -171,6 +172,7 @@ try {
  results.push(...await checkTasks(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  if (process.env.UI_SUITE !== 'tasks') {
  results.push(...await checkRecordVisibility(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
+ results.push(...await checkHelp(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkExcelExports(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkAuditClients(browser,origin,out,snapshot,admin));
  results.push(...await checkRegistration(browser,origin,out));

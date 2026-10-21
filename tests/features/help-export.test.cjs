@@ -3,7 +3,7 @@ const express=require('express'),Database=require('better-sqlite3');
 const help=require('../../src/features/help/content.json');
 const install=require('../../server/features/help/help-comments.cjs');
 const text=block=>block.type==='steps'?block.items.join('\n'):block.type==='table'?[...block.headers,...block.rows.flat()].join('\n'):block.text||'';
-test('Excel-only help keeps retired comment anchors and accepts new selections and replies',async()=>{
+test('current role help accepts selections and replies while preserving archived comment anchors',async()=>{
  const db=new Database(':memory:'),app=express(),events=[];
  app.use(express.json());
  install({app,db,authMiddleware:(req,res,next)=>{req.account={username:'example-student',display_name:'示例学生',account_type:'student',status:'active'};next();},addAudit:(...args)=>events.push(args),nowISO:()=>new Date().toISOString(),recordChanges:{notify(){}}});
@@ -15,14 +15,14 @@ test('Excel-only help keeps retired comment anchors and accepts new selections a
    for(const [index,block]of section.blocks.entries()){
     if(block.type==='history')continue;
     assert(!text(block).includes('CSV'),section.id);
-    if(!text(block).includes('Excel'))continue;
-    const source=text(block),at=source.indexOf('Excel'),quote=source.slice(Math.max(0,at-20),at+100);
+    const source=text(block),quote=source.slice(0,Math.min(120,source.length));
+    if(!quote)continue;
     const comment=await post({section_id:section.id,block_id:`${section.id}-${index}`,quote,body:'示例新导出评论'});
     const reply=await post({parent_id:comment.id,body:'示例回复'});assert.equal(reply.reply_to_username,'example-student');checked++;
    }
    const archived=section.blocks.findIndex(block=>block.type==='history'&&text(block).includes('CSV'));
    if(archived>=0){const source=text(section.blocks[archived]),at=source.indexOf('CSV');await post({section_id:section.id,block_id:`${section.id}-${archived}`,quote:source.slice(Math.max(0,at-20),at+60),body:'示例旧正文评论'});}
   }
-  assert(checked>=11);assert.equal(db.prepare('SELECT COUNT(*) AS count FROM help_comment_events').get().count,events.length);
+  assert(checked>=100);assert.equal(db.prepare('SELECT COUNT(*) AS count FROM help_comment_events').get().count,events.length);
  }finally{await new Promise(resolve=>server.close(resolve));db.close();}
 });
