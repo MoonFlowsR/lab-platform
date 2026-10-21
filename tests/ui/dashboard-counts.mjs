@@ -33,6 +33,8 @@ export async function checkDashboardCounts(browser, origin, out, base, users) {
     const scale = team ? 2 : 1;
     const expected = [2 * scale + (role === 'admin' ? 1 : 0), 2 * scale, 2 * scale, scale];
     const total = expected.reduce((a, b) => a + b, 0);
+    const countsFor = type => role === 'teacher' && type === '测试' ? [expected[0] - scale, ...expected.slice(1)] : expected;
+    const totalFor = type => countsFor(type).reduce((a, b) => a + b, 0);
     const label = account.default_view_scope === 'all' ? 'finance' : role;
     const page = await browser.newPage({ viewport: { width, height: 960 } }), errors = [];
     page.on('pageerror', error => errors.push(error.message));
@@ -56,11 +58,11 @@ export async function checkDashboardCounts(browser, origin, out, base, users) {
     await page.waitForFunction(() => document.querySelector('.platform-sync-status > span')?.textContent.includes('同步状态：同步完成'));
     for (const type of types) {
       const card = page.getByRole('region', { name: type + '统计', exact: true });
-      assert.equal(Number(await card.locator('.platform-business-headline strong').innerText()), total);
-      assert.deepEqual((await card.locator('.platform-business-statuses dd').allTextContents()).map(Number), expected);
+      assert.equal(Number(await card.locator('.platform-business-headline strong').innerText()), totalFor(type));
+      assert.deepEqual((await card.locator('.platform-business-statuses dd').allTextContents()).map(Number), countsFor(type));
     }
     const recent = page.locator('main section').filter({ has: page.getByRole('heading', { name: '近期测试', exact: true }) });
-    assert.match(await recent.locator('.platform-record-limit span').innerText(), new RegExp(`共 ${total} 条`));
+    assert.match(await recent.locator('.platform-record-limit span').innerText(), new RegExp(`共 ${totalFor("测试")} 条`));
     assert.equal(await recent.locator('h3').count(), 1, 'folding does not change totals');
     const movement = page.getByRole('region', { name: '库存流水统计', exact: true });
     assert.match(await movement.locator('.platform-inventory-heading small').innerText(), role === 'student' ? /3 条/ : /5 条/);
@@ -70,7 +72,7 @@ export async function checkDashboardCounts(browser, origin, out, base, users) {
       await page.getByRole('region', { name: type + '统计', exact: true }).getByRole('button').click();
       for (const [i, className] of ['pending', 'approved', 'reviewed', 'modified'].entries()) {
         const section = page.locator('main > .platform-section-' + className);
-        assert.match(await section.locator('h2').innerText(), new RegExp(`（${expected[i]}）$`));
+        assert.match(await section.locator('h2').innerText(), new RegExp(`（${countsFor(type)[i]}）$`));
       }
       // Leave an old, narrower institution selection. A dashboard link must reset it.
       if (role !== 'student') {
@@ -86,7 +88,7 @@ export async function checkDashboardCounts(browser, origin, out, base, users) {
       }
       await page.locator('.platform-nav').getByRole('button', { name: '总览', exact: true }).click();
       await page.getByRole('region', { name: type + '统计', exact: true }).getByRole('button').click();
-      assert.match(await page.locator('main > .platform-section-pending h2').innerText(), new RegExp(`（${expected[0]}）$`));
+      assert.match(await page.locator('main > .platform-section-pending h2').innerText(), new RegExp(`（${countsFor(type)[0]}）$`));
       if (role !== 'student') assert.equal(await page.getByPlaceholder('搜索或选择' + (type === '采购' ? '采购单位' : type === '维修' ? '维修人员单位' : type + '机构')).inputValue(), '全部');
       await page.locator('.platform-nav').getByRole('button', { name: '总览', exact: true }).click();
     }

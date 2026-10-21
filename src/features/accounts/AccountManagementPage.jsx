@@ -1,3 +1,4 @@
+import { RecordVisibility } from '../../shared/components/RecentRecords.jsx';
 import ExportButton from '../../shared/components/ExportButton.jsx';
 import AccountSettingsDialog from './AccountSettingsDialog.jsx';
 import { callLabOps } from '../../app/api.js';
@@ -50,7 +51,9 @@ function AccountManagementPage({ accounts = [], allAccounts = [], teachers = [],
       <StatCard title="管理员账号" value={adminCount} tone="purple" />
     </div>
     <section style={styles.card}>
-      <div style={styles.cardHeader}><h2 style={styles.h2}>账号列表</h2><div style={styles.buttonRowCompact}>{accounts.length > 1 && <button aria-expanded={showAllAccounts} style={styles.lightButton} onClick={() => setShowAllAccounts(!showAllAccounts)}>{showAllAccounts ? "仅显示最近1条账号" : `查看全部账号（${accounts.length}）`}</button>}<ExportButton subject="账号" onExport={onExportAccounts} /></div></div>
+      <div style={styles.cardHeader}><h2 style={styles.h2}>账号列表</h2><div style={styles.buttonRowCompact}><ExportButton subject="账号" onExport={onExportAccounts} /></div></div>
+      <RecordVisibility total={accounts.length} expanded={showAllAccounts} onToggle={() => setShowAllAccounts(value => !value)} controlsId="account-list-rows" />
+      <div id="account-list-rows">
       {accounts.length === 0 ? <Empty text="暂无账号数据。" /> : <div className="platform-table-scroll" style={styles.tableWrap}><table className="platform-data-table" style={styles.table}>
         <thead><tr>{["姓名", "身份", "状态", "个人资料", "创建时间", "操作"].map((c) => <th key={c} style={styles.th}>{c}</th>)}</tr></thead>
         <tbody>{shownAccounts.map((a) => <tr key={a.id || a._id}>
@@ -71,6 +74,8 @@ function AccountManagementPage({ accounts = [], allAccounts = [], teachers = [],
           </div></td>
         </tr>)}</tbody>
       </table></div>}
+      </div>
+      <RecordVisibility total={accounts.length} expanded={showAllAccounts} onToggle={() => setShowAllAccounts(value => !value)} controlsId="account-list-rows" footer />
     </section>
     <AuditLog {...auditProps} />
   </main>;

@@ -41,7 +41,7 @@ export async function checkAccountViewScope(browser, origin, out, snapshot, teac
       const scope = page.getByPlaceholder('搜索或选择查看范围');
       assert.equal(await scope.inputValue(), '全部', type + ' default scope at ' + width);
       const pending = page.locator('main > .platform-section-pending');
-      if (await pending.getByRole('button', { name: '查看全部', exact: true }).count()) await pending.getByRole('button', { name: '查看全部', exact: true }).click();
+      if (await pending.getByRole('button', { name: /^展开其余 \d+ 条$/ }).count()) await pending.getByRole('button', { name: /^展开其余 \d+ 条$/ }).click();
       assert.equal(await pending.locator('h3').count(), 2);
       assert.equal(await pending.getByRole('button', { name: '同意', exact: true }).count(), 1);
       const download = page.waitForEvent('download');

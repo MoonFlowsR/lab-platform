@@ -57,3 +57,7 @@
 教师默认查看范围由 `server/features/accounts/view-scope.cjs` 读取数据库 `platform_settings` 的 `account_view_scope:<账号ID>`；值为 `all` 时首页及工单默认查看全组，否则沿用本人范围。该设置随数据库备份，不改变审批权限。
 
 日志操作端：`server/db/records.cjs`统一写入`audit_logs.client_type`；`server/security/audit-client.cjs`识别请求与旧记录，`src/shared/api/client-platform.js`补充手机、平板和PC的浏览器终端信息。管理员日志页面、搜索和Excel共用接口返回的操作端；原浏览器信息保留，旧日志在读取时识别。
+
+记录折叠：`RecentRecords.jsx`统一卡片、表格的最新一条显示与展开入口；受控组件`RecordVisibility`供报表和账号列表复用，数量取当前筛选结果，导出使用完整数据。
+
+撤回测试的教师显示规则由`review-scope.js`的`workRecordVisible`统一处理，总览、工单、近半年历史与报表使用同一数据集；学生重提与审计记录保留。

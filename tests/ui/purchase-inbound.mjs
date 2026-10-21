@@ -29,8 +29,8 @@ export async function checkPurchaseInbound(browser,origin,out,snapshot,users){
   for(const title of ['待审批采购工单','已审批采购工单','已完成采购工单','完成时修改的采购工单'])await page.getByRole('heading',{name:new RegExp('^'+title)}).waitFor();
   const approved=page.locator('main > .platform-section-approved'),completed=page.locator('main > .platform-section-reviewed'),modified=page.locator('main > .platform-section-modified');
   assert.equal(await approved.locator('h3').count(),1);assert.equal(await completed.locator('h3').count(),1);
-  await approved.getByRole('button',{name:'查看全部',exact:true}).click();assert.equal(await approved.locator('h3').count(),2);
-  await approved.getByRole('button',{name:'仅显示最近1条',exact:true}).click();
+  await approved.getByRole('button',{name:/^展开其余 \d+ 条$/}).click();assert.equal(await approved.locator('h3').count(),2);
+  await approved.getByRole('button',{name:'收起，仅看最新1条',exact:true}).click();
   await modified.getByText('完成时修改记录',{exact:true}).click();assert((await modified.innerText()).includes('100 → 60'));
   if(user.account_type!=='student')assert.equal(await page.getByRole('button',{name:'确认到货并入库',exact:true}).count(),0);
   else{
