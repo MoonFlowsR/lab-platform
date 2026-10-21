@@ -1,3 +1,4 @@
+import { checkRecordVisibility } from './record-visibility.mjs';
 import { checkAuditClients } from './audit-clients.mjs';
 import { readWorkbookText } from './workbook.mjs';
 import { checkExcelExports } from './excel-exports.mjs';
@@ -103,8 +104,8 @@ try {
     if(tabs[i]==='测试记录'){
      const pending=page.locator('main > section').filter({has:page.getByRole('heading',{name:/^待审批测试/})});
      assert.equal(await pending.locator('h3').count(),1);
-     await pending.getByRole('button',{name:'查看全部',exact:true}).click();assert.equal(await pending.locator('h3').count(),3);
-     await pending.getByRole('button',{name:'仅显示最近1条',exact:true}).click();assert.equal(await pending.locator('h3').count(),1);
+     await pending.getByRole('button',{name:/^展开其余 \d+ 条$/}).click();assert.equal(await pending.locator('h3').count(),3);
+     await pending.getByRole('button',{name:'收起，仅看最新1条',exact:true}).click();assert.equal(await pending.locator('h3').count(),1);
      const downloaded=page.waitForEvent('download');await page.getByRole('button',{name:/导出.*Excel/}).first().click();
      const worksheetText=await readWorkbookText(await (await downloaded).path());
      for(const name of ['直接指定教师甲测试','仅导师关系对照测试','教师甲本人申请测试'])assert(worksheetText.includes(name),'Excel must include hidden matching records');
@@ -118,14 +119,14 @@ try {
     if(tabs[i]==='库存'){
      const groups=page.locator('main > section').filter({has:page.getByRole('heading',{name:'材料批次库存',exact:true})});
      assert.equal(await groups.locator('.platform-stock-group').count(),1);
-     await groups.getByRole('button',{name:'查看全部',exact:true}).click();assert.equal(await groups.locator('.platform-stock-group').count(),2);
-     await groups.getByRole('button',{name:'仅显示最近1条',exact:true}).click();
+     await groups.getByRole('button',{name:/^展开其余 \d+ 组$/}).click();assert.equal(await groups.locator('.platform-stock-group').count(),2);
+     await groups.getByRole('button',{name:'收起，仅看最新1组',exact:true}).click();
      results.push({inventoryLatestOne:true});
     }
     if(tabs[i]==='数据报表'){
      const panel=page.locator('#report-detail-panel');assert.equal(await panel.locator('tbody tr').count(),1);
-     await panel.getByRole('button',{name:'查看全部',exact:true}).click();assert.equal(await panel.locator('tbody tr').count(),5);
-     await panel.getByRole('button',{name:'仅显示最近1条',exact:true}).click();
+     await panel.getByRole('button',{name:/^展开其余 \d+ 条$/}).click();assert.equal(await panel.locator('tbody tr').count(),5);
+     await panel.getByRole('button',{name:'收起，仅看最新1条',exact:true}).click();
      await page.getByRole('tab',{name:/^采购/}).click();assert.equal(await panel.getByText('系统责任教师',{exact:true}).count(),0);
      results.push({reportsLatestOne:true,reportTeacherDuplicationRemoved:true});
     }
@@ -140,7 +141,7 @@ try {
    if(tabs[i]==='账号管理'&&width===390){
     await page.getByRole('button',{name:'导出账号Excel',exact:true}).click();
     assert.match(await page.locator('.platform-sync-status').innerText(),/同步完成/);
-    await page.getByRole('button',{name:/查看全部账号/}).click();
+    await page.locator('main > section').filter({has:page.getByRole('heading',{name:'账号列表',exact:true})}).getByRole('button',{name:/^展开其余 \d+ 条$/}).click();
     await page.getByRole('button',{name:'修改学生资料',exact:true}).first().click();
     const dialog=page.getByRole('dialog');await dialog.waitFor();assert.equal(await dialog.getByText('修改密码',{exact:true}).count(),0);
     const teacher=dialog.getByRole('combobox').first();await teacher.fill('不存在的示例教师');
@@ -163,6 +164,7 @@ try {
   await page.goto(origin+'/help');await page.locator('.help-page').waitFor();await page.screenshot({path:path.join(out,role+'-'+width+'-help.png'),fullPage:true});
   results.push({role,width,help:true,overflow:await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),errors});await page.close();
  }
+ results.push(...await checkRecordVisibility(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkExcelExports(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkAuditClients(browser,origin,out,snapshot,admin));
   results.push(...await checkRegistration(browser,origin,out));

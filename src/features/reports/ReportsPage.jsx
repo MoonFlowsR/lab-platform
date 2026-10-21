@@ -7,7 +7,7 @@ import { Toolbar, Field, SearchableSelect, DateInput, DataTable } from '../../sh
 import { money, formatDate } from '../../app/formatters.js';
 import { styles } from '../../app/styles.js';
 import { useEffect, useState } from 'react';
-import { newestRecords } from '../../shared/components/RecentRecords.jsx';
+import { newestRecords, RecordVisibility } from '../../shared/components/RecentRecords.jsx';
 import { completedWorkFee, isCompletedWork, workFee } from '../work/work-values.js';
 import { selectReportData } from './report-data.js';
 import { downloadReport } from './report-export.js';
@@ -81,13 +81,16 @@ export default function ReportsPage({ currentUser, onReimbursementChange, data, 
       <div className="platform-report-filter-heading"><h2 style={styles.h2}>业务明细</h2><small style={styles.muted}>导出包含全部分类，不受当前明细页签限制。</small></div>
       <div className="platform-report-tabs" role="tablist" aria-label="报表明细分类">{tabs.map(([key, label, rows]) => <button key={key} id={`report-tab-${key}`} type="button" role="tab" aria-selected={detail === key} aria-controls="report-detail-panel" onClick={() => setDetail(key)}>{label}<span>{rows.length}</span></button>)}</div>
       <div id="report-detail-panel" role="tabpanel" aria-labelledby={`report-tab-${detail}`}>
-        <div className="platform-record-limit"><span>{active[1]} · 共 {active[2].length} 条{!showAllDetails && active[2].length > 1 ? ' · 最近1条' : ''}</span>{active[2].length > 1 && <button type="button" aria-expanded={showAllDetails} onClick={() => setShowAllDetails(!showAllDetails)}>{showAllDetails ? '仅显示最近1条' : '查看全部'}</button>}</div>
+        <RecordVisibility total={active[2].length} expanded={showAllDetails} onToggle={() => setShowAllDetails(value => !value)} controlsId="report-detail-rows" />
+        <div id="report-detail-rows">
         {['tests', 'processing', 'repair'].includes(detail) && <DataTable mobileColumns={[detail === 'repair' ? '维修设备' : '名称', '申请人', '状态', '最终费用（元）', '工单状态']} columns={['编号', detail === 'repair' ? '维修设备' : '名称', ...(detail === 'repair' ? ['维修人员', '维修人员单位'] : []), '申请人', '审核教师', '状态', '工作量', '预计费用（元）', '最终费用（元）', '完结修改', '工单状态', '提交时间', ...closureColumns]} rows={workRows(pageRows)} />}
         {detail === 'purchases' && <DataTable mobileColumns={['物品', '申请人', '状态', '金额（元）', '工单状态']} columns={['编号', '物品', '申请人', '审核教师', '状态', '数量', '金额（元）', '金额口径', '工单状态', '完成时修改', '使用目的', '有效期', '提交时间', ...closureColumns]} rows={pageRows.map(row => [row.public_id, row.material_name, row.applicant_name || row.applicant_username, reviewTeacherName(row), row.status, purchaseQuantityText(row), money(purchaseAmount(row)), hasFinalPurchaseAmount(row) ? '最终金额' : '预计金额', isReceivedPurchase(row) ? <ReimbursementStatus row={row} currentUser={currentUser} onChange={onReimbursementChange} /> : '—', purchaseWasModified(row) ? '有修改' : '—', row.purchase_purpose || '未标注', row.expiry_date || '—', formatDate(row.created_at), ...closureCells(row)])} />}
         {detail === 'stock' && <DataTable mobileColumns={['材料', '类型', '数量', '操作人']} columns={['类型', '材料', '批次', '数量', '操作人', '地点', '具体位置简述', '采购人审批 / 原同意备注', '用途/原因', '时间']} rows={pageRows.map(row => [row.transaction_type, row.material_name, row.batch_code, `${row.quantity} ${row.unit || ''}`, row.operator_name || row.operator_username, row.storage_room || row.storage_location || '—', row.storage_detail || '—',row.purchaser_approved_by ? row.purchaser_approved_by + ' · ' + formatDate(row.purchaser_approved_at) : row.consent_note || '—', row.usage_reason || row.modification_reason || '—', formatDate(row.created_at)])} />}
         {detail === 'stockRequests' && <DataTable mobileColumns={['材料','申请人','采购人','状态','数量']} columns={['编号','材料','批次','申请人','采购人','状态','数量','审批人','审批意见','审批时间','提交时间','完成出库时间']} rows={pageRows.map(row=>[row.public_id,row.material_name,row.batch_code,row.applicant_name,row.purchaser_name,row.status,row.quantity+' '+row.unit,row.reviewed_by || '—',row.review_note || '—',formatDate(row.reviewed_at),formatDate(row.created_at),formatDate(row.completed_at)])} />}
         {detail === 'batches' && <DataTable mobileColumns={['材料', '当前库存', '位置', '有效期']} columns={['批次', '材料', '规格', '当前库存', '位置', '具体位置简述', '有效期', '采购人', '入库人', '建立时间']} rows={pageRows.map(row => [row.batch_code || row.public_id, row.material_name, row.spec || '无', `${row.current_qty} ${row.unit || ''}`, row.storage_room || row.storage_location || '—', row.storage_detail || '—', row.expiry_date || '—', row.purchaser_name || row.purchaser_username || '—', row.inbound_by_name || row.created_by_name || row.inbound_by_username || row.created_by_username || '—', formatDate(row.created_at)])} />}
         {detail === 'reviews' && <DataTable mobileColumns={['申请编号', '审批人', '审批结果', '审批时间']} columns={['申请编号', '审批人', '审批结果', '审批意见', '审批时间']} rows={pageRows.map(row => [row.target_public_id, row.reviewer_name || row.reviewer_username, row.action, row.review_note || '未填写', formatDate(row.created_at)])} />}
+        </div>
+        <RecordVisibility total={active[2].length} expanded={showAllDetails} onToggle={() => setShowAllDetails(value => !value)} controlsId="report-detail-rows" footer />
       </div>
     </section>
   </main>;

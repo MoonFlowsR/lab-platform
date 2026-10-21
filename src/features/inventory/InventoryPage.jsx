@@ -62,7 +62,7 @@ function InventoryPage({ canInitialize = false, materialCatalog = [], isAdmin = 
     <section style={styles.card}>
       <div style={styles.cardHeader}><h2 style={styles.h2}>材料批次库存</h2><div className="platform-stock-export-actions"><ExportButton subject="汇总" onExport={exportSummary} /><ExportButton subject="批次" onExport={onExportBatches} /></div></div>
       <p className="platform-stock-group-note">同材料、规格和房间汇总；展开查看原批次、照片及操作。</p>
-      <RecentRecords rows={batchGroups}>{shown => <div className="platform-stock-groups">{shown.length ? shown.map(group => <BatchGroup key={`${group._id}:${searchQuery.trim()}`} group={group} searchQuery={searchQuery}>
+      <RecentRecords rows={batchGroups} unit="组">{shown => <div className="platform-stock-groups">{shown.length ? shown.map(group => <BatchGroup key={`${group._id}:${searchQuery.trim()}`} group={group} searchQuery={searchQuery}>
         <DataTable desktopColumns={["批次", "当前库存", "位置", "有效期", "采购人", "入库人", "入库证明"]} mobileColumns={["批次", "当前库存", "位置", "有效期", "采购人", "入库人", "入库证明"]} columns={batchColumns} rows={group.batches.map(batchRow)} />
       </BatchGroup>) : <Empty text="暂无材料批次库存。" />}</div>}</RecentRecords>
     </section>

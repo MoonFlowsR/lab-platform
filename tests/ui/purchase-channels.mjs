@@ -32,7 +32,7 @@ export async function checkPurchaseChannels(browser, origin, out, snapshot, user
    await details.locator(':scope > summary').click();
    assert.equal(await details.locator('.platform-supplier-change').count(),1);
    const latest=await details.innerText();for(const text of ['修改前：示例旧渠道','修改后：示例新渠道',student.display_name,'核对采购凭证','补同步于'])assert(latest.includes(text));
-   await details.getByRole('button',{name:'查看全部',exact:true}).click();assert.equal(await details.locator('.platform-supplier-change').count(),2);
+   await details.getByRole('button',{name:/^展开其余 \d+ 条$/}).click();assert.equal(await details.locator('.platform-supplier-change').count(),2);
    assert((await details.innerText()).includes('示例最初渠道'));
    await details.scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,`channels-${user.account_type}-${width}-${tab}.png`)});
    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);

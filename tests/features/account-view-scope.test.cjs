@@ -57,3 +57,13 @@ test('account responses refresh the preference while backend review authorizatio
     fs.rmSync(temporary, { recursive: true, force: true });
   }
 });
+
+test('withdrawn tests leave teacher displays but remain available for student resubmission and administration', async () => {
+  const { workRecordVisible } = await import('../../src/shared/lib/review-scope.js');
+  const withdrawn = Object.freeze({ request_type: '测试', status: '已撤回' });
+  assert.equal(workRecordVisible(withdrawn, { account_type: 'teacher' }), false);
+  for (const role of ['student', 'admin', 'finance']) assert.equal(workRecordVisible(withdrawn, { account_type: role }), true);
+  for (const status of ['待教师审核', '已驳回', '已通过', '已完成', '已关闭']) assert.equal(workRecordVisible({ ...withdrawn, status }, { account_type: 'teacher' }), true);
+  for (const request_type of ['加工', '维修']) assert.equal(workRecordVisible({ ...withdrawn, request_type }, { account_type: 'teacher' }), true);
+  assert.equal(withdrawn.status, '已撤回');
+});
