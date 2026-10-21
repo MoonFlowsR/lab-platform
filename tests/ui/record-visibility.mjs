@@ -1,3 +1,4 @@
+import { showModuleRecords } from './module-records.mjs';
 import { readWorkbookText } from './workbook.mjs';
 import assert from 'node:assert/strict';
 import path from 'node:path';
@@ -29,7 +30,7 @@ export async function checkRecordVisibility(browser, origin, out, snapshot, user
       return route.fulfill({ json: { ok: true, rows: [], total: 0 } });
     });
     await page.goto(origin);
-    await page.locator('.platform-nav').getByRole('button', { name: account.account_type === 'student' ? '测试' : account.account_type === 'teacher' ? '测试审核' : '测试记录', exact: true }).click();
+    await page.locator('.platform-nav').getByRole('button', { name: account.account_type === 'student' ? '测试' : account.account_type === 'teacher' ? '测试审核' : '测试记录', exact: true }).click();await showModuleRecords(page);
     const section = page.locator('main > .platform-section-pending');
     const header = section.locator(':scope > .platform-record-limit');
     const footer = section.locator(':scope > .platform-record-more');
@@ -72,19 +73,19 @@ export async function checkRecordVisibility(browser, origin, out, snapshot, user
     assert.equal(await section.locator('h3').count(), 0);
     if (account.account_type === 'teacher') {
       await page.getByRole('textbox', { name: '搜索记录', exact: true }).fill('');
-      await page.locator('.platform-nav').getByRole('button', { name: '总览', exact: true }).click();
+      await page.locator('.platform-nav').getByRole('button', { name: '总览', exact: true }).click();await showModuleRecords(page);
       await page.locator('[data-task="test-review"]').click();
       const taskRecords = page.locator('main > .platform-section-pending');
       assert.equal(await taskRecords.locator('h3').count(), 3);
       assert.equal(await taskRecords.getByText('撤回测试核对', { exact: true }).count(), 0);
-      await page.locator('.platform-nav').getByRole('button', { name: '数据报表', exact: true }).click();
+      await page.locator('.platform-nav').getByRole('button', { name: '数据报表', exact: true }).click();await showModuleRecords(page);
       const details = page.locator('#report-detail-panel');
       await details.getByRole('button', { name: '展开其余 2 条', exact: true }).click();
       assert.equal(await details.locator('tbody tr').count(), 3);
       assert.equal(await details.getByText('撤回测试核对', { exact: true }).count(), 0);
       records[3].status = '待教师审核';
       await page.reload();
-      await page.locator('.platform-nav').getByRole('button', { name: '测试审核', exact: true }).click();
+      await page.locator('.platform-nav').getByRole('button', { name: '测试审核', exact: true }).click();await showModuleRecords(page);
       await page.getByRole('heading', { name: '待审批测试工单（4）', exact: true }).waitFor();
       await section.getByRole('button', { name: '展开其余 3 条', exact: true }).click();
       assert.equal(await section.getByRole('heading', { name: '撤回测试核对', exact: true }).count(), 1, 'Resubmission restores the teacher queue');

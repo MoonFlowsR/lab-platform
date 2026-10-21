@@ -1,7 +1,6 @@
 import { isValidLoginId } from '../shared/lib/platform-settings.js';
 import { materialKey, uniqueOptions } from "../shared/lib/dropdown-normalize.js";
 import { recordMatchesSearch } from "../shared/lib/teacher-filter.js";
-import { completedWorkFee } from "../features/work/work-values.js";
 
 function uniqueNonEmpty(values) {
   return uniqueOptions(values);
@@ -43,15 +42,5 @@ function normalizeItemName(value) {
   return materialKey(value);
 }
 function containsQuery(row, query) { return recordMatchesSearch(row, query); }
-function countBy(rows, key) {
-  return rows.reduce((acc, row) => {
-    const value = row[key] || "未分类";
-    acc[value] = (acc[value] || 0) + 1;
-    return acc;
-  }, {});
-}
-function sumCosts(row) {
-  return completedWorkFee(row);
-}
 
-export { containsQuery, countBy, formatDate, formatFileSize, isValidLoginId, money, normalizeItemName, num, sortByCreatedAt, sumCosts, toDateInputValue, uniqueNonEmpty };
+export { containsQuery, formatDate, formatFileSize, isValidLoginId, money, normalizeItemName, num, sortByCreatedAt, toDateInputValue, uniqueNonEmpty };

@@ -47,6 +47,32 @@ export async function checkTasks(browser, origin, out, base, users) {
     await page.screenshot({path:path.join(out,`tasks-overview-${role}-${width}.png`),fullPage:true});
     await page.getByRole('textbox',{name:'搜索记录',exact:true}).fill('无匹配的待办');
     assert.equal(await page.locator('.platform-task-grid button').count(),0);assert.equal(await header.locator('b').innerText(),String(expected));await header.click();
+    const modules = await page.locator('.platform-nav button:has(.platform-nav-task-count)').evaluateAll(buttons => buttons.map(button => ({ label:button.getAttribute('aria-label'), count:Number(button.querySelector('.platform-nav-task-count').textContent) })));
+    for (const module of modules) {
+      await page.getByRole('textbox',{name:'搜索记录',exact:true}).fill('上一个页面的搜索');
+      await page.locator('.platform-nav').getByRole('button',{name:module.label,exact:true}).click();
+      const queue=page.getByRole('region',{name:'当前待办筛选',exact:true});await queue.waitFor();
+      assert.match(await queue.innerText(),new RegExp(`${module.count} 条`));
+      assert.equal(await page.getByRole('heading',{name:/待办事项/}).count(),1,'Task title is shown once');
+      assert.equal(await page.locator('.platform-task-caption').count(),0);
+      assert.equal(await page.getByRole('textbox',{name:'搜索记录',exact:true}).inputValue(),'');
+      assert.equal(await page.locator('.platform-filter-panel').count(),0);
+      const queuedRows=module.label.includes('账号')?page.locator('#account-list-rows tbody tr'):module.label.includes('库')&&!module.label.includes('采购')?page.locator('.platform-stock-request'):page.locator('main .platform-request-record');
+      assert.equal(await queuedRows.count(),module.count,'Module badge must open every actionable record, across stages');
+      if(role==='student'&&module.label==='测试') {
+        assert.equal(await page.getByRole('button',{name:'确认完成',exact:true}).count(),1);
+        assert.equal(await page.getByRole('button',{name:'修改/重新提交',exact:true}).count(),2);
+        assert.equal(await page.getByRole('button',{name:'关闭工单',exact:true}).count(),1);
+      }
+      assert.equal(await page.locator('main > .platform-section-create').count(),0);
+      if(module===modules[0])await page.screenshot({path:path.join(out,`tasks-nav-${role}-${width}.png`),fullPage:true});
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+      await queue.getByRole('button',{name:'查看本模块全部记录',exact:true}).click();
+      assert.equal(await page.locator('.platform-task-filter').count(),0);
+      await page.locator('.platform-nav').getByRole('button',{name:module.label,exact:true}).click();
+      await page.getByRole('region',{name:'当前待办筛选',exact:true}).waitFor();
+      await header.click();
+    }
     const id={student:'test-complete',teacher:'test-review',finance:'test-reimburse',admin:'accounts-pending'}[role];
     const count={student:1,teacher:2,finance:1,admin:2}[role];
     const link=page.locator(`[data-task="${id}"]`);await link.focus();await page.keyboard.press('Enter');
@@ -88,7 +114,9 @@ export async function checkTasks(browser, origin, out, base, users) {
     await page.getByRole('button',{name:'返回待办',exact:true}).click();
     if(role==='finance'||role==='admin'){await page.getByRole('button',{name:'统计与导出',exact:true}).click();await page.getByRole('heading',{name:'数据报表',exact:true}).waitFor();assert.equal(await page.locator('.platform-business-metrics').count(),1);}
     assert.deepEqual(errors,[]);
-    results.push({roleTasks:true,role,width,actionCount:expected,focusQueue:true,liveDecrement:true,reportSeparated:true,overflow:await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),errors});await page.close();
+    await page.goto(origin+'/help');await page.locator('.help-page').waitFor();
+    assert.equal(await page.getByText('导出 Excel：首行自带筛选并冻结表头。',{exact:true}).count(),0);
+    results.push({roleTasks:true,role,width,actionCount:expected,navQueues:modules.length,focusQueue:true,liveDecrement:true,reportSeparated:true,helpNoteRemoved:true,overflow:await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),errors});await page.close();
   }
   return results;
 }

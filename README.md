@@ -18,8 +18,6 @@ npm run local
 
 `npm run setup` 会生成本机 `.env` 文件，其中包含密钥和四类账号的注册码。
 
-旧部署运行 `npm run setup` 补充财务注册码，然后重载服务。
-
 首次使用按以下顺序注册：
 
 - 管理员：使用 `ADMIN_INVITE_CODE`，首个管理员自动启用。

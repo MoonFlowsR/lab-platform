@@ -208,13 +208,7 @@ function DataTable({ columns, rows, mobileColumns, desktopColumns }) {
     <div className="platform-mobile-records">{rows.length === 0 ? <Empty text="暂无数据" /> : rows.map((row, i) => <article className="platform-mobile-record" key={i}><dl>{cells(row, false)}</dl>{columns.some(label => !primary.includes(label) && label !== "操作") && <details><summary>查看明细</summary><dl>{cells(row, true)}</dl></details>}{actionIndex >= 0 && row[actionIndex] && <div className="platform-mobile-actions">{row[actionIndex]}</div>}</article>)}</div>
   </>;
 }
-function MiniBars({ data }) {
-  const entries = Object.entries(data);
-  const max = Math.max(...entries.map(([, v]) => v), 1);
-  if (!entries.length) return <p style={styles.muted}>暂无数据。</p>;
-  return <div>{entries.map(([key, value]) => <div key={key} style={{ marginBottom: 12 }}><div style={styles.barLabel}><span>{key}</span><span>{value}</span></div><div style={styles.barTrack}><div style={{ ...styles.barFill, width: `${Math.max(6, (value / max) * 100)}%` }} /></div></div>)}</div>;
-}
 function Empty({ text }) {
   return <div style={styles.empty}>{text}</div>;
 }
-export { Badge, DataTable, DateInput, Empty, Field, Info, MiniBars, SearchableSelect, StatCard, Toolbar };
+export { Badge, DataTable, DateInput, Empty, Field, Info, SearchableSelect, StatCard, Toolbar };

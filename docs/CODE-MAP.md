@@ -62,4 +62,4 @@
 
 撤回测试的教师显示规则由`review-scope.js`的`workRecordVisible`统一处理，总览、工单、近半年历史与报表使用同一数据集；学生重提与审计记录保留。
 
-角色待办：`src/features/tasks/task-model.js`从同步记录派生个人任务、团队跟进和库存预警，共用现有审批/完结/报销条件，不写入新状态。`TaskCenter.jsx`显示入口与任务筛选提示；`Dashboard.jsx`只保留任务、进度与提醒。`App.jsx`负责清除旧筛选、按记录ID打开处理页，并刷新菜单角标。完整数量、金额统计与导出由`features/reports`及`dashboard-metrics.js`负责。
+角色待办：`src/features/tasks/task-model.js`从同步记录派生个人任务、团队跟进和库存预警，共用现有审批、完成和报销条件。`moduleTaskGroup`汇总模块待办，供角标和处理列表共用。`TaskCenter.jsx`显示入口与筛选提示；`Dashboard.jsx`显示任务、进度和提醒。`App.jsx`清除旧筛选、按记录ID打开对应待办；从提示栏可进入新建和历史记录。完整统计与导出由`features/reports`及`dashboard-metrics.js`负责。

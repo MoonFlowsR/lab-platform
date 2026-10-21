@@ -33,9 +33,9 @@ function PurchaseSummaryCard({ currentUser, onReimbursementChange, row }) {
     {row.review_note && <p style={styles.note}><b>审批意见：</b>{row.review_note}{row.reviewed_by && <>（审批人：<strong className="platform-identity">{row.reviewed_by}</strong>）</>}</p>}
   </div>;
 }
-function RequestHistorySection({ title, rows, renderCard, emptyText, className = 'platform-section-history', defaultExpanded = false }) {
-  return <section className={className} style={styles.card}>
-    <div style={styles.cardHeader}><h2 style={styles.h2}>{title}（{rows.length}）</h2></div>
+function RequestHistorySection({ title, rows, renderCard, emptyText, className = 'platform-section-history', defaultExpanded = false, showTitle = true }) {
+  return <section className={className} style={styles.card} aria-label={title}>
+    {showTitle && <div style={styles.cardHeader}><h2 style={styles.h2}>{title}（{rows.length}）</h2></div>}
     {rows.length === 0 ? <Empty text={emptyText} /> : <RecentRecords rows={rows} defaultExpanded={defaultExpanded}>{shown => shown.map(renderCard)}</RecentRecords>}
   </section>;
 }

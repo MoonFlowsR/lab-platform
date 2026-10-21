@@ -2,7 +2,7 @@ import { callLabOps } from "../../app/api.js";
 import { showAlert, showForm } from "../../shared/components/platform-dialog.jsx";
 import { validatePhotoFile } from "../../app/attachment-validation.js";
 
-export function createInventoryActions({ uploadStockEvidence, currentUser, loadAll, setMessage, canInboundStock, canEditBatchInformation, setEditingBatch, canManageStock }) {
+export function createInventoryActions({ uploadStockEvidence, currentUser, loadAll, setMessage, canEditBatchInformation, setEditingBatch, canManageStock }) {
 async function initializeMaterialStock(form, file) {
     validatePhotoFile(file);
     const evidence = await uploadStockEvidence(file);
@@ -12,19 +12,6 @@ async function initializeMaterialStock(form, file) {
     return result;
   }
 
-async function addMaterialBatch(form, file) {
-    if (!canInboundStock) return;
-    try {
-      const evidence = await uploadStockEvidence(file);
-      await callLabOps("addMaterialBatch", { ...form, photo_attachment_id: evidence._id }, currentUser);
-      setMessage("材料批次已新增。");
-      await loadAll();
-      return true;
-    } catch (error) {
-      showAlert(error.message || error);
-      return false;
-    }
-  }
 
 async function updateMaterialBatch(row) {
     if (canEditBatchInformation) { setEditingBatch(row); return; }
@@ -67,5 +54,5 @@ async function saveMaterialBatchInformation(form, photo) {
     setMessage("物品信息已修改，并已记录修改前后信息和原因。");
     await loadAll();
   }
-return { initializeMaterialStock, addMaterialBatch, updateMaterialBatch, saveMaterialBatchInformation };
+return { initializeMaterialStock, updateMaterialBatch, saveMaterialBatchInformation };
 }

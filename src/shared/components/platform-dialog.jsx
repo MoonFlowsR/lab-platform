@@ -20,7 +20,7 @@ export async function showPrompt(message, defaultValue = '', options = {}) {
   return result === null ? null : result.value;
 }
 
-export function DialogMessage({ message }) {
+function DialogMessage({ message }) {
   return formatPublicNumbers(String(message || '')).split(/\n+/).filter(Boolean).map((line, index) => <p key={index}>{line.split(/(必填|至少\s*6\s*位|永久删除|无法在平台中撤销|所有用户均不可再查看|123456|“[^”]+”|[A-Z]+-(?:\d{8}|\d{6})-\d+)/g).map((part, partIndex) => /^(必填|至少|永久删除|无法|所有用户|123456)/.test(part) ? <strong className="platform-dialog-critical" key={partIndex}>{part}</strong> : /^(“|[A-Z]+-\d)/.test(part) ? <strong key={partIndex}>{part}</strong> : part)}</p>);
 }
 

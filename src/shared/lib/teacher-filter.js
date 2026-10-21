@@ -7,7 +7,7 @@ export function createTeacherContext({ purchases = [], batches = [], teachers = 
   return { purchases: index(purchases), batches: index(batches), teachers: new Map(teachers.map(row => [row.username, row.display_name || row.username])) };
 }
 
-export function recordTeacherUsernames(row, module, context) {
+function recordTeacherUsernames(row, module, context) {
   const reviewer = value => value?.review_teacher_username || value?.reviewed_username || '';
   const mentors = value => [value?.responsible_teacher_username,value?.guiding_teacher_username].filter(Boolean);
   if (!['stock', 'materials'].includes(module)) return [...new Set([reviewer(row),...mentors(row)].filter(Boolean))];
@@ -20,7 +20,7 @@ export function recordTeacherUsernames(row, module, context) {
 }
 
 // Filtering uses direct participation, while the names below retain mentor context for display/search.
-export function recordParticipantUsernames(row, module) {
+function recordParticipantUsernames(row, module) {
   const fields = ['applicant_username', 'operator_username', 'purchaser_username', 'inbound_by_username', 'created_by_username', 'last_modified_username', 'reviewed_username', 'reviewer_username', 'approved_username', 'purchaser_approved_username', 'closed_by_username'];
   if (!['stock', 'materials'].includes(module)) fields.push('review_teacher_username');
   return [...new Set(fields.map(field => row[field]).filter(Boolean))];
@@ -34,7 +34,7 @@ export function recordTeacherNames(row, module, context) {
   return recordTeacherUsernames(row, module, context).map(username => context.teachers.get(username) || username).join('、');
 }
 
-export const normalizeSearch = value => String(value ?? '').normalize('NFKC').trim().toLocaleLowerCase('zh-CN').replace(/\s+/gu, ' ');
+const normalizeSearch = value => String(value ?? '').normalize('NFKC').trim().toLocaleLowerCase('zh-CN').replace(/\s+/gu, ' ');
 
 // Snapshot records are replaced by synchronization, never edited in place.
 // Cache the rendered search text until that record object is replaced.
