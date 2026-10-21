@@ -1,3 +1,4 @@
+import { checkTasks } from './tasks.mjs';
 import { checkRecordVisibility } from './record-visibility.mjs';
 import { checkAuditClients } from './audit-clients.mjs';
 import { readWorkbookText } from './workbook.mjs';
@@ -77,6 +78,7 @@ snapshot.lab_work_requests.push({...work,_id:75,status:'已完成',work_content:
 snapshot.lab_work_requests.push({...work,_id:76,status:'已完成',work_content:'示例审批后修改测试',completion_modified:true,completed_at:at});
 snapshot.lab_material_batches.push({...batch,_id:83,public_id:'BATCH-261016-000001',batch_code:'BATCH-261016-000001',storage_room:'A101',storage_location:'A101 · 示例柜',expiry_date:'2026-10-01'});
 try {
+ if (process.env.UI_SUITE !== 'tasks') {
  for (const width of [1440,390,320]) for(const user of [admin,teachers[0],studentA]) {
   const account={...user,profile_required:false,session_token:'synthetic-only'},role=account.account_type;
   const page=await browser.newPage({viewport:{width,height:960},acceptDownloads:true});const errors=[];
@@ -94,7 +96,7 @@ try {
    return route.fulfill({json:{ok:true,comments:[]}});
   });
   await page.goto(origin);await page.locator('.platform-nav').waitFor();
-  const tabs=await page.locator('.platform-nav button').allTextContents();
+  const tabs=await page.locator('.platform-nav button').evaluateAll(buttons=>buttons.map(button=>button.getAttribute('aria-label')));
   for(let i=0;i<tabs.length;i++){
    await page.locator('.platform-nav button').nth(i).click();await page.locator('main').waitFor();await page.waitForTimeout(250);
    await page.screenshot({path:path.join(out,role+'-'+width+'-'+i+'.png'),fullPage:true});
@@ -164,10 +166,13 @@ try {
   await page.goto(origin+'/help');await page.locator('.help-page').waitFor();await page.screenshot({path:path.join(out,role+'-'+width+'-help.png'),fullPage:true});
   results.push({role,width,help:true,overflow:await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),errors});await page.close();
  }
+ }
+ results.push(...await checkTasks(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
+ if (process.env.UI_SUITE !== 'tasks') {
  results.push(...await checkRecordVisibility(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkExcelExports(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkAuditClients(browser,origin,out,snapshot,admin));
-  results.push(...await checkRegistration(browser,origin,out));
+ results.push(...await checkRegistration(browser,origin,out));
  results.push(...await checkFinance(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkDashboardCounts(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkPurchaseFilters(browser,origin,out,snapshot,[teachers[0],admin]));
@@ -180,6 +185,7 @@ try {
  await anonymous.goto(origin+'/help');await anonymous.getByText('后查看留言和评论。',{exact:false}).waitFor();
  assert.equal(await anonymous.locator('.help-composer-error').count(),0);await anonymous.waitForTimeout(10500);assert.equal(deniedReads,1,'Anonymous authorization failure must not keep polling');
  results.push({anonymousHelpNoError:true,anonymousRequests:deniedReads});await anonymous.close();
+ }
  assert.equal(results.filter(r=>r.scrollWidth>r.viewport||r.overflow).length,0,'page must fit the viewport');assert.deepEqual(results.flatMap(r=>r.errors||[]),[],'no browser errors');
  await fs.writeFile(path.join(out,'results.json'),JSON.stringify(results,null,2));console.log(JSON.stringify({cases:results.length,overflow:results.filter(r=>r.scrollWidth>r.viewport||r.overflow),errors:results.flatMap(r=>r.errors||[]),out},null,2));
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

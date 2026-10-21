@@ -11,7 +11,7 @@ import { styles } from "../../app/styles.js";
 import { accountStatusLabels, accountTypeLabels } from "../../app/config.js";
 import { formatDate } from "../../app/formatters.js";
 
-function AccountManagementPage({ accounts = [], allAccounts = [], teachers = [], onReload, auditProps, onSetAccountStatus, onResetPassword, onExportAccounts }) {
+function AccountManagementPage({ task, accounts = [], allAccounts = [], teachers = [], onReload, auditProps, onSetAccountStatus, onResetPassword, onExportAccounts }) {
   const [editing, setEditing] = useState(null);
   async function transfer(row) {
     try {
@@ -31,7 +31,7 @@ function AccountManagementPage({ accounts = [], allAccounts = [], teachers = [],
     try { await callLabOps('adminSetAccountRole',{id:row.id || row._id,account_type:next,expected_updated_at:row.updated_at},auditProps.account);await onReload(); }
     catch(error) { await showAlert(error.message); }
   }
-  const [showAllAccounts, setShowAllAccounts] = useState(false);
+  const [showAllAccounts, setShowAllAccounts] = useState(Boolean(task));
   const newestFirst = (a, b) => (Date.parse(b.created_at) || 0) - (Date.parse(a.created_at) || 0) || Number(b.id || b._id) - Number(a.id || a._id);
   const orderedAccounts = [...accounts].sort(newestFirst);
   const shownAccounts = showAllAccounts ? orderedAccounts : orderedAccounts.slice(0, 1);
@@ -77,7 +77,7 @@ function AccountManagementPage({ accounts = [], allAccounts = [], teachers = [],
       </div>
       <RecordVisibility total={accounts.length} expanded={showAllAccounts} onToggle={() => setShowAllAccounts(value => !value)} controlsId="account-list-rows" footer />
     </section>
-    <AuditLog {...auditProps} />
+    {!task && <AuditLog {...auditProps} />}
   </main>;
 }
 export { AccountManagementPage };

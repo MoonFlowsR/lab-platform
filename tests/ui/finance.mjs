@@ -61,19 +61,13 @@ export async function checkFinance(browser,origin,out,snapshot,users){
   const tabName=type=>type==='采购'?(role==='teacher'?'采购审核':role==='student'?'采购/入库':'采购记录'):type+(role==='teacher'?'审核':role==='student'?'':'记录');
   if(role==='finance'){
    assert.match(await page.locator('.platform-sync-status').innerText(),/财务账号/);
-   assert.match(await page.locator('.platform-metric-scope').innerText(),/团队全部申请/);
+   assert.equal(await page.getByTestId('task-total').innerText(),'8');
    assert.equal(await page.locator('.platform-nav').getByRole('button',{name:'账号管理',exact:true}).count(),0);
-   assert.equal(await page.getByRole('checkbox').count(),4);
+   assert.equal(await page.getByRole('checkbox').count(),0);
+   await page.locator('.platform-nav').getByRole('button',{name:'数据报表',exact:true}).click();
    const totals=page.getByRole('region',{name:'报销统计',exact:true});await checkReimbursementTotals(totals,0,12,0,300);
    await checkReimbursementBreakdown(totals);
    const search=page.getByPlaceholder('搜索页面内任意内容');await search.fill('报销核对测试');await checkReimbursementTotals(totals,0,3,0,75);await checkReimbursementBreakdown(totals,'','测试');await search.fill('无匹配工单');await checkReimbursementTotals(totals,0,0,0,0);await checkReimbursementBreakdown(totals,'','none');await search.fill('');await checkReimbursementTotals(totals,0,12,0,300);await checkReimbursementBreakdown(totals);
-   const overviewCheck=page.getByRole('checkbox').first();
-   const overviewCard=page.locator('.platform-request-record').filter({has:page.getByRole('checkbox')}).first();
-   await checkReimbursementHighlight(overviewCard,false);
-   await overviewCheck.check();await checkReimbursementHighlight(overviewCard,true);await checkReimbursementTotals(totals,1,11,25,275);await page.getByRole('button',{name:'手动同步',exact:true}).waitFor({state:'visible'});
-   await checkReimbursementBreakdown(totals,'测试');
-   await overviewCheck.uncheck();await checkReimbursementHighlight(overviewCard,false);await checkReimbursementTotals(totals,0,12,0,300);
-   await checkReimbursementBreakdown(totals);
    await totals.screenshot({path:path.join(out,`reimbursement-summary-${width}.png`)});
    await page.locator('.platform-business-metrics').screenshot({path:path.join(out,`reimbursement-categories-${width}.png`)});
   }else{assert.equal(await page.getByRole('checkbox').count(),0);assert.equal(await page.getByRole('region',{name:'报销统计',exact:true}).count(),0);}

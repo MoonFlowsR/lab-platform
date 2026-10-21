@@ -58,7 +58,7 @@ export default function ReportsPage({ currentUser, onReimbursementChange, data, 
     } catch (error) { onMessage?.(error.message || '导出失败，请重试。', { persistent: true }); }
   }
   return <main>
-    <Toolbar title="数据报表" onExport={exportReport} />
+    <Toolbar title="数据报表" description="按人员和日期统计业务、核对最终金额，导出完整明细。" onExport={exportReport} />
     <FilterPanel title="报表筛选" summary={scope} onReset={() => { setStudent(''); setTeacher(''); setRange('all'); setStartDate(''); setEndDate(''); onQueryChange?.(''); }}>
       <div className={`platform-student-filter-grid${canFilterTeacher ? " has-teacher" : ""}`} style={styles.formGrid}>
         <Field label="学生姓名"><SearchableSelect value={student} onChange={setStudent} clearOnInput={false} options={[{ value: '', label: '全部' }, ...studentOptions.map(account => ({ value: account.username, label: account.label }))]} placeholder="搜索或选择学生姓名" fixedOptions={['']} /></Field>

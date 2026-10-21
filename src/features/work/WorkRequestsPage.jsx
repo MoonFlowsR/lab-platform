@@ -16,7 +16,7 @@ import { showAlert } from "../../shared/components/platform-dialog.jsx";
 import CustomOptionFields from "../../shared/components/CustomOptionFields.jsx";
 import { ALLOWED_ATTACHMENT_LABEL } from "../../app/attachment-validation.js";
 
-function WorkRequestsPage({ onReimbursementChange, workHistory = [], teacherAccounts = [], reviewScope = "mine", onReviewScopeChange, fixedType, rows, logs, attachments = [], currentUser, units = [], canSubmit, canReview, isAdmin = false, onAdd, onResubmit, onWithdraw, onReview, onComplete, onCloseRejected, onDeleteRecord, onHideRecord, onUploadAttachment, onDownloadAttachment, onDeleteAttachment, onExport }) {
+function WorkRequestsPage({ task, onReimbursementChange, workHistory = [], teacherAccounts = [], reviewScope = "mine", onReviewScopeChange, fixedType, rows, logs, attachments = [], currentUser, units = [], canSubmit, canReview, isAdmin = false, onAdd, onResubmit, onWithdraw, onReview, onComplete, onCloseRejected, onDeleteRecord, onHideRecord, onUploadAttachment, onDownloadAttachment, onDeleteAttachment, onExport }) {
   const historyIndex = useMemo(() => canReview ? indexWorkHistory(workHistory) : new Map(), [canReview, workHistory]);
   const [editingRow, setEditingRow] = useState(null);
   useEffect(() => { if (editingRow && !rows.some(row => row._id === editingRow._id)) setEditingRow(null); }, [rows, editingRow]);
@@ -56,7 +56,7 @@ function WorkRequestsPage({ onReimbursementChange, workHistory = [], teacherAcco
 
   return <main>
     <Toolbar title={title} description={description} onExport={onExport} />
-    {canSubmit && !editingRow && <WorkRequestForm workHistory={workHistory} teacherAccounts={teacherAccounts} fixedType={fixedType} onSubmit={onAdd} currentUser={currentUser} units={units} />}
+    {canSubmit && !task && !editingRow && <WorkRequestForm workHistory={workHistory} teacherAccounts={teacherAccounts} fixedType={fixedType} onSubmit={onAdd} currentUser={currentUser} units={units} />}
     {canSubmit && editingRow && <WorkRequestForm
       workHistory={workHistory}
       teacherAccounts={teacherAccounts}
@@ -76,12 +76,14 @@ function WorkRequestsPage({ onReimbursementChange, workHistory = [], teacherAcco
       units={units}
     />}
 
-    {["teacher", "student"].includes(currentUser?.account_type) && <RequestViewScope key={fixedType} scope={reviewScope} onChange={onReviewScopeChange} label={`${fixedType}${canReview ? "审核" : ""}查看范围`} />}
+    {!task && ["teacher", "student"].includes(currentUser?.account_type) && <RequestViewScope key={fixedType} scope={reviewScope} onChange={onReviewScopeChange} label={`${fixedType}${canReview ? "审核" : ""}查看范围`} />}
+    {task ? <RequestHistorySection className={"platform-section-" + (task.section || "pending")} title={task.title} rows={rows} renderCard={renderCard} defaultExpanded emptyText={task.count ? "没有符合搜索的记录。" : "当前没有此类待办。"} /> : <>
     <DashboardMetrics showReimbursement={currentUser?.account_type === "finance"} workRequests={rows} types={[fixedType]} mode={canSubmit ? "student" : canReview ? "review" : "team"} money={money} />
     <RequestHistorySection className="platform-section-pending" title={`待审批${fixedType}工单`} rows={pending} renderCard={renderCard} emptyText="暂无待审批工单。" />
     <RequestHistorySection className="platform-section-approved" title={`已审批${fixedType}工单`} rows={reviewed} renderCard={renderCard} emptyText="暂无已审批未完成工单。" />
     <RequestHistorySection className="platform-section-reviewed" title={`已完成${fixedType}工单`} rows={completed} renderCard={renderCard} emptyText="暂无已完成工单。" />
     <RequestHistorySection className="platform-section-modified" title={`完成时修改的${fixedType}工单`} rows={modified} renderCard={renderCard} emptyText="暂无确认完成时修改过信息的工单。" />
+    </>}
   </main>;
 }
 function WorkRequestForm({ workHistory = [], teacherAccounts = [], fixedType, onSubmit, currentUser, units = [], initialData = null, existingAttachments = [], onDownloadAttachment, onDeleteAttachment, submitLabel = "提交教师审核", onCancel }) {

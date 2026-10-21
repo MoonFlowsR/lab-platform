@@ -5,7 +5,7 @@ import RecordActions from '../../shared/components/RecordActions.jsx';
 import { canCompleteStockRequest, stockApprovalExemptionText, stockRequestIsPurchaserSelf } from './stock-out-policy.js';
 import { formatPublicNumber } from '../../shared/lib/public-number.js';
 import './stock-out-requests.css';
-export default function StockOutRequests({ rows = [], currentUser, batches = [], purchaseRequests = [], attachments = [], onReview, onComplete, onWithdraw, onDelete, onDownload, onExport, styles, formatDate, Badge }) {
+export default function StockOutRequests({ defaultExpanded = false, rows = [], currentUser, batches = [], purchaseRequests = [], attachments = [], onReview, onComplete, onWithdraw, onDelete, onDownload, onExport, styles, formatDate, Badge }) {
   const [busy,setBusy] = useState('');
   const ongoing = rows.filter(row => ['待采购人审批','已同意待出库'].includes(row.status));
   const history = rows.filter(row => !['待采购人审批','已同意待出库'].includes(row.status));
@@ -32,7 +32,7 @@ export default function StockOutRequests({ rows = [], currentUser, batches = [],
     </article>;
   };
   return <>
-    <section className="platform-section-pending" style={styles.card}><div style={styles.cardHeader}><h2 style={styles.h2}>私用/项目用物品出库申请（{ongoing.length}）</h2><ExportButton subject="出库申请" onExport={()=>onExport?.(rows)} /></div><p style={styles.muted}>采购人本人可直接登记；其他人经采购人审批后完成出库。完成登记时扣减库存。</p>{ongoing.length ? <RecentRecords rows={ongoing}>{shown => shown.map(card)}</RecentRecords> : <p style={styles.muted}>当前范围暂无待处理出库申请。</p>}</section>
+    <section className="platform-section-pending" style={styles.card}><div style={styles.cardHeader}><h2 style={styles.h2}>私用/项目用物品出库申请（{ongoing.length}）</h2><ExportButton subject="出库申请" onExport={()=>onExport?.(rows)} /></div><p style={styles.muted}>采购人本人可直接登记；其他人经采购人审批后完成出库。完成登记时扣减库存。</p>{ongoing.length ? <RecentRecords rows={ongoing} defaultExpanded={defaultExpanded}>{shown => shown.map(card)}</RecentRecords> : <p style={styles.muted}>当前范围暂无待处理出库申请。</p>}</section>
     {history.length>0 && <section style={styles.card}><div style={styles.cardHeader}><h2 style={styles.h2}>出库申请历史（{history.length}）</h2></div><RecentRecords rows={history}>{shown => shown.map(card)}</RecentRecords></section>}
   </>;
 }
