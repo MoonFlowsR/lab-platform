@@ -76,11 +76,6 @@ function recordNameChanges(row, index) {
   return changes;
 }
 
-export function displayStudentRecord(row, index) {
-  const changes = recordNameChanges(row, index);
-  return changes.length ? { ...row, ...Object.fromEntries(changes) } : row;
-}
-
 export function displayStudentComment(row, index) {
   const shown = { ...row,
     author_name: studentNameLabel(row.author_name || row.author_username, row.author_username, index),

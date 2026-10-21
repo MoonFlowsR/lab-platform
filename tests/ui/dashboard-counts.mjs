@@ -1,3 +1,4 @@
+import { showModuleRecords } from './module-records.mjs';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
@@ -77,11 +78,11 @@ export async function checkDashboardCounts(browser, origin, out, base, users) {
         await scope.fill(team ? '本人' : '全部');
         await page.getByRole('option', { name: team ? '本人' : '全部', exact: true }).click();
       }
-      await page.locator('.platform-nav').getByRole('button', { name: '总览', exact: true }).click();
+      await page.locator('.platform-nav').getByRole('button', { name: '总览', exact: true }).click();await showModuleRecords(page);
       await page.getByRole('button', { name: '查看' + (type === '采购' ? '采购/入库' : type) + ' →', exact: true }).click();
       assert.match(await page.locator('main > .platform-section-pending h2').innerText(), new RegExp(`（${countsFor(type)[0]}）$`));
       if (role !== 'student') assert.equal(await page.getByPlaceholder('搜索或选择' + (type === '采购' ? '采购单位' : type === '维修' ? '维修人员单位' : type + '机构')).inputValue(), '全部');
-      await page.locator('.platform-nav').getByRole('button', { name: '总览', exact: true }).click();
+      await page.locator('.platform-nav').getByRole('button', { name: '总览', exact: true }).click();await showModuleRecords(page);
     }
     await page.getByRole('textbox', { name: '搜索记录', exact: true }).fill('987654');
     assert.match(await page.getByRole('region', { name: '团队库存提醒', exact: true }).innerText(), /2 个批次/);

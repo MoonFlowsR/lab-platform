@@ -6,6 +6,30 @@ const teacher = { username: 'example-teacher', account_type: 'teacher', default_
 const row = (id, status, extra = {}) => ({ _id: id, request_type: '测试', applicant_username: student.username, review_teacher_username: teacher.username, status, ...extra });
 const group = (center,id) => center.groups.find(item => item.id === id);
 
+test('module tasks combine every actionable stage and exclude other people, waiting and history', async () => {
+  const { buildTaskCenter, moduleTaskGroup } = await model;
+  const requests = [row(1,'已通过'),row(2,'已驳回'),row(3,'已撤回'),row(4,'待教师审核'),row(5,'已完成'),row(6,'已通过',{applicant_username:'other'})];
+  const center = buildTaskCenter({ account:student, workRequests:requests });
+  const queue = moduleTaskGroup(center,'test');
+  assert.equal(queue.count,center.byModule.test);
+  assert.deepEqual([...queue.ids],['1','2','3']);
+  assert.equal(queue.title,'测试待办事项');
+  assert.equal(moduleTaskGroup(buildTaskCenter({account:student}),'test').count,0);
+});
+
+test('module queue is deduplicated and remains empty after the last actionable record is handled', async () => {
+  const { buildTaskCenter, moduleTaskGroup, taskContains } = await model;
+  const center = buildTaskCenter({ account:teacher, workRequests:[row(1,'待教师审核')] });
+  const queue = moduleTaskGroup(center,'test');
+  assert(taskContains(queue,{_id:'1'}));
+  assert(!taskContains(queue,{_id:99}));
+  assert.equal(moduleTaskGroup({...center,groups:[...center.groups,group(center,'test-review')]},'test').count,1);
+  const empty = moduleTaskGroup(buildTaskCenter({account:teacher,workRequests:[row(1,'已通过')]}),'test');
+  assert.equal(empty.id,queue.id);
+  assert.equal(empty.count,0);
+  assert(!taskContains(empty,{_id:1}));
+});
+
 test('teacher tasks are limited to assigned, actionable requests even when default visibility is all', async () => {
   const { buildTaskCenter } = await model;
   const workRequests = [row(1,'待教师审核'),row(2,'已撤回'),row(3,'待教师审核',{review_teacher_username:'other',guiding_teacher_username:teacher.username}),row(4,'已通过'),row(5,'待教师审核',{review_teacher_username:'',reviewed_username:teacher.username})];

@@ -1,3 +1,4 @@
+import { showModuleRecords } from './module-records.mjs';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
@@ -22,7 +23,7 @@ export async function checkPurchaseChannels(browser, origin, out, snapshot, user
   });
   await page.goto(origin);await page.locator('.platform-nav').waitFor();
   for(const tab of ['采购','库存']){
-   await page.locator('.platform-nav button').filter({hasText:tab}).click();
+   await page.locator('.platform-nav button').filter({hasText:tab}).click();await showModuleRecords(page);
    if(tab==='库存'){
     await page.locator('.platform-stock-group > summary').click();
     await page.locator('summary:visible').filter({hasText:/^查看明细$/}).first().click();

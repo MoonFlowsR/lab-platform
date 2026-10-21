@@ -6,8 +6,17 @@ import { isReimbursementEligible } from '../finance/reimbursement.js';
 import { canCompleteStockRequest } from '../stock/stock-out-policy.js';
 import { expiryWarnings } from '../reports/report-data.js';
 
-export const taskRecordId = row => String(row._id ?? row.id ?? row.public_id ?? '');
+const taskRecordId = row => String(row._id ?? row.id ?? row.public_id ?? '');
 export const taskContains = (group, row) => !group || group.ids.has(taskRecordId(row));
+
+// Module badges and their destination share the same actionable record set.
+export function moduleTaskGroup(center, module) {
+  const groups = center.groups.filter(group => group.module === module && group.kind === 'action');
+  const rows = [...new Map(groups.flatMap(group => group.rows).map(row => [taskRecordId(row), row])).values()];
+  const label = WORK_DEFINITIONS.find(item => item.module === module)?.name || { purchases: '采购/入库', stock: '出库', admin: '账号' }[module] || '';
+  const sections = new Set(groups.filter(group => group.count).map(group => group.section));
+  return { id: `module:${module}`, module, title: label + '待办事项', rows, ids: new Set(rows.map(taskRecordId)), count: rows.length, kind: 'action', section: sections.size === 1 ? [...sections][0] : 'pending' };
+}
 
 // Only available actions count as personal tasks. Search and list preferences cannot hide duties.
 export function buildTaskCenter({ account, workRequests = [], purchases = [], stockOutRequests = [], batches = [], accounts = [], today }) {

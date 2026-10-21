@@ -117,7 +117,7 @@ function PurchasesPage({ task, onReimbursementChange, registeredTeacherAccounts 
       <Field label="查看范围"><SearchableSelect value={viewScope} onChange={onViewScopeChange} clearOnInput={false} options={[{ value: "mine", label: "本人" }, { value: "all", label: "全部" }]} placeholder="搜索或选择查看范围" /></Field>
       <small style={styles.muted}>调整查看范围可查看团队内其它采购/入库进度</small>
     </section>}
-    {task ? <RequestHistorySection className={"platform-section-" + (task.section || "pending")} title={task.title} rows={rows} renderCard={renderCard} defaultExpanded emptyText={task.count ? "没有符合搜索的记录。" : "当前没有此类待办。"} /> : <>
+    {task ? <RequestHistorySection showTitle={false} className={"platform-section-" + (task.section || "pending")} title={task.title} rows={rows} renderCard={renderCard} defaultExpanded emptyText={task.count ? "没有符合搜索的记录。" : "当前没有此类待办。"} /> : <>
     <DashboardMetrics showReimbursement={currentUser?.account_type === "finance"} purchases={rows} types={["采购"]} mode={canSubmit ? "student" : canReview ? "review" : "team"} money={money} />
     <RequestHistorySection className="platform-section-pending" title="待审批采购工单" rows={pending} renderCard={renderCard} emptyText="暂无待审批工单。" />
     <RequestHistorySection className="platform-section-approved" title="已审批采购工单" rows={reviewed} renderCard={renderCard} emptyText="暂无已审批未完成工单。" />

@@ -1,3 +1,4 @@
+import { showModuleRecords } from './module-records.mjs';
 import { checkTasks } from './tasks.mjs';
 import { checkRecordVisibility } from './record-visibility.mjs';
 import { checkAuditClients } from './audit-clients.mjs';
@@ -98,7 +99,7 @@ try {
   await page.goto(origin);await page.locator('.platform-nav').waitFor();
   const tabs=await page.locator('.platform-nav button').evaluateAll(buttons=>buttons.map(button=>button.getAttribute('aria-label')));
   for(let i=0;i<tabs.length;i++){
-   await page.locator('.platform-nav button').nth(i).click();await page.locator('main').waitFor();await page.waitForTimeout(250);
+   await page.locator('.platform-nav button').nth(i).click();await showModuleRecords(page);await page.locator('main').waitFor();await page.waitForTimeout(250);
    await page.screenshot({path:path.join(out,role+'-'+width+'-'+i+'.png'),fullPage:true});
    const geometry=await page.evaluate(()=>({viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,bodyHeight:document.body.scrollHeight,mainTop:document.querySelector('main')?.getBoundingClientRect().top,heading:document.querySelector('main h2')?.textContent}));
    results.push({role,width,tab:tabs[i],...geometry,errors:[...errors]});

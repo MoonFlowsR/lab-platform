@@ -17,13 +17,13 @@ export function TaskCenter({ center, currentUser, query = '', onOpen, onReports 
     <div className="platform-task-heading"><div><h2>我的待办 <span data-testid="task-total">{center.total}</span></h2><p>{description}</p></div>{onReports && <button type="button" className="platform-task-report-link" onClick={onReports}>统计与导出 <span aria-hidden="true">→</span></button>}</div>
     <div className="platform-task-grid">{visible.map(group => <TaskLink key={group.id} group={group} onOpen={onOpen} />)}</div>
     {!visible.length && <p className="platform-task-empty">{actions.length ? '没有匹配的待办事项。' : '当前没有需要你处理的事项。'}</p>}
-    <p className="platform-task-caption">数量随同步更新；点击直接处理对应记录。</p>
   </section>;
 }
 
 export function TaskFilterBanner({ task, onClear, onBack, query }) {
+  const detail = !task.count ? task.kind === 'action' ? '此项待办已处理完毕。' : '当前已无此类记录。' : query.trim() ? '下方显示此事项中符合搜索的记录。' : '';
   return <section className="platform-task-filter" aria-label="当前待办筛选" tabIndex={-1} id="platform-task-results">
-    <div><h2>{task.title} <span>{task.count} {task.kind === 'warning' ? '批' : '条'}</span></h2><p>{task.count ? query.trim() ? '下方显示此事项中符合搜索的记录。' : task.kind === 'action' ? '下方仅显示当前待办，可直接处理。' : '下方仅显示此类记录。' : task.kind === 'action' ? '此项待办已处理完毕。' : '当前已无此类记录。'}</p></div>
+    <div><h2>{task.title} <span>{task.count} {task.kind === 'warning' ? '批' : '条'}</span></h2>{detail && <p>{detail}</p>}</div>
     <div><button type="button" onClick={onBack}>返回待办</button><button type="button" onClick={onClear}>查看本模块全部记录</button></div>
   </section>;
 }

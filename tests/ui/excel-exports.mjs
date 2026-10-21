@@ -1,3 +1,4 @@
+import { showModuleRecords } from './module-records.mjs';
 import { workbookParts } from './workbook.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -23,7 +24,7 @@ export async function checkExcelExports(browser,origin,out,snapshot,users) {
   await page.goto(origin);await page.waitForFunction(()=>document.querySelector('.platform-sync-status > span')?.textContent.includes('同步状态：同步完成'));
   const tabs=await page.locator('.platform-nav button').allTextContents();
   for(const tab of tabs){
-   await page.locator('.platform-nav button').getByText(tab,{exact:true}).click();
+   await page.locator('.platform-nav button').getByText(tab,{exact:true}).click();await showModuleRecords(page);
    if(tab==='数据报表')await page.getByRole('heading',{name:'数据报表',exact:true}).waitFor();
    assert.equal(await page.getByRole('button',{name:/CSV/i}).count(),0);
    const actions=page.locator('.platform-export-button');

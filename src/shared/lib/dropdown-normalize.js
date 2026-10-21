@@ -21,7 +21,3 @@ export function uniqueOptions(values) {
     seen.add(key); return true;
   });
 }
-export function materialOptionMatches(name, query) {
-  const key = optionKey(query);
-  return optionKey(name).includes(key) || [...aliases].some(([alias, canonical]) => materialKey(name) === materialKey(canonical) && alias.includes(key));
-}
