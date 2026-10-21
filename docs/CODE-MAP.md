@@ -13,6 +13,8 @@
 | 总览与报表 | `src/features/dashboard`、`src/features/reports` | 共用业务记录与筛选规则 |
 | 帮助、留言 | `src/features/help` | `server/features/help` |
 
+帮助正文在 `src/features/help/content.json`，按账号角色组织。改写正文时保留旧块编号，将原文归入 `history` 供评论回溯；新内容追加为当前块。报表帮助入口指向对应角色章节。正文同时用于服务端评论校验，更新后需重载服务，并检查 `help-export.test.cjs` 与 `tests/ui/help.mjs`。
+
 测试、加工与维修：`request-sections.js`负责四类工单分组，`work-history.js`负责同学生、同项目、同机构的近半年记录及机构匹配，历史折叠栏仅在教师待审核工单中显示。`work-completion.cjs`校验最终信息与工单状态。`settlement_status`保存在工单记录中；已有未登记记录不自动补值。
 
 `src/config/work-types.json`统一定义工单类型、页面、费用字段和编号前缀；维修复用测试加工流程，通过`cost_repair`单独统计费用。维修设备沿用`work_content`，维修人员保存为`repair_personnel`，维修人员单位沿用`external_unit`，计量单位默认“次”，其它单位从已保存维修记录补入菜单；专有字段由`repair-fields.cjs`校验。

@@ -14,7 +14,7 @@ function initialHelpView(currentUser) {
   const role = helpRoleForAccount(currentUser?.account_type);
   let anchor = '';
   try { anchor = decodeURIComponent(window.location.hash.slice(1)); } catch { /* Ignore malformed links. */ }
-  const exportsTarget = role === 'student' ? 'student-exports' : `${role}-reports`;
+  const exportsTarget = role === 'student' ? 'student-exports' : role === 'finance' ? 'finance-reimbursement' : `${role}-reports`;
   if (anchor === 'exports' && content.sections.some(section => section.id === exportsTarget)) anchor = exportsTarget;
   const section = findHelpSection(content.sections, anchor);
   return { role: section?.role || role, anchor, legacy: Boolean(section && !Object.hasOwn(section, 'role')) };
