@@ -30,11 +30,9 @@ export async function checkAccountViewScope(browser, origin, out, snapshot, teac
     });
     await page.goto(origin);
     await page.waitForFunction(()=>document.querySelector('.platform-sync-status > span')?.textContent.includes('同步状态：同步完成'));
-    await page.locator('.platform-metric-scope').getByText('团队全部申请', { exact: true }).waitFor();
-    await page.locator('main h3').filter({ hasText: '团队已完成项目' }).nth(2).waitFor();
-    assert.equal(await page.locator('main').getByText('申请总数', { exact: true }).count(), 4);
-    assert.equal(await page.locator('main').getByText('去审核 →', { exact: true }).count(), 0);
-    assert.equal(await page.locator('main h3').filter({ hasText: '团队已完成项目' }).count(), 3);
+    assert.equal(await page.getByTestId('task-total').innerText(),'4', 'All-record viewing never adds other teachers tasks');
+    assert.equal(await page.locator('main').getByText('申请总数', { exact: true }).count(), 0);
+    assert.equal(await page.locator('[data-task="test-review"] strong').innerText(),'1 条');
     await page.screenshot({ path: path.join(out, 'finance-overview-' + width + '.png'), fullPage: true });
     for (const type of ['测试', '加工', '维修', '采购']) {
       await page.locator('.platform-nav').getByRole('button', { name: type + '审核', exact: true }).click();

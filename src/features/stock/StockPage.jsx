@@ -17,21 +17,22 @@ import ItemPhotoFields from "../../shared/components/ItemPhotoFields.jsx";
 import { batchIsPurchaserSelf, batchPurchaser, privateStockPurpose, stockApprovalExemptionText } from "./stock-out-policy.js";
 import { formatPublicNumber } from "../../shared/lib/public-number.js";
 
-function StockPage({ movementType = "", currentUser, purchaseRequests = [], teacherAccounts = [], requests = [], onReviewRequest, onCompleteRequest, onWithdrawRequest, onExportRequests, viewScope = "mine", onViewScopeChange, materialCatalog = [], rows, batches, attachments = [], isAdmin = false, onDeleteRecord, isManager, canSubmit, onAdd, onDownloadAttachment, onExport }) {
+function StockPage({ task, movementType = "", currentUser, purchaseRequests = [], teacherAccounts = [], requests = [], onReviewRequest, onCompleteRequest, onWithdrawRequest, onExportRequests, viewScope = "mine", onViewScopeChange, materialCatalog = [], rows, batches, attachments = [], isAdmin = false, onDeleteRecord, isManager, canSubmit, onAdd, onDownloadAttachment, onExport }) {
   const movementTypes = ["入库", "出库", "退库"];
   const selectedRows = movementType ? rows.filter(row => row.transaction_type === movementType) : rows;
   const otherRows = selectedRows.filter(row => !movementTypes.includes(row.transaction_type));
   const historyProps = { attachments, isAdmin, onDeleteRecord, onDownloadAttachment };
   return <main>
-    <Toolbar title={isManager ? "出入退库" : "出/退库"} description={isManager ? "按学生、日期和出入退库类型筛选，分别查看入库、出库、退库。" : "登记出库和退库，查看库存流水及证明。"} onExport={() => onExport(selectedRows)} />
-    {canSubmit && <StockForm currentUser={currentUser} purchaseRequests={purchaseRequests} teacherAccounts={teacherAccounts} materialCatalog={materialCatalog} batches={batches} isManager={isManager} onSubmit={onAdd} />}
-    {canSubmit && <section aria-label="出退库查看范围" className="platform-purchase-scope" style={styles.card}>
+    <Toolbar title={isManager ? "出入退库" : "出/退库"} description={isManager ? "按学生、日期和出入退库类型筛选，分别查看入库、出库、退库。" : "登记出库和退库，查看库存流水及证明。"} onExport={() => task ? onExportRequests(requests) : onExport(selectedRows)} />
+    {canSubmit && !task && <StockForm currentUser={currentUser} purchaseRequests={purchaseRequests} teacherAccounts={teacherAccounts} materialCatalog={materialCatalog} batches={batches} isManager={isManager} onSubmit={onAdd} />}
+    {canSubmit && !task && <section aria-label="出退库查看范围" className="platform-purchase-scope" style={styles.card}>
       <Field label="查看范围"><SearchableSelect value={viewScope} onChange={onViewScopeChange} clearOnInput={false} options={[{ value: "mine", label: "本人" }, { value: "all", label: "全部" }]} placeholder="搜索或选择查看范围" /></Field>
       <small style={styles.muted}>调整查看范围可查看团队内其它出库/退库记录</small>
     </section>}
-    {(!movementType || movementType === '出库') && <StockOutRequests rows={requests} currentUser={currentUser} batches={batches} purchaseRequests={purchaseRequests} attachments={attachments} onReview={onReviewRequest} onComplete={onCompleteRequest} onWithdraw={onWithdrawRequest} onDelete={onDeleteRecord} onDownload={onDownloadAttachment} onExport={onExportRequests} styles={styles} formatDate={formatDate} Badge={Badge} />}
-    <MovementMetrics rows={selectedRows} />
+    {(!movementType || movementType === '出库') && <StockOutRequests defaultExpanded={Boolean(task)} rows={requests} currentUser={currentUser} batches={batches} purchaseRequests={purchaseRequests} attachments={attachments} onReview={onReviewRequest} onComplete={onCompleteRequest} onWithdraw={onWithdrawRequest} onDelete={onDeleteRecord} onDownload={onDownloadAttachment} onExport={onExportRequests} styles={styles} formatDate={formatDate} Badge={Badge} />}
+    {!task && <><MovementMetrics rows={selectedRows} />
     {isManager ? movementTypes.filter(type => !movementType || type === movementType).map(type => <StockHistorySection key={type} title={`${type}历史`} rows={selectedRows.filter(row => row.transaction_type === type)} {...historyProps} extra={type === "入库" && otherRows.length > 0 ? <details><summary>库存修正记录（{otherRows.length}）</summary><StockHistorySection embedded title="库存修正" rows={otherRows} {...historyProps} /></details> : null} />) : <StockHistorySection title="库存流水历史" rows={selectedRows} {...historyProps} />}
+    </>}
   </main>;
 }
 function StockHistorySection({ title, rows, attachments, isAdmin, onDeleteRecord, onDownloadAttachment, extra = null, embedded = false }) {

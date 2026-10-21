@@ -61,3 +61,5 @@
 记录折叠：`RecentRecords.jsx`统一卡片、表格的最新一条显示与展开入口；受控组件`RecordVisibility`供报表和账号列表复用，数量取当前筛选结果，导出使用完整数据。
 
 撤回测试的教师显示规则由`review-scope.js`的`workRecordVisible`统一处理，总览、工单、近半年历史与报表使用同一数据集；学生重提与审计记录保留。
+
+角色待办：`src/features/tasks/task-model.js`从同步记录派生个人任务、团队跟进和库存预警，共用现有审批/完结/报销条件，不写入新状态。`TaskCenter.jsx`显示入口与任务筛选提示；`Dashboard.jsx`只保留任务、进度与提醒。`App.jsx`负责清除旧筛选、按记录ID打开处理页，并刷新菜单角标。完整数量、金额统计与导出由`features/reports`及`dashboard-metrics.js`负责。

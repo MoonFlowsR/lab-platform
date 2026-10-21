@@ -73,10 +73,10 @@ export async function checkRecordVisibility(browser, origin, out, snapshot, user
     if (account.account_type === 'teacher') {
       await page.getByRole('textbox', { name: '搜索记录', exact: true }).fill('');
       await page.locator('.platform-nav').getByRole('button', { name: '总览', exact: true }).click();
-      const recent = page.locator('main section').filter({ has: page.getByRole('heading', { name: '近期测试', exact: true }) });
-      await recent.getByRole('button', { name: '展开其余 2 条', exact: true }).click();
-      assert.equal(await recent.locator('h3').count(), 3);
-      assert.equal(await recent.getByText('撤回测试核对', { exact: true }).count(), 0);
+      await page.locator('[data-task="test-review"]').click();
+      const taskRecords = page.locator('main > .platform-section-pending');
+      assert.equal(await taskRecords.locator('h3').count(), 3);
+      assert.equal(await taskRecords.getByText('撤回测试核对', { exact: true }).count(), 0);
       await page.locator('.platform-nav').getByRole('button', { name: '数据报表', exact: true }).click();
       const details = page.locator('#report-detail-panel');
       await details.getByRole('button', { name: '展开其余 2 条', exact: true }).click();

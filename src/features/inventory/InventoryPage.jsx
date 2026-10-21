@@ -22,7 +22,7 @@ function StockPhotoLinks({ row, attachments, onDownload, batch = false }) {
     {item && <button style={styles.lightButton} onClick={() => onDownload?.(item)}>物品特写</button>}
   </div>;
 }
-function InventoryPage({ canInitialize = false, materialCatalog = [], isAdmin = false, onDeleteRecord, attachments = [], onDownloadAttachment, onInitialize, initializationMaterials, initializationBatches, initializationUnits, materials, batches, canManageStock, canEditBatchInformation = false, onUpdateBatch, onExportMaterials, onExportBatches, searchQuery = "" }) {
+function InventoryPage({ task, canInitialize = false, materialCatalog = [], isAdmin = false, onDeleteRecord, attachments = [], onDownloadAttachment, onInitialize, initializationMaterials, initializationBatches, initializationUnits, materials, batches, canManageStock, canEditBatchInformation = false, onUpdateBatch, onExportMaterials, onExportBatches, searchQuery = "" }) {
   const showSafetyNotes = batches.some(batch => batch.safety_notes);
   const showRemarks = batches.some(batch => batch.remark);
   const showAssociatedTeachers = batches.some(batch => batch.associated_teacher_names);
@@ -54,15 +54,15 @@ function InventoryPage({ canInitialize = false, materialCatalog = [], isAdmin = 
   return <main>
     <Toolbar title="库存" description={canInitialize ? "查看库存、有效期和入库证明；现存材料可在此建库。" : "查看和筛选库存、有效期及入库证明。"} />
     <InventoryWarnings batches={batches} Table={DataTable} cardStyle={styles.card} renderPhoto={row => <StockPhotoLinks batch row={row} attachments={attachments} onDownload={onDownloadAttachment} />} />
-    {canInitialize && <MaterialInitialization materialCatalog={materialCatalog} materials={initializationMaterials} batches={initializationBatches} units={initializationUnits} onSave={onInitialize}       />}
+    {canInitialize && !task && <MaterialInitialization materialCatalog={materialCatalog} materials={initializationMaterials} batches={initializationBatches} units={initializationUnits} onSave={onInitialize}       />}
     <section style={styles.card}>
       <div style={styles.cardHeader}><h2 style={styles.h2}>材料汇总</h2><ExportButton subject="材料" onExport={onExportMaterials} /></div>
-      <RecentRecords rows={materials}>{shown => <div style={styles.cardGrid}>{shown.length === 0 ? <Empty text="暂无材料汇总。" /> : shown.map((m) => <MaterialCard key={m._id} row={m} isAdmin={isAdmin} onDeleteRecord={onDeleteRecord} searchQuery={searchQuery} />)}</div>}</RecentRecords>
+      <RecentRecords rows={materials} defaultExpanded={Boolean(task)}>{shown => <div style={styles.cardGrid}>{shown.length === 0 ? <Empty text="暂无材料汇总。" /> : shown.map((m) => <MaterialCard key={m._id} row={m} isAdmin={isAdmin} onDeleteRecord={onDeleteRecord} searchQuery={searchQuery} />)}</div>}</RecentRecords>
     </section>
     <section style={styles.card}>
       <div style={styles.cardHeader}><h2 style={styles.h2}>材料批次库存</h2><div className="platform-stock-export-actions"><ExportButton subject="汇总" onExport={exportSummary} /><ExportButton subject="批次" onExport={onExportBatches} /></div></div>
       <p className="platform-stock-group-note">同材料、规格和房间汇总；展开查看原批次、照片及操作。</p>
-      <RecentRecords rows={batchGroups} unit="组">{shown => <div className="platform-stock-groups">{shown.length ? shown.map(group => <BatchGroup key={`${group._id}:${searchQuery.trim()}`} group={group} searchQuery={searchQuery}>
+      <RecentRecords rows={batchGroups} unit="组" defaultExpanded={Boolean(task)}>{shown => <div className="platform-stock-groups">{shown.length ? shown.map(group => <BatchGroup key={`${group._id}:${searchQuery.trim()}`} group={group} searchQuery={searchQuery}>
         <DataTable desktopColumns={["批次", "当前库存", "位置", "有效期", "采购人", "入库人", "入库证明"]} mobileColumns={["批次", "当前库存", "位置", "有效期", "采购人", "入库人", "入库证明"]} columns={batchColumns} rows={group.batches.map(batchRow)} />
       </BatchGroup>) : <Empty text="暂无材料批次库存。" />}</div>}</RecentRecords>
     </section>

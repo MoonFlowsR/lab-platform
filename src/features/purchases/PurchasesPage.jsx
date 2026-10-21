@@ -25,7 +25,7 @@ import StorageFields from "../../shared/components/StorageFields.jsx";
 import ExpiryDateField from "../../shared/components/ExpiryDateField.jsx";
 import ItemPhotoFields from "../../shared/components/ItemPhotoFields.jsx";
 
-function PurchasesPage({ onReimbursementChange, registeredTeacherAccounts = [], teacherAccounts = [], reviewScope = "mine", onReviewScopeChange, viewScope = "mine", onViewScopeChange, materialCatalog = [], rows, logs = [], attachments = [], batches = [], purchaseHistory = [], purchaseCatalog = [], fundSummary = {}, currentUser, units = [], canSubmit, canReview, isAdmin = false, onAdd, onResubmit, onWithdraw, onReview, onCompleteInbound, onCloseRejected, onDeleteRecord, onHideRecord, onUploadAttachment, onDownloadAttachment, onDeleteAttachment, onExport }) {
+function PurchasesPage({ task, onReimbursementChange, registeredTeacherAccounts = [], teacherAccounts = [], reviewScope = "mine", onReviewScopeChange, viewScope = "mine", onViewScopeChange, materialCatalog = [], rows, logs = [], attachments = [], batches = [], purchaseHistory = [], purchaseCatalog = [], fundSummary = {}, currentUser, units = [], canSubmit, canReview, isAdmin = false, onAdd, onResubmit, onWithdraw, onReview, onCompleteInbound, onCloseRejected, onDeleteRecord, onHideRecord, onUploadAttachment, onDownloadAttachment, onDeleteAttachment, onExport }) {
   const [editingRow, setEditingRow] = useState(null);
   useEffect(() => { if (editingRow && !rows.some(row => row._id === editingRow._id)) setEditingRow(null); }, [rows, editingRow]);
   const [inboundRow, setInboundRow] = useState(null);
@@ -91,7 +91,7 @@ function PurchasesPage({ onReimbursementChange, registeredTeacherAccounts = [], 
       description={(isAdmin || currentUser?.account_type === "finance") ? "查看团队采购和入库进度，管理记录。" : canReview ? "审核采购申请；到货后由申请人完成入库。" : "提交采购申请，跟进审核和入库。"}
       onExport={onExport}
     />
-    {canSubmit && !editingRow && <PurchaseForm registeredTeacherAccounts={registeredTeacherAccounts} teacherAccounts={teacherAccounts} materialCatalog={materialCatalog} onSubmit={onAdd} purchaseHistory={purchaseHistory} purchaseCatalog={purchaseCatalog} batches={batches} fundSummary={fundSummary} currentUser={currentUser} units={units} />}
+    {canSubmit && !task && !editingRow && <PurchaseForm registeredTeacherAccounts={registeredTeacherAccounts} teacherAccounts={teacherAccounts} materialCatalog={materialCatalog} onSubmit={onAdd} purchaseHistory={purchaseHistory} purchaseCatalog={purchaseCatalog} batches={batches} fundSummary={fundSummary} currentUser={currentUser} units={units} />}
     {canSubmit && editingRow && <PurchaseForm registeredTeacherAccounts={registeredTeacherAccounts} teacherAccounts={teacherAccounts} materialCatalog={materialCatalog}
       initialData={editingRow}
       existingAttachments={attachments.filter((a) => !a.deleted_at && a.target_collection === "lab_purchase_requests" && (String(a.target_id) === String(editingRow._id) || a.target_public_id === editingRow.public_id))}
@@ -112,16 +112,18 @@ function PurchasesPage({ onReimbursementChange, registeredTeacherAccounts = [], 
       units={units}
     />}
 
-    {currentUser?.account_type === "teacher" && <RequestViewScope scope={reviewScope} onChange={onReviewScopeChange} label="采购审核查看范围" />}
-    {currentUser?.account_type === "student" && <section aria-label="采购查看范围" className="platform-purchase-scope" style={styles.card}>
+    {!task && currentUser?.account_type === "teacher" && <RequestViewScope scope={reviewScope} onChange={onReviewScopeChange} label="采购审核查看范围" />}
+    {!task && currentUser?.account_type === "student" && <section aria-label="采购查看范围" className="platform-purchase-scope" style={styles.card}>
       <Field label="查看范围"><SearchableSelect value={viewScope} onChange={onViewScopeChange} clearOnInput={false} options={[{ value: "mine", label: "本人" }, { value: "all", label: "全部" }]} placeholder="搜索或选择查看范围" /></Field>
       <small style={styles.muted}>调整查看范围可查看团队内其它采购/入库进度</small>
     </section>}
+    {task ? <RequestHistorySection className={"platform-section-" + (task.section || "pending")} title={task.title} rows={rows} renderCard={renderCard} defaultExpanded emptyText={task.count ? "没有符合搜索的记录。" : "当前没有此类待办。"} /> : <>
     <DashboardMetrics showReimbursement={currentUser?.account_type === "finance"} purchases={rows} types={["采购"]} mode={canSubmit ? "student" : canReview ? "review" : "team"} money={money} />
     <RequestHistorySection className="platform-section-pending" title="待审批采购工单" rows={pending} renderCard={renderCard} emptyText="暂无待审批工单。" />
     <RequestHistorySection className="platform-section-approved" title="已审批采购工单" rows={reviewed} renderCard={renderCard} emptyText="暂无已审批未完成工单。" />
     <RequestHistorySection className="platform-section-reviewed" title="已完成采购工单" rows={completed} renderCard={renderCard} emptyText="暂无已完成工单。" />
     <RequestHistorySection className="platform-section-modified" title="完成时修改的采购工单" rows={modified} renderCard={renderCard} emptyText="暂无入库确认时修改过信息的工单。" />
+    </>}
   </main>;
 }
 function PurchaseForm({ teacherAccounts = [], materialCatalog = [], onSubmit, purchaseHistory = [], purchaseCatalog = [], batches = [], currentUser, units = [], initialData = null, existingAttachments = [], onDownloadAttachment, onDeleteAttachment, submitLabel = "提交采购审核", onCancel }) {

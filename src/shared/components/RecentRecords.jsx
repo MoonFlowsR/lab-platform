@@ -22,8 +22,8 @@ export function RecordVisibility({ total, expanded, onToggle, controlsId, preser
 }
 
 // Limit presentation only; statistics and exports continue to use the complete filtered data.
-export default function RecentRecords({ rows = [], children, preserveOrder = false, unit = "条" }) {
-  const [expanded, setExpanded] = useState(false);
+export default function RecentRecords({ rows = [], children, preserveOrder = false, unit = "条", defaultExpanded = false }) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const controlsId = useId();
   const ordered = useMemo(() => preserveOrder ? rows : newestRecords(rows), [rows, preserveOrder]);
   const visibility = { total: rows.length, expanded, onToggle: () => setExpanded(value => !value), controlsId, preserveOrder, unit };
