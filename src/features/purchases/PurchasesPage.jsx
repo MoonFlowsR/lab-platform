@@ -1,10 +1,12 @@
+import PersonName from '../../shared/components/PersonName.jsx';
+import RequestIdentity from '../../shared/components/RequestIdentity.jsx';
 import ReimbursementStatus, { ReimbursementBadge } from '../finance/ReimbursementStatus.jsx';
 import { isReceivedPurchase, purchaseWasModified, purchaseAmount, purchaseAmountLabel, purchaseQuantityText, inboundChangesText } from './purchase-values.js';
 import SupplierChangeHistory from "../../shared/components/SupplierChangeHistory.jsx";
 import { useEffect, useState } from "react";
 import { splitReviewedPurchaseSections } from "../../shared/lib/request-sections.js";
 import { styles } from "../../app/styles.js";
-import { canReviewAssignedRequest, reviewTeacherName } from "../../shared/lib/review-scope.js";
+import { canReviewAssignedRequest } from "../../shared/lib/review-scope.js";
 import { formatDate, money, normalizeItemName, num, uniqueNonEmpty } from "../../app/formatters.js";
 import { Badge, DateInput, Field, Info, SearchableSelect, Toolbar } from "../../shared/components/ui.jsx";
 import { ClosureInfo, RequestHistorySection, RequestViewScope, ReviewHistory, ReviewTeacherField } from "../../shared/components/request-records.jsx";
@@ -41,7 +43,7 @@ function PurchasesPage({ task, onReimbursementChange, registeredTeacherAccounts 
       <div style={styles.rowBetween}>
         <div>
           <h3 style={styles.h3}>{p.material_name}</h3>
-          <p style={styles.meta}>{formatPublicNumber(p.public_id)} · 申请人：<strong className="platform-identity">{p.applicant_name}</strong> · 审核教师：<strong className="platform-identity">{reviewTeacherName(p)}</strong> · 提交时间：{formatDate(p.created_at)}</p>
+          <RequestIdentity row={p} />
         </div>
         <div style={styles.badgeRow}><Badge text={p.status} /><ReimbursementBadge row={p} />{purchaseWasModified(p) && <Badge text="完成时已修改" />}{p.is_first_purchase && <Badge text="首次采购" />}</div>
       </div>
@@ -60,7 +62,7 @@ function PurchasesPage({ task, onReimbursementChange, registeredTeacherAccounts 
       </div>
       {p.safety_notes && <p><b>安全事项：</b>{p.safety_notes}</p>}
       {p.remark && <p><b>备注：</b>{p.remark}</p>}
-      {isReceivedPurchase(p) && <p style={styles.meta}>入库确认人：<strong className="platform-identity">{p.completed_by || p.completed_username || "未登记"}</strong> · 确认时间：{formatDate(p.completed_at)}</p>}
+      {isReceivedPurchase(p) && <p style={styles.meta}>入库确认人：<strong className="platform-identity"><PersonName value={p.completed_by || p.completed_username || "未登记"} /></strong> · 确认时间：{formatDate(p.completed_at)}</p>}
       {purchaseWasModified(p) && <details style={styles.logBox}><summary><strong>完成时修改记录</strong></summary><p style={styles.note}>{inboundChangesText(p)}</p></details>}
       {p.inbound_note && <p><b>入库备注：</b>{p.inbound_note}</p>}
       <ReviewHistory row={p} logs={logs} />
@@ -207,7 +209,7 @@ function PurchaseForm({ teacherAccounts = [], materialCatalog = [], onSubmit, pu
     <div style={styles.cardHeader}>
       <div>
         <h2 style={styles.h2}>{isEditing ? "修改并重新提交采购" : "新建采购申请"}</h2>
-        <p style={styles.muted}>申请人：<strong className="platform-identity">{initialData?.applicant_name || initialData?.applicant_username || currentUser?.display_name || currentUser?.username}</strong> · 提交日期和时间由系统自动记录。</p>
+        <p className="platform-request-form-meta" style={styles.muted}><span>申请人：<strong className="platform-identity"><PersonName value={initialData?.applicant_name || initialData?.applicant_username || currentUser?.display_name || currentUser?.username} /></strong></span><span>提交日期和时间由系统自动记录。</span></p>
       </div>
       {isEditing ? <button type="button" style={styles.lightButton} onClick={onCancel}>取消修改</button> : <button type="button" style={styles.primaryButton} onClick={() => setShow(!show)}>{show ? "收起表单" : "新建采购"}</button>}
     </div>

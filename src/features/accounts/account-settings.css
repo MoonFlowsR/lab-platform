@@ -13,3 +13,4 @@
 .platform-account-settings input { font-size:16px; }
 .platform-graduation-hint { margin-left:8px; color:#b91c1c; font-size:14px; font-weight:700; line-height:1.6; overflow-wrap:anywhere; }
 @media(max-width:640px) { .platform-account-fields { grid-template-columns:1fr; gap:14px; } .platform-account-settings { width:calc(100% - 24px); } }
+@media(max-width:640px) { .platform-graduation-hint { display:block; margin:4px 0 0; font-size:12px; } }

@@ -1,4 +1,5 @@
 @import "./base.css";
+@import "./tokens.css";
 
 html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
 .platform-shell,.platform-shell *,.help-page,.help-page *{box-sizing:border-box}
@@ -7,10 +8,6 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
 .platform-shell :where(main,section,form,fieldset){max-width:100%}
 .platform-shell :where(input,select,textarea){min-width:0;max-width:100%}
 .platform-shell :where(p,h1,h2,h3,a){overflow-wrap:anywhere}
-.platform-header{align-items:center}
-.platform-header>div:first-child{flex:1 1 500px}
-.platform-header-actions{max-width:100%}
-.platform-nav button{flex-shrink:0}
 .platform-filter-bar{align-items:center}
 .platform-date-filter{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
 .platform-date-filter label{display:grid;gap:4px;font-size:12px;color:#475569;flex:0 1 175px;min-width:0}
@@ -62,13 +59,7 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
  .platform-mobile-record details dl>div{grid-column:1/-1}
  .platform-mobile-actions{margin-top:12px}
  .platform-shell{padding:10px!important}
- .platform-header{padding:14px!important;gap:10px!important;margin-bottom:12px!important}
- .platform-header h1{font-size:21px!important;line-height:1.35!important}
- .platform-header>div:first-child{flex-basis:100%}
- .platform-header-actions{width:100%!important;gap:6px!important}
  .platform-header-actions :is(button,a){padding:8px 10px!important;min-height:38px!important;font-size:12px!important}
- .platform-nav{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px!important;margin-bottom:12px!important;overflow-x:visible!important}
- .platform-nav button{padding:9px 12px!important;font-size:13px}
  .platform-shell :is(input,select,textarea){font-size:16px!important}
  .platform-shell :is(input,select){width:100%}
  .platform-shell input[type=checkbox]{width:auto}
@@ -256,8 +247,6 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
  .platform-stock-group-detail .platform-mobile-record{padding:10px}
  .platform-stock-group-detail .platform-mobile-record dl{gap:8px 10px}
 }
-
-.platform-header>div:first-child{min-width:0}
 .platform-sync-status{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;max-width:100%}
 .platform-sync-status>span{min-width:0;max-width:100%;overflow-wrap:anywhere}
 .platform-sync-guidance{min-width:0;max-width:100%;color:#b91c1c;font-size:16px;font-weight:750;line-height:1.6;overflow-wrap:anywhere}

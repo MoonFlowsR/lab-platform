@@ -5,7 +5,7 @@ import { studentFilterOptions } from '../lib/student-filter.js';
 export default function RecordFilters({ module = "", extraSummary = "", extraFields = null, onResetSearch, teachers = [], teacher = "", onTeacherChange, showTeacherFilter = false, students, student, onStudentChange, range, onRangeChange, styles, Field, SearchableSelect, DateInput }) {
   const options = studentFilterOptions(students);
   const dateLabel = module === 'materials' ? '建库日期' : module === 'stock' ? '登记日期' : module === 'admin' ? '创建 / 操作日期' : '申请日期';
-  const summary = [student || '全部学生', showTeacherFilter && (teacher || '全部教师'), range.mode === 'custom' ? `${range.start || '不限'} 至 ${range.end || '不限'}` : '全部时间', extraSummary].filter(Boolean).join(' · ');
+  const summary = [options.find(account => account.username === student)?.label || student || '全部学生', showTeacherFilter && (studentFilterOptions(teachers).find(account => account.username === teacher)?.label || teacher || '全部教师'), range.mode === 'custom' ? `${range.start || '不限'} 至 ${range.end || '不限'}` : '全部时间', extraSummary].filter(Boolean).join(' · ');
   return <FilterPanel summary={summary} label="学生与日期筛选" onReset={() => { onStudentChange(''); onTeacherChange?.(''); onRangeChange({}); onResetSearch?.(); }}>
     <div data-module={module} className={`platform-student-filter-grid${showTeacherFilter ? " has-teacher" : ""}${extraFields ? " has-extra" : ""}`} style={styles.formGrid}>
       <Field label="学生姓名"><SearchableSelect value={student} onChange={onStudentChange} clearOnInput={false} options={[{ value: '', label: '全部' }, ...options.map(account => ({ value: account.username, label: account.label }))]} placeholder="搜索或选择学生姓名" fixedOptions={['']} /></Field>

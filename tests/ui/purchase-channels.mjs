@@ -1,3 +1,4 @@
+import { openNavigation } from './navigation.mjs';
 import { showModuleRecords } from './module-records.mjs';
 import assert from 'node:assert/strict';
 import path from 'node:path';
@@ -21,9 +22,9 @@ export async function checkPurchaseChannels(browser, origin, out, snapshot, user
    if(url.pathname==='/api/events')return route.fulfill({contentType:'text/event-stream',body:': fixture\n\n'});
    return route.fulfill({json:{ok:true,rows:[],total:0}});
   });
-  await page.goto(origin);await page.locator('.platform-nav').waitFor();
+  await page.goto(origin);await page.locator('.platform-nav').waitFor({state:'attached'});
   for(const tab of ['采购','库存']){
-   await page.locator('.platform-nav button').filter({hasText:tab}).click();await showModuleRecords(page);
+   await openNavigation(page);await page.locator('.platform-nav button').filter({hasText:tab}).click();await showModuleRecords(page);
    if(tab==='库存'){
     await page.locator('.platform-stock-group > summary').click();
     await page.locator('summary:visible').filter({hasText:/^查看明细$/}).first().click();

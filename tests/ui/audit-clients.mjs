@@ -1,3 +1,4 @@
+import { openNavigation } from './navigation.mjs';
 import { showModuleRecords } from './module-records.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -26,8 +27,8 @@ export async function checkAuditClients(browser,origin,out,snapshot,admin){
    if(url.pathname==='/api/ops/listAudit'){const payload=request.postDataJSON(),matching=logs.filter(row=>!payload.query||row.client_label.includes(payload.query));if(!payload.all)assert.equal(payload.limit,10);return route.fulfill({json:{ok:true,rows:payload.all?matching:matching.slice(payload.offset||0,(payload.offset||0)+10),total:matching.length}});}
    return route.fulfill({json:{ok:true,account,comments:[],student_name_labels:[],rows:[],total:0}});
   });
-  await page.goto(origin);await page.waitForFunction(()=>document.querySelector('.platform-sync-status > span')?.textContent.includes('同步状态：同步完成'));
-  await page.locator('.platform-nav button').getByText('账号管理',{exact:true}).click();await showModuleRecords(page);
+  await page.goto(origin);await page.waitForFunction(()=>document.querySelector('.platform-sync-status')?.textContent.includes('同步状态：同步完成'));
+  await openNavigation(page);await page.locator('.platform-nav button').getByText('账号管理',{exact:true}).click();await showModuleRecords(page);
   const audit=page.getByRole('region',{name:'最近操作日志'});await page.waitForFunction(()=>document.querySelectorAll('[aria-label="最近操作日志"] tbody tr').length===10);assert.equal(await audit.locator('tbody tr').count(),10);
   const previous=audit.getByRole('button',{name:'上一页',exact:true}),next=audit.getByRole('button',{name:'下一页',exact:true});
   assert(await previous.isDisabled());assert((await audit.textContent()).includes('第 1 / 3 页'));

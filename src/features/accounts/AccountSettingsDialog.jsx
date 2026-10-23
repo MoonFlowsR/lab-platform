@@ -1,3 +1,4 @@
+import PersonName from '../../shared/components/PersonName.jsx';
 import { graduationYears } from '../../shared/lib/platform-settings.js';
 import { Field, SearchableSelect } from '../../shared/components/ui.jsx';
 import { styles } from '../../app/styles.js';
@@ -36,7 +37,7 @@ export default function AccountSettingsDialog({ account, teachers = [], required
       try {if(tab==='profile')await onSaveProfile(form);else await onSavePassword(password);}catch(failure){setError(failure.message || '保存失败，请重试。');}finally{setBusy(false);}
     }}>
       <div className="platform-dialog-header"><h2 id="account-settings-title">{adminEdit ? '修改学生资料' : required ? '完善个人信息' : '账户设置'}</h2>{!required&&<button type="button" disabled={busy} className="platform-dialog-close" aria-label="关闭弹窗" onClick={onClose}>×</button>}</div>
-      <p className="platform-account-identity"><strong>{account.display_name || account.username}</strong> · {({student:'学生',teacher:'教师',admin:'管理员',finance:'财务'})[account.account_type]}</p>
+      <p className="platform-account-identity"><strong><PersonName value={account.display_name || account.username} /></strong> · {({student:'学生',teacher:'教师',admin:'管理员',finance:'财务'})[account.account_type]}</p>
       {adminEdit ? <p style={styles.muted}>更新毕业年份后，可返回账号列表启用账号。</p> : required ? <p className="platform-account-required">请先填写以下三项，再进入平台。</p> : <div className="platform-account-tabs" role="tablist" aria-label="账号设置">{[['profile','个人信息'],['password','修改密码']].map(([value,label])=><button key={value} type="button" role="tab" disabled={busy} aria-selected={tab===value} onClick={()=>{setTab(value);setError('');}}>{label}</button>)}</div>}
       <fieldset disabled={busy}>
         {tab==='profile' && (student ? <div className="platform-account-fields">

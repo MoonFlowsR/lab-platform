@@ -1,3 +1,4 @@
+import { openNavigation } from './navigation.mjs';
 import { showModuleRecords } from './module-records.mjs';
 import { readWorkbookText } from './workbook.mjs';
 import assert from 'node:assert/strict';
@@ -27,7 +28,7 @@ export async function checkPurchaseFilters(browser, origin, out, snapshot, users
       return route.fulfill({ json: { ok: true, rows: [], total: 0 } });
     });
     await page.goto(origin);
-    await page.locator('.platform-nav').getByRole('button', { name: role === 'admin' ? '采购记录' : '采购审核', exact: true }).click();await showModuleRecords(page);
+    await openNavigation(page);await page.locator('.platform-nav').getByRole('button', { name: role === 'admin' ? '采购记录' : '采购审核', exact: true }).click();await showModuleRecords(page);
     if (width < 640) await page.getByRole('button', { name: /展开筛选/ }).click();
     const supplier = page.getByPlaceholder('搜索或选择采购单位');
     assert.equal(await supplier.inputValue(), '全部');
@@ -53,9 +54,9 @@ export async function checkPurchaseFilters(browser, origin, out, snapshot, users
     const worksheetText = await readWorkbookText(await (await download).path());
     assert(worksheetText.includes('示例材料甲') && worksheetText.includes('示例材料丙') && !worksheetText.includes('示例材料乙'));
     await page.screenshot({ path: path.join(out, 'purchase-unit-filter-' + role + '-' + width + '.png'), fullPage: true });
-    await page.locator('.platform-nav').getByRole('button', { name: role === 'admin' ? '测试记录' : '测试审核', exact: true }).click();await showModuleRecords(page);
+    await openNavigation(page);await page.locator('.platform-nav').getByRole('button', { name: role === 'admin' ? '测试记录' : '测试审核', exact: true }).click();await showModuleRecords(page);
     assert.equal(await page.getByPlaceholder('搜索或选择测试机构').inputValue(), '全部');
-    await page.locator('.platform-nav').getByRole('button', { name: role === 'admin' ? '采购记录' : '采购审核', exact: true }).click();await showModuleRecords(page);
+    await openNavigation(page);await page.locator('.platform-nav').getByRole('button', { name: role === 'admin' ? '采购记录' : '采购审核', exact: true }).click();await showModuleRecords(page);
     if (!(await supplier.isVisible())) await page.getByRole('button', { name: /展开筛选/ }).click();
     assert.equal(await supplier.inputValue(), role === 'teacher' ? '全部' : '示例供应商', 'Reopening a badge starts a fresh task scope; ordinary module navigation retains filters');
     await page.getByRole('button', { name: '重置筛选', exact: true }).click();

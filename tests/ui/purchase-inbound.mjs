@@ -1,3 +1,4 @@
+import { openNavigation } from './navigation.mjs';
 import { showModuleRecords } from './module-records.mjs';
 import assert from 'node:assert/strict';
 import path from 'node:path';
@@ -26,7 +27,7 @@ export async function checkPurchaseInbound(browser,origin,out,snapshot,users){
    }
    return route.fulfill({json:{ok:true,rows:[],total:0}});
   });
-  await page.goto(origin);await page.locator('.platform-nav').waitFor();await page.locator('.platform-nav button').filter({hasText:'采购'}).click();await showModuleRecords(page);
+  await page.goto(origin);await openNavigation(page);await page.locator('.platform-nav').waitFor({state:'attached'});await openNavigation(page);await page.locator('.platform-nav button').filter({hasText:'采购'}).click();await showModuleRecords(page);
   for(const title of ['待审批采购工单','已审批采购工单','已完成采购工单','完成时修改的采购工单'])await page.getByRole('heading',{name:new RegExp('^'+title)}).waitFor();
   const approved=page.locator('main > .platform-section-approved'),completed=page.locator('main > .platform-section-reviewed'),modified=page.locator('main > .platform-section-modified');
   assert.equal(await approved.locator('h3').count(),1);assert.equal(await completed.locator('h3').count(),1);

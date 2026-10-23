@@ -1,3 +1,4 @@
+import { openNavigation } from './navigation.mjs';
 import { showModuleRecords } from './module-records.mjs';
 import { workbookParts } from './workbook.mjs';
 import assert from 'node:assert/strict';
@@ -21,10 +22,10 @@ export async function checkExcelExports(browser,origin,out,snapshot,users) {
    if(url.pathname==='/api/events'){return route.fulfill({contentType:'text/event-stream',body:': fixture\n\n'});}
    return route.fulfill({json:{ok:true,rows:[],total:0,comments:[]}});
   });
-  await page.goto(origin);await page.waitForFunction(()=>document.querySelector('.platform-sync-status > span')?.textContent.includes('同步状态：同步完成'));
-  const tabs=await page.locator('.platform-nav button').allTextContents();
+  await page.goto(origin);await page.waitForFunction(()=>document.querySelector('.platform-sync-status')?.textContent.includes('同步状态：同步完成'));
+  const tabs=await page.locator('.platform-nav button').evaluateAll(buttons=>buttons.map(button=>button.getAttribute('aria-label')));
   for(const tab of tabs){
-   await page.locator('.platform-nav button').getByText(tab,{exact:true}).click();await showModuleRecords(page);
+   await openNavigation(page);await page.locator('.platform-nav').getByRole('button',{name:tab,exact:true}).click();await showModuleRecords(page);
    if(tab==='数据报表')await page.getByRole('heading',{name:'数据报表',exact:true}).waitFor();
    assert.equal(await page.getByRole('button',{name:/CSV/i}).count(),0);
    const actions=page.locator('.platform-export-button');

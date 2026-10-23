@@ -8,15 +8,6 @@
 .platform-table-details dl{display:grid;grid-template-columns:minmax(120px,1fr);min-width:180px;max-width:280px;gap:10px;margin:10px 0;white-space:normal}.platform-table-details dt{color:#64748b;font-size:12px}.platform-table-details dd{margin:3px 0 0;overflow-wrap:anywhere;line-height:1.6}
 .platform-data-table td{vertical-align:top}.platform-table-desktop .platform-data-table{min-width:600px!important}.platform-table-desktop td[data-label="材料"],.platform-table-desktop td[data-label="物品"],.platform-table-desktop td[data-label="名称"],.platform-table-desktop td[data-label="对象"],.platform-table-desktop td[data-label="位置"]{white-space:normal!important;min-width:100px;max-width:240px;overflow-wrap:anywhere}
 @media(max-width:640px){
- .platform-shell:not(.platform-login) .platform-header{padding:12px!important;gap:10px!important;margin-bottom:10px!important}
- .platform-shell:not(.platform-login) .platform-header h1{font-size:20px!important;line-height:1.4!important}
- .platform-header-actions{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px!important;width:100%!important}
- .platform-header-actions>*{font-size:12px!important;padding:7px 4px!important;justify-content:center;min-height:36px!important;border-radius:8px!important;text-align:center}
- .platform-sync-status{font-size:12px!important}.platform-sync-guidance{font-size:13px!important;line-height:1.5}
- .platform-nav{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important;margin-bottom:10px!important;overflow:visible!important}
- .platform-nav:has(>button:nth-child(7)){grid-template-columns:repeat(4,minmax(0,1fr))!important}
- .platform-nav:not(:has(>button:nth-child(7))){grid-template-columns:repeat(3,minmax(0,1fr))!important}
- .platform-nav button{min-height:36px!important;font-size:13px!important;padding:7px 3px!important;border-radius:8px!important}
  .platform-filter-bar{padding:10px!important;margin-bottom:10px!important;gap:8px!important}
  .platform-filter-panel{padding:10px 12px;margin-bottom:12px;border-radius:12px}.platform-filter-panel-heading h2{font-size:14px}.platform-filter-toggle{display:block;margin-left:auto;border:0;background:transparent;color:#334155;padding:6px 0;font-size:13px;cursor:pointer}.platform-filter-reset{margin-left:0}.platform-filter-summary{margin:2px 0 0}.platform-filter-panel-body{display:none;padding-top:10px}.platform-filter-panel-body.is-open{display:block}
  .platform-filter-panel .platform-student-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.platform-filter-panel .platform-student-filter-grid>label{grid-column:auto!important}

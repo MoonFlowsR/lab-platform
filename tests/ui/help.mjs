@@ -1,3 +1,4 @@
+import { openNavigation } from './navigation.mjs';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
@@ -19,10 +20,10 @@ export async function checkHelp(browser, origin, out, snapshot, users) {
       return route.fulfill({ json: { ok: true, comments: [], rows: [], total: 0 } });
     });
     await page.goto(origin);
-    await page.locator('.platform-nav').waitFor();
+    await page.locator('.platform-nav').waitFor({state:'attached'});
     const report = page.locator('.platform-nav button[aria-label="数据报表"]');
     if (await report.count()) {
-      await report.click();
+      await openNavigation(page);await report.click();
       const expected = { admin: 'admin-reports', teacher: 'teacher-reports', finance: 'finance-reimbursement', student: 'student-exports' }[role];
       const link = page.locator('.platform-report-basis a');
       await link.waitFor({ state: 'attached' });

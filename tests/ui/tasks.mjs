@@ -1,3 +1,4 @@
+import { openNavigation } from './navigation.mjs';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { readWorkbookText } from './workbook.mjs';
@@ -45,17 +46,17 @@ export async function checkTasks(browser, origin, out, base, users) {
     assert.equal(await page.locator('.platform-business-metrics').count(),0);
     assert.equal(await page.getByRole('button',{name:'同意',exact:true}).count(),0);
     await page.screenshot({path:path.join(out,`tasks-overview-${role}-${width}.png`),fullPage:true});
-    await page.getByRole('textbox',{name:'搜索记录',exact:true}).fill('无匹配的待办');
+    await page.getByRole('searchbox',{name:'搜索记录',exact:true}).fill('无匹配的待办');
     assert.equal(await page.locator('.platform-task-grid button').count(),0);assert.equal(await header.locator('b').innerText(),String(expected));await header.click();
     const modules = await page.locator('.platform-nav button:has(.platform-nav-task-count)').evaluateAll(buttons => buttons.map(button => ({ label:button.getAttribute('aria-label'), count:Number(button.querySelector('.platform-nav-task-count').textContent) })));
     for (const module of modules) {
-      await page.getByRole('textbox',{name:'搜索记录',exact:true}).fill('上一个页面的搜索');
-      await page.locator('.platform-nav').getByRole('button',{name:module.label,exact:true}).click();
+      await page.getByRole('searchbox',{name:'搜索记录',exact:true}).fill('上一个页面的搜索');
+      await openNavigation(page);await page.locator('.platform-nav').getByRole('button',{name:module.label,exact:true}).click();
       const queue=page.getByRole('region',{name:'当前待办筛选',exact:true});await queue.waitFor();
       assert.match(await queue.innerText(),new RegExp(`${module.count} 条`));
       assert.equal(await page.getByRole('heading',{name:/待办事项/}).count(),1,'Task title is shown once');
       assert.equal(await page.locator('.platform-task-caption').count(),0);
-      assert.equal(await page.getByRole('textbox',{name:'搜索记录',exact:true}).inputValue(),'');
+      assert.equal(await page.getByRole('searchbox',{name:'搜索记录',exact:true}).inputValue(),'');
       assert.equal(await page.locator('.platform-filter-panel').count(),0);
       const queuedRows=module.label.includes('账号')?page.locator('#account-list-rows tbody tr'):module.label.includes('库')&&!module.label.includes('采购')?page.locator('.platform-stock-request'):page.locator('main .platform-request-record');
       assert.equal(await queuedRows.count(),module.count,'Module badge must open every actionable record, across stages');
@@ -69,7 +70,7 @@ export async function checkTasks(browser, origin, out, base, users) {
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
       await queue.getByRole('button',{name:'查看本模块全部记录',exact:true}).click();
       assert.equal(await page.locator('.platform-task-filter').count(),0);
-      await page.locator('.platform-nav').getByRole('button',{name:module.label,exact:true}).click();
+      await openNavigation(page);await page.locator('.platform-nav').getByRole('button',{name:module.label,exact:true}).click();
       await page.getByRole('region',{name:'当前待办筛选',exact:true}).waitFor();
       await header.click();
     }
@@ -77,7 +78,7 @@ export async function checkTasks(browser, origin, out, base, users) {
     const count={student:1,teacher:2,finance:1,admin:2}[role];
     const link=page.locator(`[data-task="${id}"]`);await link.focus();await page.keyboard.press('Enter');
     await page.getByRole('region',{name:'当前待办筛选',exact:true}).waitFor();
-    assert.equal(await page.getByRole('textbox',{name:'搜索记录',exact:true}).inputValue(),'');
+    assert.equal(await page.getByRole('searchbox',{name:'搜索记录',exact:true}).inputValue(),'');
     assert.equal(await page.locator('.platform-filter-panel').count(),0);
     const rows=role==='admin'?page.locator('#account-list-rows tbody tr'):page.locator('main > section .platform-request-record');
     assert.equal(await rows.count(),count,'Task mode opens all corresponding records');
@@ -106,7 +107,7 @@ export async function checkTasks(browser, origin, out, base, users) {
       await header.click();
     }
     if(role==='admin'){
-      await page.locator('[data-task="test-team-review"]').click();assert.equal(await page.locator('main .platform-request-record').count(),3);assert.equal(await page.getByRole('button',{name:'同意',exact:true}).count(),0);await header.click();
+      await page.locator('[data-task="test-team-review"]').click();await page.locator('main .platform-request-record').first().waitFor();assert.equal(await page.locator('main .platform-request-record').count(),3);assert.equal(await page.getByRole('button',{name:'同意',exact:true}).count(),0);await header.click();
     }
     await page.locator('[data-task="inventory-expired"]').click();
     assert.match(await page.getByRole('region',{name:'当前待办筛选'}).innerText(),/已过期 1 批/);

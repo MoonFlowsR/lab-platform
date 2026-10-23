@@ -1,5 +1,9 @@
+import { checkWorkspace } from './workspace.mjs';
+import { checkReadability } from './readability.mjs';
+import { openNavigation } from './navigation.mjs';
 import { showModuleRecords } from './module-records.mjs';
 import { checkHelp } from './help.mjs';
+import { checkHelpPolling } from './help-polling.mjs';
 import { checkTasks } from './tasks.mjs';
 import { checkRecordVisibility } from './record-visibility.mjs';
 import { checkAuditClients } from './audit-clients.mjs';
@@ -79,7 +83,20 @@ snapshot.lab_work_requests.push({...work,_id:74,request_type:'加工',work_conte
 snapshot.lab_work_requests.push({...work,_id:75,status:'已完成',work_content:'示例已完成测试',completed_at:at});
 snapshot.lab_work_requests.push({...work,_id:76,status:'已完成',work_content:'示例审批后修改测试',completion_modified:true,completed_at:at});
 snapshot.lab_material_batches.push({...batch,_id:83,public_id:'BATCH-261016-000001',batch_code:'BATCH-261016-000001',storage_room:'A101',storage_location:'A101 · 示例柜',expiry_date:'2026-10-01'});
+async function checkOperations() {
+ return [
+  ...await checkFinance(browser,origin,out,snapshot,[admin,teachers[0],studentA]),
+  ...await checkDashboardCounts(browser,origin,out,snapshot,[admin,teachers[0],studentA]),
+  ...await checkPurchaseFilters(browser,origin,out,snapshot,[teachers[0],admin]),
+  ...await checkAccountViewScope(browser,origin,out,snapshot,teachers[0]),
+  ...await checkWorkReview(browser,origin,out,snapshot,[admin,teachers[0],studentA]),
+  ...await checkPurchaseChannels(browser,origin,out,snapshot,[admin,teachers[0],studentA]),
+  ...await checkPurchaseInbound(browser,origin,out,snapshot,[admin,teachers[0],studentA]),
+ ];
+}
 try {
+ if (process.env.UI_SUITE === 'operations') { results.push(...await checkOperations()); }
+ else if (process.env.UI_SUITE === 'workspace') { results.push(...await checkWorkspace(browser,origin,out,snapshot,[admin,teachers[0],studentA])); } else {
  if (process.env.UI_SUITE !== 'tasks') {
  for (const width of [1440,390,320]) for(const user of [admin,teachers[0],studentA]) {
   const account={...user,profile_required:false,session_token:'synthetic-only'},role=account.account_type;
@@ -97,10 +114,10 @@ try {
    if(u.pathname==='/api/help-comments')return route.fulfill({json:{ok:true,comments:[]}});
    return route.fulfill({json:{ok:true,comments:[]}});
   });
-  await page.goto(origin);await page.locator('.platform-nav').waitFor();
+  await page.goto(origin);await page.locator('.platform-nav').waitFor({state:'attached'});
   const tabs=await page.locator('.platform-nav button').evaluateAll(buttons=>buttons.map(button=>button.getAttribute('aria-label')));
   for(let i=0;i<tabs.length;i++){
-   await page.locator('.platform-nav button').nth(i).click();await showModuleRecords(page);await page.locator('main').waitFor();await page.waitForTimeout(250);
+   await openNavigation(page);await page.locator('.platform-nav button').nth(i).click();await showModuleRecords(page);await page.locator('main').waitFor();await page.waitForTimeout(250);
    await page.screenshot({path:path.join(out,role+'-'+width+'-'+i+'.png'),fullPage:true});
    const geometry=await page.evaluate(()=>({viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,bodyHeight:document.body.scrollHeight,mainTop:document.querySelector('main')?.getBoundingClientRect().top,heading:document.querySelector('main h2')?.textContent}));
    results.push({role,width,tab:tabs[i],...geometry,errors:[...errors]});
@@ -171,24 +188,23 @@ try {
  }
  results.push(...await checkTasks(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  if (process.env.UI_SUITE !== 'tasks') {
+ results.push(...await checkWorkspace(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
+ results.push(...await checkReadability(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkRecordVisibility(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkHelp(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
+ results.push(...await checkHelpPolling(browser,origin,[admin,teachers[0],studentA]));
  results.push(...await checkExcelExports(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkAuditClients(browser,origin,out,snapshot,admin));
  results.push(...await checkRegistration(browser,origin,out));
- results.push(...await checkFinance(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
- results.push(...await checkDashboardCounts(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
- results.push(...await checkPurchaseFilters(browser,origin,out,snapshot,[teachers[0],admin]));
- results.push(...await checkAccountViewScope(browser,origin,out,snapshot,teachers[0]));
- results.push(...await checkWorkReview(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
- results.push(...await checkPurchaseChannels(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
- results.push(...await checkPurchaseInbound(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
+ if (process.env.UI_SUITE !== 'interface') results.push(...await checkOperations());
  const anonymous=await browser.newPage({viewport:{width:390,height:850}});let deniedReads=0;
  await anonymous.route('**/*',route=>{const u=new URL(route.request().url());if(u.origin!==origin)return route.abort();if(!u.pathname.startsWith('/api/'))return route.continue();if(u.pathname==='/api/help-comments'){deniedReads++;return route.fulfill({status:401,json:{ok:false,message:'请先登录。'}});}return route.fulfill({json:{ok:true,comments:[]}});});
  await anonymous.goto(origin+'/help');await anonymous.getByText('后查看留言和评论。',{exact:false}).waitFor();
  assert.equal(await anonymous.locator('.help-composer-error').count(),0);await anonymous.waitForTimeout(10500);assert.equal(deniedReads,1,'Anonymous authorization failure must not keep polling');
  results.push({anonymousHelpNoError:true,anonymousRequests:deniedReads});await anonymous.close();
  }
+ }
  assert.equal(results.filter(r=>r.scrollWidth>r.viewport||r.overflow).length,0,'page must fit the viewport');assert.deepEqual(results.flatMap(r=>r.errors||[]),[],'no browser errors');
- await fs.writeFile(path.join(out,'results.json'),JSON.stringify(results,null,2));console.log(JSON.stringify({cases:results.length,overflow:results.filter(r=>r.scrollWidth>r.viewport||r.overflow),errors:results.flatMap(r=>r.errors||[]),out},null,2));
+ const resultName=process.env.UI_SUITE ? `results-${process.env.UI_SUITE}.json` : 'results.json';
+ await fs.writeFile(path.join(out,resultName),JSON.stringify(results,null,2));console.log(JSON.stringify({cases:results.length,overflow:results.filter(r=>r.scrollWidth>r.viewport||r.overflow),errors:results.flatMap(r=>r.errors||[]),out},null,2));
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

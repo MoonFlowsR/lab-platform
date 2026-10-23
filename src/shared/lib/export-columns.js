@@ -37,10 +37,10 @@ const workColumns = type => [
   column('工单状态', row => isCompletedWork(row) ? row.settlement_status || '未登记' : '', true),
   column('报销状态', row => isCompletedWork(row) ? reimbursementLabel(row) : '', true),
   column('报销登记人','reimbursed_by',true),column('报销登记时间',row=>date(row.reimbursed_at),true),
-  column('完结时修改', row => row.completion_modified ? '是' : '', true),
-  column('完结修改明细', completionChangesText, true),
+  column('完成时修改', row => row.completion_modified ? '是' : '', true),
+  column('完成时修改明细', completionChangesText, true),
   column('申请状态', row => row.status === '已通过' ? '已通过（待确认完成）' : row.status), column('提交时间', row => date(row.created_at)), ...approval,...closure,
-  column('完结人', row => row.completed_by || row.completed_username, true), column('完成时间', row => date(row.completed_at), true), column('完成备注', 'completion_note', true), column('备注', 'remark', true),
+  column('完成人', row => row.completed_by || row.completed_username, true), column('完成时间', row => date(row.completed_at), true), column('完成备注', 'completion_note', true), column('备注', 'remark', true),
   column('附件文件名', (row, context) => attachments(row, 'lab_work_requests', context), true),
 ];
 const profileColumns = [column('系统责任教师',row=>row.student_profile?.responsible_teacher_name,true),column('实际指导教师',row=>row.student_profile?.guiding_teacher_name,true),column('毕业年份',row=>row.student_profile?.graduation_year,true),column('个人资料状态',row=>row.account_type==='student' ? row.profile_required ? '待完善' : '已完善' : '',true)];
