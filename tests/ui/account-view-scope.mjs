@@ -1,3 +1,4 @@
+import { openNavigation } from './navigation.mjs';
 import { showModuleRecords } from './module-records.mjs';
 import { readWorkbookText } from './workbook.mjs';
 import assert from 'node:assert/strict';
@@ -30,13 +31,13 @@ export async function checkAccountViewScope(browser, origin, out, snapshot, teac
       return route.fulfill({ json: { ok: true, rows: [], total: 0 } });
     });
     await page.goto(origin);
-    await page.waitForFunction(()=>document.querySelector('.platform-sync-status > span')?.textContent.includes('同步状态：同步完成'));
+    await page.waitForFunction(()=>document.querySelector('.platform-sync-status')?.textContent.includes('同步状态：同步完成'));
     assert.equal(await page.getByTestId('task-total').innerText(),'4', 'All-record viewing never adds other teachers tasks');
     assert.equal(await page.locator('main').getByText('申请总数', { exact: true }).count(), 0);
     assert.equal(await page.locator('[data-task="test-review"] strong').innerText(),'1 条');
     await page.screenshot({ path: path.join(out, 'finance-overview-' + width + '.png'), fullPage: true });
     for (const type of ['测试', '加工', '维修', '采购']) {
-      await page.locator('.platform-nav').getByRole('button', { name: type + '审核', exact: true }).click();await showModuleRecords(page);
+      await openNavigation(page);await page.locator('.platform-nav').getByRole('button', { name: type + '审核', exact: true }).click();await showModuleRecords(page);
       const scope = page.getByPlaceholder('搜索或选择查看范围');
       assert.equal(await scope.inputValue(), '全部', type + ' default scope at ' + width);
       const pending = page.locator('main > .platform-section-pending');
@@ -54,7 +55,7 @@ export async function checkAccountViewScope(browser, origin, out, snapshot, teac
       assert.equal(await scope.inputValue(), '本人');
     }
     await page.reload();
-    await page.locator('.platform-nav').getByRole('button', { name: '测试审核', exact: true }).click();await showModuleRecords(page);
+    await openNavigation(page);await page.locator('.platform-nav').getByRole('button', { name: '测试审核', exact: true }).click();await showModuleRecords(page);
     assert.equal(await page.getByPlaceholder('搜索或选择查看范围').inputValue(), '全部');
     results.push({ financeScope: true, width, overflow: await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), errors });
     await page.close();

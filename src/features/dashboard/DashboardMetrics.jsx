@@ -12,7 +12,10 @@ export default function DashboardMetrics({ workRequests, purchases, mode = 'revi
       return <section key={metric.type} aria-label={`${metric.type}统计`} className={`platform-business-card is-${purchase ? 'purchase' : workModule(metric.type)}`}>
         <div className="platform-business-heading"><h2>{purchase ? '采购/入库' : metric.type}</h2>{onOpen && <button type="button" onClick={() => onOpen(purchase ? 'purchases' : workModule(metric.type))}>{mode === 'review' ? '去审核' : '查看'} →</button>}</div>
         <div className="platform-business-headline"><strong>{metric.total}</strong><span>申请总数</span></div>
-        <dl className="platform-business-statuses">{statuses.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+        <dl className="platform-business-statuses">{statuses.map(([label, value], index) => <div key={label}><dt>{label}</dt><dd>{types.length === 1 ? <button type="button" className="platform-status-jump" aria-label={`查看${label}工单，共${value}条`} onClick={() => {
+          const target = document.querySelector(`main > .platform-section-${['pending', 'approved', 'reviewed', 'modified'][index]}`);
+          if (target) { target.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }); target.focus({ preventScroll: true }); }
+        }}>{value}<span aria-hidden="true">↗</span></button> : value}</dd></div>)}</dl>
         <div className="platform-business-footer">
           <span>待教师审核 <b>{metric.pending}</b> 条</span>
           <span>{purchase ? '待入库' : '待确认完成'} <b>{metric.ready}</b> 条</span>

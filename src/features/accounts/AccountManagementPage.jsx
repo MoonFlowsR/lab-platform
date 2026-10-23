@@ -6,7 +6,7 @@ import { SearchableSelect } from '../../shared/components/ui.jsx';
 import { showAlert, showConfirm, showForm } from '../../shared/components/platform-dialog.jsx';
 import AuditLog from './AuditLog.jsx';
 import { useState } from "react";
-import { Badge, Empty, StatCard, Toolbar } from "../../shared/components/ui.jsx";
+import { Badge, DataTable, Empty, StatCard, Toolbar } from "../../shared/components/ui.jsx";
 import { styles } from "../../app/styles.js";
 import { accountStatusLabels, accountTypeLabels } from "../../app/config.js";
 import { formatDate } from "../../app/formatters.js";
@@ -54,15 +54,13 @@ function AccountManagementPage({ task, accounts = [], allAccounts = [], teachers
       <div style={styles.cardHeader}><h2 style={styles.h2}>账号列表</h2><div style={styles.buttonRowCompact}><ExportButton subject="账号" onExport={onExportAccounts} /></div></div>
       <RecordVisibility total={accounts.length} expanded={showAllAccounts} onToggle={() => setShowAllAccounts(value => !value)} controlsId="account-list-rows" />
       <div id="account-list-rows">
-      {accounts.length === 0 ? <Empty text="暂无账号数据。" /> : <div className="platform-table-scroll" style={styles.tableWrap}><table className="platform-data-table" style={styles.table}>
-        <thead><tr>{["姓名", "身份", "状态", "个人资料", "创建时间", "操作"].map((c) => <th key={c} style={styles.th}>{c}</th>)}</tr></thead>
-        <tbody>{shownAccounts.map((a) => <tr key={a.id || a._id}>
-          <td data-label="姓名" className="platform-identity" style={styles.td}>{a.display_name || a.username}</td>
-          <td data-label="身份" style={styles.td}>{accountTypeLabels[a.account_type] || a.account_type}</td>
-          <td data-label="状态" style={styles.td}><Badge text={accountStatusLabels[a.status] || a.status || "启用中"} /></td>
-          <td data-label="个人资料" style={styles.td}>{a.account_type === "student" ? a.student_profile ? <>{a.student_profile.graduation_year}年毕业 / 合作结束</> : <strong style={{color:"#b91c1c"}}>待完善</strong> : "—"}</td>
-          <td data-label="创建时间" style={styles.td}>{formatDate(a.created_at)}</td>
-          <td data-label="操作" style={styles.td}><div style={styles.buttonRowCompact}>
+      {accounts.length === 0 ? <Empty text="暂无账号数据。" /> : <DataTable columns={["姓名", "身份", "状态", "个人资料", "创建时间", "操作"]} mobileColumns={["姓名", "身份", "状态", "个人资料", "创建时间"]} rows={shownAccounts.map(a => [
+          a.display_name || a.username,
+          accountTypeLabels[a.account_type] || a.account_type,
+          <Badge key="status" text={accountStatusLabels[a.status] || a.status || "启用中"} />,
+          a.account_type === "student" ? a.student_profile ? `${a.student_profile.graduation_year}年毕业 / 合作结束` : <strong key="profile" style={{color:"#b91c1c"}}>待完善</strong> : "—",
+          formatDate(a.created_at),
+          <div key="actions" style={styles.buttonRowCompact}>
             {["teacher","finance"].includes(a.account_type) && <button style={styles.lightButton} onClick={()=>changeRole(a)}>{a.account_type === "finance" ? "设为教师" : "设为财务"}</button>}
             {a.account_type === "student" && <button style={styles.lightButton} onClick={()=>setEditing(a)}>修改学生资料</button>}
             {a.account_type !== "admin" && <button style={styles.lightButton} onClick={()=>transfer(a)}>移交出库审批</button>}
@@ -71,9 +69,8 @@ function AccountManagementPage({ task, accounts = [], allAccounts = [], teachers
             {a.status !== "disabled" && <button style={styles.warningButton} onClick={() => onSetAccountStatus(a, "disabled")}>停用</button>}
             {a.status === "active" && <button style={styles.lightButton} onClick={() => onSetAccountStatus(a, "pending")}>设为待审核</button>}
             <button style={styles.secondaryButton} onClick={() => onResetPassword(a)}>重置密码</button>
-          </div></td>
-        </tr>)}</tbody>
-      </table></div>}
+          </div>
+      ])} />}
       </div>
       <RecordVisibility total={accounts.length} expanded={showAllAccounts} onToggle={() => setShowAllAccounts(value => !value)} controlsId="account-list-rows" footer />
     </section>

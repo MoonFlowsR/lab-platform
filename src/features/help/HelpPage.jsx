@@ -5,7 +5,7 @@ import { showConfirm } from '../../shared/components/platform-dialog.jsx';
 import content from './content.json';
 import { filterHelpSections, searchTerms, commentBranchMatches } from './help-search.js';
 import './HelpPage.css';
-import { CommentAudit, CommentComposer, CommentThread, commentRequest } from './HelpComments.jsx';
+import { CommentAudit, CommentComposer, CommentThread, HelpDialog, commentRequest } from './HelpComments.jsx';
 import { liveCommentRoots, sectionAnnotations } from './help-annotations.js';
 import { createStudentNameIndex, displayStudentAccount, displayStudentComment } from '../accounts/student-name-display.js';
 import { HELP_VIEWS, helpRoleForAccount, findHelpSection, helpSectionsForView, legacyCommentSections } from './help-role-sections.js';
@@ -101,12 +101,24 @@ export default function HelpPage({ currentUser }) {
     return () => { alive = false; };
   }, [token]);
   useEffect(() => {
-    let alive = true, anonymousDenied = false;
+    let alive = true, anonymousDenied = false, activeRequest = null;
     if (!history || !isAdmin) setAuditCommentsLoaded(false);
-    const load = () => !anonymousDenied && commentRequest(history && isAdmin ? '/admin' : '', token)
-      .then(json => { if (alive) { setCommentsRequireLogin(false); setComments(json.comments); setStudentNames(json.student_name_labels || []); setError(''); if (history && isAdmin) setAuditCommentsLoaded(true); } }).catch(failure => { if (!alive) return; if (!token && [401, 403].includes(failure.status)) { anonymousDenied = true; setCommentsRequireLogin(true); setComments([]); setError(''); } else setError(failure.message); });
+    const load = async () => {
+      if (!alive || anonymousDenied || activeRequest || document.hidden) return;
+      const controller = new AbortController(); activeRequest = controller;
+      const timeout = setTimeout(() => controller.abort(), 30000);
+      try {
+        const json = await commentRequest(history && isAdmin ? '/admin' : '', token, { signal: controller.signal });
+        if (alive) { setCommentsRequireLogin(false); setComments(json.comments); setStudentNames(json.student_name_labels || []); setError(''); if (history && isAdmin) setAuditCommentsLoaded(true); }
+      } catch (failure) {
+        if (!alive) return;
+        if (!token && [401, 403].includes(failure.status)) { anonymousDenied = true; setCommentsRequireLogin(true); setComments([]); setError(''); }
+        else setError(failure.name === 'AbortError' ? '读取讨论超时，请稍后重试。' : failure.message);
+      } finally { clearTimeout(timeout); if (activeRequest === controller) activeRequest = null; }
+    };
     load(); const interval = setInterval(load, 10000);
-    return () => { alive = false; clearInterval(interval); };
+    document.addEventListener('visibilitychange', load);
+    return () => { alive = false; clearInterval(interval); document.removeEventListener('visibilitychange', load); activeRequest?.abort(); };
   }, [token, isAdmin, history, revision]);
   useEffect(() => {
     if (!jump || (jump.id === 'comment-audit' && !auditCommentsLoaded)) return;
@@ -134,12 +146,6 @@ export default function HelpPage({ currentUser }) {
     else if (section) { setShowLegacy(true); setLegacyAnchor(root.block_id || section.id); }
     setActiveComment(root); setJump({ id: `comment-${target.id}`, comment: true }); setInitialCommentId(null);
   }, [initialCommentId, comments]);
-  useEffect(() => {
-    if (!commentTargets) return;
-    const escape = event => { if (event.key === 'Escape') setCommentTargets(null); };
-    document.addEventListener('keydown', escape);
-    return () => document.removeEventListener('keydown', escape);
-  }, [commentTargets]);
   const captureSelection = useCallback(() => {
     const next = selectedHelpText();
     setSelection(previous => previous?.section_id === next?.section_id && previous?.block_id === next?.block_id && previous?.quote === next?.quote ? previous : next);
@@ -204,10 +210,11 @@ export default function HelpPage({ currentUser }) {
 
   return <div className="help-page" id="help-top">
     <header className="help-header">
-      <div><p className="help-brand">{platformSettings.title}</p><h1>平台使用帮助</h1><p className="help-subtitle">操作流程与平台维护指引 · 更新于 {content.updated}</p></div>
+      <div><p className="help-brand">{platformSettings.title}</p><h1>平台使用帮助</h1><p className="help-subtitle">更新于 {content.updated}</p></div>
       <a className="help-return" href="/">返回平台</a>
     </header>
     <main className="help-main">
+      <p className="help-navigation-guide">切换模块：电脑用左侧导航，手机用左上角菜单。</p>
       <section className="help-role-switch" aria-label="选择帮助类别">
         <span>查看说明</span><div>{HELP_VIEWS.map(role => <button key={role.value} type="button" aria-pressed={helpRole === role.value} onClick={() => chooseRole(role.value)}>{role.label}</button>)}</div>
         <a className="help-source-link" href="https://github.com/MoonFlowsR/lab-platform" target="_blank" rel="noopener noreferrer">平台代码已在Github开源 ↗</a>
@@ -215,25 +222,25 @@ export default function HelpPage({ currentUser }) {
       <section className="help-search" aria-label="帮助搜索">
         <label htmlFor="help-search-input">搜索{roleLabel}帮助</label>
         <div className="help-search-row"><input id="help-search-input" type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="搜索当前说明" /><button type="button" onClick={() => setQuery('')} disabled={!query}>清除搜索</button></div>
-        <p role="status" aria-live="polite">{terms.length ? `匹配章节 ${sections.length} 个，相关讨论见页面下方。` : '按目录查看，或输入关键词搜索。'}</p>
+        <p role="status" aria-live="polite" className={!terms.length ? 'help-search-status-idle' : undefined}>{terms.length ? `${sections.length} 个匹配章节 · 相关讨论见下方` : ''}</p>
       </section>
       <section className="help-comment-tools" aria-label="帮助评论">
-        <span>选中正文可评论，也可直接留言。</span>
+        <span>选中正文可评论</span>
         <div className="help-comment-actions"><button type="button" onClick={openMessage}>直接留言</button><a href="#help-messages">查看留言（{messages.length}）</a><button type="button" onClick={() => setRevision(value => value + 1)}>刷新讨论</button>{(legacyCommentCount > 0 || showLegacy) && <button type="button" aria-pressed={showLegacy} onClick={() => { setShowLegacy(!showLegacy); setLegacyAnchor(''); setJump(null); }}>{showLegacy ? '收起历史正文评论' : `历史正文评论（${legacyCommentCount}）`}</button>}{isAdmin && <label><input type="checkbox" checked={history} onChange={event => setHistory(event.target.checked)} />查看已删除评论与操作记录</label>}</div>
         {commentsRequireLogin && <p className="help-comment-note"><a href="/">登录</a>后查看留言和评论。</p>}
         {(selectionError || error) && !composer && <p className="help-composer-error" role="alert">{selectionError || error}</p>}
       </section>
       {selection && !composer && <div className="help-selection-bar" role="status" onPointerDown={event => event.preventDefault()}><span>已选 {selection.quote.length} 字</span><button type="button" disabled={selection.quote.length > 1000} onClick={commentSelection}>评论所选内容</button><button type="button" onClick={clearSelection}>取消选择</button></div>}
-      {composer && <div className="help-composer-overlay"><div role="dialog" aria-modal="true" aria-label={composer.parent ? '回复评论' : composer.kind === 'message' ? '直接留言' : '评论所选内容'}><CommentComposer key={composer.parent?.id || composer.kind || composer.anchor.quote} kind={composer.kind} quote={composer.anchor.quote} parent={composer.parent} account={account} busy={busy} onSubmit={publish} onCancel={() => setComposer(null)} />{error && <p className="help-composer-error" role="alert">{error}</p>}</div></div>}
-      {commentTargets && <div className="help-composer-overlay"><div role="dialog" aria-modal="true" aria-label="选择对应评论">
+      {composer && <HelpDialog label={composer.parent ? '回复评论' : composer.kind === 'message' ? '直接留言' : '评论所选内容'} busy={busy} onClose={() => setComposer(null)}><CommentComposer key={composer.parent?.id || composer.kind || composer.anchor.quote} kind={composer.kind} quote={composer.anchor.quote} parent={composer.parent} account={account} busy={busy} onSubmit={publish} onCancel={() => setComposer(null)} />{error && <p className="help-composer-error" role="alert">{error}</p>}</HelpDialog>}
+      {commentTargets && <HelpDialog label="选择对应评论" onClose={() => setCommentTargets(null)}>
         <h3>选择对应评论</h3><p>这段文字有多条评论，请选择要查看的一条。</p>
-        <div className="help-comment-targets">{commentTargets.map((row, index) => <button autoFocus={index === 0} key={row.id} type="button" onClick={() => showComment(row)}><b>{row.author_name || row.author_username}</b><span>{row.deleted_at ? '原评论已删除，仍有后续回复' : row.body}</span></button>)}</div>
+        <div className="help-comment-targets">{commentTargets.map(row => <button key={row.id} type="button" onClick={() => showComment(row)}><b>{row.author_name || row.author_username}</b><span>{row.deleted_at ? '原评论已删除，仍有后续回复' : row.body}</span></button>)}</div>
         <button type="button" onClick={() => setCommentTargets(null)}>关闭</button>
-      </div></div>}
+      </HelpDialog>}
       <div className="help-layout">
         <aside className="help-toc"><button className="help-toc-toggle" type="button" aria-expanded={tocOpen} aria-controls="help-toc-nav" onClick={() => setTocOpen(!tocOpen)}>{terms.length ? '搜索结果目录' : tocLabel}<span aria-hidden="true">{tocOpen ? '▴' : '▾'}</span></button><nav id="help-toc-nav" className={tocOpen ? 'is-open' : undefined} aria-label="帮助目录"><h2>{terms.length ? '搜索结果目录' : tocLabel}</h2>{sections.map(section => <a key={section.id} href={`#${section.id}`} onClick={() => setTocOpen(false)}>{section.legacy ? `历史评论 · ${section.title}` : section.title}</a>)}<a href="#help-messages" onClick={() => setTocOpen(false)}>留言与讨论</a>{!sections.length && <p>暂无匹配章节</p>}</nav></aside>
         <div className="help-articles">
-          {!sections.length && !messages.length && <section className="help-empty"><h2>没有找到相关内容</h2><p>请缩短关键词，或尝试“采购”“密码”“附件”等操作名称。清除搜索后可查看全部章节。</p><button type="button" onClick={() => setQuery('')}>查看全部帮助</button></section>}
+          {!sections.length && !messages.length && <section className="help-empty"><h2>没有找到相关内容</h2><p>试试更短的关键词，或清除搜索。</p><button type="button" onClick={() => setQuery('')}>查看全部帮助</button></section>}
           {sections.map(section => <div className={`help-section-row${roots.some(row => row.section_id === section.id) ? ' has-comments' : ' no-comments'}${roots.filter(row => !terms.length && row.section_id === section.id).length === 1 ? ' one-comment-rail' : ''}`} key={section.id}>
             <aside className="help-comment-rail help-comment-left" aria-label={`${section.title} 左侧评论`}>{roots.filter(row => !terms.length && row.section_id === section.id).filter((_, index) => index % 2 === 0).map(renderThread)}</aside>
             <section className="help-article" id={section.id}>

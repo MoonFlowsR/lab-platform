@@ -1,3 +1,4 @@
+import PersonName from '../../shared/components/PersonName.jsx';
 import { Badge, DataTable, Field, SearchableSelect, Toolbar } from "../../shared/components/ui.jsx";
 import { materialSearchTerms } from "../inventory/material-model-search.js";
 import { styles } from "../../app/styles.js";
@@ -98,7 +99,7 @@ function StockForm({ currentUser, purchaseRequests = [], materialCatalog = [], b
       <Field required label="单位"><input required style={styles.input} value={form.unit} onChange={event=>set('unit',event.target.value)} placeholder="选择批次后自动带出单位" /></Field>
 
       <StorageFields key={`${form.transaction_type}:${form.batch_id}`} form={form} onChange={patch=>setForm(prev=>({...prev,...patch}))} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
-      {approvalRequired && <Field wide label="采购人审批"><p style={styles.note}>提交给采购人：<strong className="platform-identity">{purchaser.name || '未登记，请联系管理员核对'}</strong>。同意后在下方出库申请中点击“完成出库登记”。</p></Field>}
+      {approvalRequired && <Field wide label="采购人审批"><p style={styles.note}>提交给采购人：<strong className="platform-identity"><PersonName value={purchaser.name || '未登记，请联系管理员核对'} /></strong>。同意后在下方出库申请中点击“完成出库登记”。</p></Field>}
       {selfPurchase && <p role="note" style={{ ...styles.fullWidth, ...styles.note }}>采购人本人，无需审批。保存后完成出库并扣减库存。</p>}
       <Field wide label="用途 / 备注（可选）"><textarea maxLength={2000} style={styles.textarea} value={form.usage_reason} onChange={event=>set('usage_reason',event.target.value)} /></Field>
       <ItemPhotoFields photo={photo} onPhotoChange={setPhoto} Field={Field} FilePicker={FilePicker} styles={styles} />

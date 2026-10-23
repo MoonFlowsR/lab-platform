@@ -1,0 +1,66 @@
+/* Use the space available to the table, including narrower desktop panels. */
+.platform-table-responsive {
+  container-type: inline-size;
+  width: 100%;
+  min-width: 0;
+}
+@container (max-width: 1050px) {
+  .platform-table-desktop {
+    display: none !important;
+  }
+  .platform-table-responsive > .platform-mobile-records {
+    display: grid;
+    gap: 10px;
+  }
+  .platform-mobile-record {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 13px;
+    background: var(--surface);
+    min-width: 0;
+    font-size: 14px;
+  }
+  .platform-mobile-record dl {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+    margin: 0;
+  }
+  .platform-mobile-record dl > div {
+    min-width: 0;
+  }
+  .platform-mobile-record dl > div:is([data-label="材料"], [data-label="材料名称"], [data-label="物品"], [data-label="名称"], [data-label="对象"], [data-label="姓名"], [data-label="位置"], [data-label="地点"], [data-label="具体位置简述"]) {
+    grid-column: 1 / -1;
+  }
+  .platform-mobile-record dt {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 3px;
+  }
+  .platform-mobile-record dd {
+    margin: 0;
+    color: var(--ink);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+  .platform-mobile-record details {
+    border-top: 1px solid var(--line);
+    padding-top: 9px;
+    margin-top: 11px;
+  }
+  .platform-mobile-record summary {
+    cursor: pointer;
+    color: var(--accent);
+    font-size: 13px;
+    padding-block: 5px;
+  }
+  .platform-mobile-record details dl {
+    margin-top: 10px;
+  }
+  .platform-mobile-record details dl > div {
+    grid-column: 1 / -1;
+  }
+  .platform-mobile-actions {
+    margin-top: 12px;
+  }
+}

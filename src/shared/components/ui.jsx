@@ -4,6 +4,10 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { groupDropdownOptions } from "../lib/dropdown-order.js";
 import { formatPublicNumbers } from "../lib/public-number.js";
 import ExportButton from './ExportButton.jsx';
+import Icon from './Icon.jsx';
+import PersonName from './PersonName.jsx';
+import { isPersonLabel } from '../lib/person-name.js';
+import './responsive-table.css';
 
 function DateInput({ value, onChange, required = false, min = "2000-01-01", max = "2099-12-31" }) {
   const currentValue = toDateInputValue(value);
@@ -41,7 +45,7 @@ function DateInput({ value, onChange, required = false, min = "2000-01-01", max 
   </div>;
 }
 function Toolbar({ title, description, onExport }) {
-  return <section style={styles.toolbar}><div><h2 style={styles.h2}>{title}</h2>{description && <p style={styles.muted}>{description}</p>}</div>{onExport && <ExportButton onExport={onExport} />}</section>;
+  return <section className="platform-page-heading" style={styles.toolbar}><div><h2 style={styles.h2}>{title}</h2>{description && <p style={styles.muted}>{description}</p>}</div>{onExport && <ExportButton onExport={onExport} />}</section>;
 }
 function StatCard({ title, value, tone = "gray" }) {
   const toneStyle = { gray: { background: "#f8fafc", color: "#0f172a" }, blue: { background: "#eff6ff", color: "#1d4ed8" }, green: { background: "#ecfdf5", color: "#047857" }, orange: { background: "#fff7ed", color: "#c2410c" }, red: { background: "#fef2f2", color: "#b91c1c" }, purple: { background: "#f5f3ff", color: "#6d28d9" } }[tone];
@@ -81,12 +85,13 @@ function SearchableSelect({ value, onChange, options = [], placeholder = "搜索
   }, [valueLabel]);
 
   useEffect(() => {
+    if (!open) return;
     function handleOutside(event) {
       if (wrapRef.current && !wrapRef.current.contains(event.target)) { setOpen(false); setSearching(false); }
     }
-    document.addEventListener("mousedown", handleOutside);
-    return () => document.removeEventListener("mousedown", handleOutside);
-  }, []);
+    document.addEventListener("pointerdown", handleOutside);
+    return () => document.removeEventListener("pointerdown", handleOutside);
+  }, [open]);
 
   const keyword = searching ? normalizeDropdownSearch(query) : "";
   const matchingTerm = item => keyword && !item.searchLabel.includes(keyword)
@@ -174,16 +179,17 @@ function SearchableSelect({ value, onChange, options = [], placeholder = "搜索
   </div>;
 }
 function Field({ label, children, wide, required = false }) {
-  return <label style={wide ? styles.fullWidth : undefined}>
+  return <label className="platform-field" style={wide ? styles.fullWidth : undefined}>
     <div style={styles.fieldLabel}>{required && <span style={styles.requiredStar}>*</span>}{label}</div>
     {children}
   </label>;
 }
-function identityLabel(label) { return ["申请人", "审批人", "审核人", "采购人", "入库人", "操作人"].includes(label); }
-const numberedValue = (label, value) => /编号|^批次$|批次号|流水号/.test(label) ? formatPublicNumbers(value) : value;
+function identityLabel(label) { return isPersonLabel(label); }
+const numberedValue = (label, value) => /编号|^批次$|批次号|流水号/.test(label) ? formatPublicNumbers(value) : isPersonLabel(label) && typeof value === 'string' && value ? <PersonName value={value} /> : value;
 function Info({ label, value, strong, danger }) {
   strong = strong || identityLabel(label);
-  return <div style={styles.info}><div style={styles.infoLabel}>{label}</div><div style={{ ...styles.infoValue, fontWeight: strong ? 800 : 500, color: danger ? "#dc2626" : identityLabel(label) ? "#1e40af" : "#0f172a" }}>{numberedValue(label, value) || "-"}</div></div>;
+  const amount = /费|金额/.test(label), longAmount = amount && typeof value === 'string' && value.replace(/\s/gu, '').length > 8;
+  return <div className={`platform-info${amount ? ' is-amount' : ''}${longAmount ? ' is-long-amount' : ''}`} style={styles.info}><div style={styles.infoLabel}>{label}</div><div style={{ ...styles.infoValue, fontWeight: strong ? 800 : 500, color: danger ? "#dc2626" : identityLabel(label) ? "#1e40af" : "#0f172a" }}>{numberedValue(label, value) || "-"}</div></div>;
 }
 function Badge({ text }) {
   let style = styles.badge;
@@ -192,7 +198,7 @@ function Badge({ text }) {
   if (s.includes("通过") || s.includes("确认") || s.includes("完成") || s.includes("已实施")) style = { ...style, background: "#dcfce7", color: "#166534" };
   if (s.includes("驳回") || s.includes("高风险")) style = { ...style, background: "#fee2e2", color: "#991b1b" };
   if (s.includes("需修改") || s.includes("中风险")) style = { ...style, background: "#ffedd5", color: "#9a3412" };
-  return <span style={style}>{text}</span>;
+  return <span className="platform-badge" style={style}>{text}</span>;
 }
 function DataTable({ columns, rows, mobileColumns, desktopColumns }) {
   const common = ["材料", "材料名称", "姓名", "用户名", "规格", "当前库存", "出入退库类型", "类型", "数量", "审批人", "审批结果", "申请状态", "状态", "操作时间", "操作"];
@@ -203,12 +209,12 @@ function DataTable({ columns, rows, mobileColumns, desktopColumns }) {
   const hiddenDesktop = columns.map((label,index) => ({label,index})).filter(({index}) => !shownDesktop.some(cell => cell.index === index));
   const actionIndex = columns.findIndex(label => label.endsWith("操作"));
   const cells = (row, detailed) => columns.flatMap((label, index) => index !== actionIndex && primary.includes(label) !== detailed ? [<div key={label} data-label={label}><dt>{label}</dt><dd className={identityLabel(label) ? "platform-identity" : undefined}>{numberedValue(label, row[index]) ?? "—"}</dd></div>] : []);
-  return <>
+  return <div className="platform-table-responsive">
     <div className="platform-table-scroll platform-table-desktop" style={styles.tableWrap}><table className="platform-data-table" style={styles.table}><thead><tr>{shownDesktop.map(({label}) => <th key={label} style={styles.th}>{label}</th>)}{hiddenDesktop.length > 0 && <th style={styles.th}>明细</th>}</tr></thead><tbody>{rows.length === 0 ? <tr><td style={styles.td} colSpan={shownDesktop.length + Number(Boolean(hiddenDesktop.length))}>暂无数据</td></tr> : rows.map((row, i) => <tr key={i}>{shownDesktop.map(({label,index}) => <td key={label} className={identityLabel(label) ? "platform-identity" : undefined} style={styles.td} data-label={label}>{numberedValue(label, row[index])}</td>)}{hiddenDesktop.length > 0 && <td style={styles.td}><details className="platform-table-details"><summary>查看明细</summary><dl>{hiddenDesktop.map(({label,index}) => <div key={label}><dt>{label}</dt><dd className={identityLabel(label) ? "platform-identity" : undefined}>{numberedValue(label,row[index]) ?? '—'}</dd></div>)}</dl></details></td>}</tr>)}</tbody></table></div>
     <div className="platform-mobile-records">{rows.length === 0 ? <Empty text="暂无数据" /> : rows.map((row, i) => <article className="platform-mobile-record" key={i}><dl>{cells(row, false)}</dl>{columns.some(label => !primary.includes(label) && label !== "操作") && <details><summary>查看明细</summary><dl>{cells(row, true)}</dl></details>}{actionIndex >= 0 && row[actionIndex] && <div className="platform-mobile-actions">{row[actionIndex]}</div>}</article>)}</div>
-  </>;
+  </div>;
 }
 function Empty({ text }) {
-  return <div style={styles.empty}>{text}</div>;
+  return <div className="platform-empty-state" style={styles.empty}><Icon name="inbox" size={20} /><span>{text}</span></div>;
 }
 export { Badge, DataTable, DateInput, Empty, Field, Info, SearchableSelect, StatCard, Toolbar };

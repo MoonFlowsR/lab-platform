@@ -1,0 +1,102 @@
+/* Shared visual language. Layout lives in app/workspace.css;
+business styling stays with features. */
+:root {
+  --font-ui:
+    "Segoe UI", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+  --canvas: #f4f6fa;
+  --surface: #ffffff;
+  --surface-muted: #f7f9fc;
+  --ink: #172b45;
+  --muted: #607089;
+  --line: #e1e7f0;
+  --line-strong: #c7d2e2;
+  --accent: #245bdd;
+  --accent-hover: #1948ba;
+  --accent-soft: #edf3ff;
+  --success: #167650;
+  --warning: #a5660c;
+  --danger: #c72f3b;
+  --radius: 12px;
+  --radius-control: 8px;
+  --shadow: 0 2px 5px #1c365707, 0 8px 24px #1c365704;
+  --focus-ring: 0 0 0 3px #245bdd25;
+}
+body {
+  font-family: var(--font-ui);
+  color: var(--ink);
+}
+.platform-icon {
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+button,
+a,
+input,
+textarea,
+summary {
+  -webkit-tap-highlight-color: transparent;
+}
+button:not(:disabled),
+a {
+  touch-action: manipulation;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+button,
+a,
+input,
+textarea {
+  transition:
+    background-color 0.16s,
+    border-color 0.16s,
+    box-shadow 0.16s,
+    color 0.16s;
+}
+:is(.platform-shell, .help-page)
+  :is(input:not([type="checkbox"]):not([type="date"]), textarea):focus {
+  border-color: var(--accent) !important;
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+:is(.platform-shell, .help-page)
+  :is(button, a, summary, input, textarea):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.platform-shell input::placeholder,
+.platform-shell textarea::placeholder {
+  color: #778398;
+}
+.platform-shell button:not(:disabled):active {
+  transform: translateY(1px);
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}
+@media print {
+  .workspace-sidebar,
+  .workspace-topbar,
+  .workspace-statusbar,
+  .workspace-footer,
+  .workspace-scrim,
+  .platform-filter-bar,
+  .platform-filter-panel,
+  .platform-record-actions,
+  .platform-export-button {
+    display: none !important;
+  }
+  .workspace-body {
+    margin: 0 !important;
+  }
+  .workspace-content {
+    padding: 0 !important;
+  }
+}

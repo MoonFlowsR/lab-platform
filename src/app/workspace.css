@@ -1,0 +1,503 @@
+.platform-workspace {
+  padding: 0 !important;
+  min-height: 100dvh;
+  background: var(--canvas);
+  font-family: var(--font-ui);
+  color: var(--ink);
+}
+.workspace-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 216px;
+  display: flex;
+  flex-direction: column;
+  background: #14263e;
+  color: #d4dfef;
+  z-index: 80;
+  padding: 26px 16px 18px;
+}
+.workspace-brand {
+  display: flex;
+  gap: 11px;
+  align-items: center;
+  padding: 0 2px 27px;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #fff;
+}
+.workspace-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 44px;
+  border: 1px solid #ffffff27;
+  border-radius: 12px;
+  background: #ffffff0b;
+  color: #8ab6ff;
+  flex-shrink: 0;
+}
+.workspace-brand-name { flex: 1; min-width: 0; }
+.workspace-brand small {
+  display: block;
+  font-weight: 400;
+  font-size: 10px;
+  color: #8da3c1;
+  letter-spacing: 1.3px;
+  margin-top: 5px;
+}
+.workspace-nav-caption {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #91a6c3;
+  padding: 0 12px 12px;
+}
+.platform-workspace .platform-nav {
+  display: flex !important;
+  flex-direction: column;
+  gap: 5px !important;
+  margin: 0 !important;
+  padding: 0;
+  overflow: auto !important;
+}
+.platform-workspace .platform-nav button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 13px !important;
+  border: 1px solid transparent;
+  border-radius: 9px !important;
+  color: #bdcce0;
+  background: transparent;
+  text-align: left;
+  font-size: 14px !important;
+  font-weight: 500;
+  cursor: pointer;
+}
+.platform-workspace .platform-nav button:hover {
+  background: #ffffff0a;
+  color: #fff;
+}
+.platform-workspace .platform-nav button[aria-current="page"] {
+  background: #2c60cd;
+  border-color: #ffffff15;
+  box-shadow: 0 3px 12px #06183120;
+  color: #fff;
+  font-weight: 650;
+}
+.platform-workspace .platform-nav .platform-nav-task-count {
+  margin-left: auto;
+  color: #fff;
+  background: #ffffff19;
+  border: 1px solid #ffffff25;
+  font-size: 11px;
+  min-width: 22px;
+  line-height: 19px;
+  padding: 0 5px;
+}
+.workspace-sidebar-footer {
+  display: flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+  gap: 11px;
+  margin-top: auto;
+  padding: 20px 7px 0;
+  border-top: 1px solid #ffffff12;
+  font-size: 13px;
+}
+.workspace-sidebar-footer > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.workspace-sidebar-footer .platform-person-name { --person-detail-color: #a6bad4; }
+.workspace-sidebar-footer .platform-person-mentors { font-size: 11px; }
+.workspace-sidebar-footer > .workspace-avatar { margin-top: 2px; }
+.workspace-brand, .workspace-nav-caption { flex-shrink: 0; }
+.workspace-sidebar-footer small {
+  display: block;
+  color: #91a6c3;
+  font-size: 11px;
+  margin-top: 3px;
+}
+.workspace-avatar {
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #314866;
+  border: 1px solid #526784;
+  color: #e5efff;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  font-size: 15px;
+}
+.workspace-body {
+  margin-left: 216px;
+  min-width: 0;
+}
+.workspace-topbar {
+  height: 74px;
+  position: sticky;
+  top: 0;
+  z-index: 65;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 28px;
+  background: #ffffffed;
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--line);
+}
+.workspace-context {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.workspace-context-icon {
+  color: var(--muted);
+}
+.workspace-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.workspace-topbar-actions > button,
+.workspace-topbar-actions > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+  color: #4c5f78;
+}
+.workspace-topbar-actions > :hover {
+  background: var(--surface-muted);
+  color: var(--accent);
+}
+.workspace-topbar-actions > .workspace-tasks {
+  color: var(--accent);
+  background: var(--accent-soft);
+  margin-right: 8px;
+}
+.workspace-tasks b {
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  background: #245bdd;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 11px;
+}
+.workspace-topbar-actions .platform-icon {
+  width: 17px;
+  height: 17px;
+}
+.workspace-logout {
+  border-left: 1px solid var(--line) !important;
+  margin-left: 4px;
+}
+.workspace-statusbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin: 0;
+  padding: 11px 28px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.workspace-sync-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16805b;
+  flex-shrink: 0;
+}
+.workspace-sync-dot.is-busy {
+  background: #ca870c;
+}
+.workspace-sync-dot.is-warning {
+  background: #c83d44;
+}
+.workspace-statusbar .platform-sync-guidance {
+  font-size: 16px;
+  color: #b91c1c;
+  font-weight: 750;
+  line-height: 1.5;
+  margin-left: 4px;
+}
+.workspace-mobile-account {
+  margin-left: auto;
+  font-size: 11px;
+}
+.workspace-content {
+  padding: 22px 28px 28px;
+  min-height: calc(100dvh - 110px);
+  outline: none;
+}
+.workspace-welcome {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 23px;
+}
+.workspace-welcome p {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0 0 5px;
+}
+.workspace-welcome > div { min-width: 0; }
+.workspace-welcome time { flex-shrink: 0; }
+.workspace-footer > span { min-width: 0; text-wrap: pretty; }
+.workspace-footer > a { flex-shrink: 0; white-space: nowrap; }
+.workspace-welcome h1 {
+  font-size: 27px;
+  font-weight: 730;
+  letter-spacing: -0.6px;
+  line-height: 1.3;
+}
+.workspace-welcome time {
+  font-size: 12px;
+  color: var(--muted);
+  padding-bottom: 4px;
+}
+.workspace-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 28px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  color: #6b7c93;
+  font-size: 11px;
+}
+.workspace-footer a:hover {
+  color: var(--accent);
+}
+.workspace-menu-button,
+.workspace-nav-close {
+  display: none;
+}
+.workspace-scrim {
+  position: fixed;
+  inset: 0;
+  background: #10203980;
+  backdrop-filter: blur(3px);
+  z-index: 85;
+}
+.platform-skip-link {
+  position: fixed;
+  left: 240px;
+  top: -80px;
+  z-index: 200;
+  padding: 10px 18px;
+  color: #fff;
+  background: var(--accent);
+  border-radius: 6px;
+}
+.platform-skip-link:focus {
+  top: 8px;
+}
+.is-spinning {
+  animation: workspace-spin 1.2s linear infinite;
+}
+@keyframes workspace-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (min-width: 1600px) {
+  .workspace-sidebar {
+    width: 232px;
+  }
+  .workspace-body {
+    margin-left: 232px;
+  }
+  .workspace-content {
+    padding: 26px 34px 34px;
+  }
+}
+@media (max-width: 1099px) {
+  .workspace-sidebar {
+    visibility: hidden;
+    transform: translateX(-100%);
+    z-index: 90;
+    width: min(290px, calc(100vw - 38px));
+    padding-top: 22px;
+    transition:
+      transform 0.2s ease,
+      visibility 0.2s;
+  }
+  .workspace-sidebar.is-open {
+    visibility: visible;
+    transform: translateX(0);
+  }
+  .workspace-body {
+    margin-left: 0;
+  }
+  .workspace-menu-button,
+  .workspace-nav-close {
+    display: grid;
+    place-items: center;
+    min-width: 42px;
+    min-height: 42px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .workspace-menu-button {
+    color: var(--ink);
+    background: var(--surface-muted);
+  }
+  .workspace-nav-close {
+    margin-left: auto;
+    color: #d1def1;
+  }
+  .workspace-topbar {
+    padding: 0 20px;
+    height: 66px;
+  }
+  .workspace-context-icon {
+    display: none;
+  }
+  .workspace-statusbar {
+    padding: 10px 20px 0;
+  }
+  .workspace-content {
+    padding: 20px;
+  }
+  .workspace-topbar-actions .workspace-tool span {
+    display: none;
+  }
+  .workspace-sidebar-footer {
+    margin-top: 22px;
+  }
+  .platform-skip-link {
+    left: 12px;
+  }
+}
+@media (max-width: 640px) {
+  .workspace-topbar {
+    height: 60px;
+    gap: 5px;
+    padding: 0 10px;
+  }
+  .workspace-context {
+    gap: 7px;
+    font-size: 14px;
+  }
+  .workspace-topbar-actions {
+    gap: 0;
+  }
+  .workspace-topbar-actions > button,
+  .workspace-topbar-actions > a {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 7px;
+  }
+  .workspace-topbar-actions > .workspace-tasks {
+    margin-right: 3px;
+    gap: 4px;
+    padding: 7px;
+  }
+  .workspace-tasks > span,
+  .workspace-tasks > .platform-icon {
+    display: none;
+  }
+  .workspace-logout {
+    margin-left: 0;
+    border: 0 !important;
+  }
+  .workspace-topbar-actions .platform-icon {
+    width: 18px;
+    height: 18px;
+  }
+  .workspace-statusbar {
+    padding: 9px 13px 0;
+    gap: 4px 6px;
+  }
+  .workspace-statusbar .platform-sync-guidance {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+  .workspace-mobile-account {
+    display: none;
+  }
+  .workspace-content {
+    padding: 18px 12px 20px;
+  }
+  .workspace-welcome {
+    margin-bottom: 16px;
+    align-items: center;
+  }
+  .workspace-welcome h1 {
+    font-size: 23px;
+  }
+  .workspace-welcome p {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+  .workspace-welcome time {
+    font-size: 10px;
+    max-width: 85px;
+    text-align: right;
+  }
+  .workspace-sidebar .platform-nav {
+    grid-template-columns: none !important;
+  }
+  .workspace-sidebar .platform-nav button {
+    min-height: 46px !important;
+    padding: 11px 13px !important;
+  }
+  .workspace-sidebar .platform-nav .platform-icon {
+    width: 20px;
+    height: 20px;
+  }
+  .workspace-footer {
+    margin-top: 20px;
+    font-size: 10px;
+  }
+  .workspace-content .platform-action-notice {
+    bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}
+@media (max-width: 359px) {
+  .workspace-context {
+    font-size: 12px;
+    gap: 3px;
+  }
+  .workspace-context > span {
+    display: none;
+  }
+  .workspace-menu-button {
+    min-width: 40px;
+  }
+  .workspace-topbar-actions > button,
+  .workspace-topbar-actions > a {
+    min-width: 44px;
+    padding: 6px;
+  }
+  .workspace-topbar {
+    padding-inline: 6px;
+  }
+  .workspace-topbar-actions > .workspace-tasks {
+    padding: 5px;
+  }
+}

@@ -1,22 +1,23 @@
+import PersonName from './PersonName.jsx';
+import RequestIdentity from './RequestIdentity.jsx';
 import ReimbursementStatus, { ReimbursementBadge } from '../../features/finance/ReimbursementStatus.jsx';
 import { isReceivedPurchase, purchaseAmount, purchaseAmountLabel, purchaseQuantityText } from "../../features/purchases/purchase-values.js";
 import { styles } from "../../app/styles.js";
 import { formatDate, money, sortByCreatedAt } from "../../app/formatters.js";
-import { reviewTeacherName } from "../lib/review-scope.js";
 import { Badge, DataTable, Empty, Field, Info, SearchableSelect } from "./ui.jsx";
 import RecentRecords from "./RecentRecords.jsx";
 import { completionChangesText, isCompletedWork, workFee } from "../../features/work/work-values.js";
 import { formatPublicNumber } from "../lib/public-number.js";
 
 function ClosureInfo({ row }) {
-  return <p style={styles.meta}>关闭人：<strong className="platform-identity">{row.closed_by_name || row.closed_by_username || "未记录"}</strong> · 关闭时间：{formatDate(row.closed_at)} · <strong>不计完成费用或入库金额</strong></p>;
+  return <p style={styles.meta}>关闭人：<strong className="platform-identity"><PersonName value={row.closed_by_name || row.closed_by_username || "未记录"} /></strong> · 关闭时间：{formatDate(row.closed_at)} · <strong>不计完成费用或入库金额</strong></p>;
 }
 function PurchaseSummaryCard({ currentUser, onReimbursementChange, row }) {
   return <div className="platform-request-record" style={styles.listItem}>
     <div style={styles.rowBetween}>
       <div>
         <h3 style={styles.h3}>{row.material_name || formatPublicNumber(row.public_id)}</h3>
-        <p style={styles.meta}>{formatPublicNumber(row.public_id)} · 申请人：<strong className="platform-identity">{row.applicant_name}</strong> · 审核教师：<strong className="platform-identity">{reviewTeacherName(row)}</strong> · 提交时间：{formatDate(row.created_at)}</p>
+        <RequestIdentity row={row} />
       </div>
       <div style={styles.badgeRow}><Badge text={row.status} /><ReimbursementBadge row={row} /></div>
     </div>
@@ -30,12 +31,12 @@ function PurchaseSummaryCard({ currentUser, onReimbursementChange, row }) {
       <Info label={purchaseAmountLabel(row)} value={money(purchaseAmount(row))} />
       {isReceivedPurchase(row) && <Info label="工单状态" value={<ReimbursementStatus row={row} currentUser={currentUser} onChange={onReimbursementChange} />} />}
     </div>
-    {row.review_note && <p style={styles.note}><b>审批意见：</b>{row.review_note}{row.reviewed_by && <>（审批人：<strong className="platform-identity">{row.reviewed_by}</strong>）</>}</p>}
+    {row.review_note && <p style={styles.note}><b>审批意见：</b>{row.review_note}{row.reviewed_by && <>（审批人：<strong className="platform-identity"><PersonName value={row.reviewed_by} /></strong>）</>}</p>}
   </div>;
 }
 function RequestHistorySection({ title, rows, renderCard, emptyText, className = 'platform-section-history', defaultExpanded = false, showTitle = true }) {
-  return <section className={className} style={styles.card} aria-label={title}>
-    {showTitle && <div style={styles.cardHeader}><h2 style={styles.h2}>{title}（{rows.length}）</h2></div>}
+  return <section className={className} style={styles.card} aria-label={title} tabIndex={-1}>
+    {showTitle && <div style={styles.cardHeader}><h2 style={styles.h2} aria-label={`${title}（${rows.length}）`}>{title}<span className="platform-heading-count">（{rows.length}）</span></h2></div>}
     {rows.length === 0 ? <Empty text={emptyText} /> : <RecentRecords rows={rows} defaultExpanded={defaultExpanded}>{shown => shown.map(renderCard)}</RecentRecords>}
   </section>;
 }
@@ -59,12 +60,12 @@ function WorkRequestCard({ currentUser, onReimbursementChange, row, logs = [], c
     <div style={styles.rowBetween}>
       <div>
         <h3 style={styles.h3}>{row.work_content || formatPublicNumber(row.public_id)}</h3>
-        <p style={styles.meta}>{formatPublicNumber(row.public_id)} · {row.request_type || "测试/加工/维修"} · 申请人：<strong className="platform-identity">{row.applicant_name}</strong> · 审核教师：<strong className="platform-identity">{reviewTeacherName(row)}</strong> · 提交时间：{formatDate(row.created_at)}</p>
+        <RequestIdentity row={row} />
       </div>
       <div style={styles.badgeRow}>
         <Badge text={row.status === "已通过" ? "已通过 · 待确认完成" : row.status} />
         <ReimbursementBadge row={row} />
-        {row.completion_modified && <Badge text="完结时已修改" />}
+        {row.completion_modified && <Badge text="完成时已修改" />}
         {compact && row.reviewed_by && <strong className="platform-identity">审批人：{row.reviewed_by}</strong>}
       </div>
     </div>
@@ -76,9 +77,9 @@ function WorkRequestCard({ currentUser, onReimbursementChange, row, logs = [], c
       {isCompletedWork(row) && <Info label="工单状态" value={<ReimbursementStatus row={row} currentUser={currentUser} onChange={onReimbursementChange} />} />}
     </div>
     {row.status === "已关闭" && <ClosureInfo row={row} />}
-    {isCompletedWork(row) && <p style={styles.meta}>完结人：<strong className="platform-identity">{row.completed_by || row.completed_username || "未记录"}</strong> · 完成时间：{formatDate(row.completed_at)}</p>}
+    {isCompletedWork(row) && <p style={styles.meta}>完成人：<strong className="platform-identity"><PersonName value={row.completed_by || row.completed_username || "未记录"} /></strong> · 完成时间：{formatDate(row.completed_at)}</p>}
     {!compact && <>
-      {row.completion_modified && <details open={completionDetailsOpen} style={styles.logBox}><summary><strong>完结修改记录</strong></summary><p style={styles.note}>{completionChangesText(row)}</p></details>}
+      {row.completion_modified && <details open={completionDetailsOpen} style={styles.logBox}><summary><strong>完成时修改记录</strong></summary><p style={styles.note}>{completionChangesText(row)}</p></details>}
       {(row.safety_notes || row.remark || row.completion_note) && <div style={styles.detailGrid2}>
         {row.safety_notes && <Info label="安全事项" value={row.safety_notes} />}
         {row.remark && <Info label="备注" value={row.remark} />}

@@ -1,3 +1,4 @@
+import PersonName from '../../shared/components/PersonName.jsx';
 import ExportButton from '../../shared/components/ExportButton.jsx';
 import { useState } from 'react';
 import RecentRecords from '../../shared/components/RecentRecords.jsx';
@@ -18,9 +19,12 @@ export default function StockOutRequests({ defaultExpanded = false, rows = [], c
     const statusLabel = selfPurchase && row.status === '待采购人审批' ? '待出库登记' : row.status;
     const canWithdraw = mine && ['待采购人审批','已同意待出库','已驳回'].includes(row.status);
     return <article key={row._id} className="platform-stock-request" aria-label={`出库申请 ${formatPublicNumber(row.public_id)}`}>
-      <div className="platform-stock-request-heading"><div><h3 style={styles.h3}>{row.material_name}</h3><p style={styles.meta}>{formatPublicNumber(row.public_id)} · 申请人：<strong className="platform-identity">{row.applicant_name}</strong> · {row.approval_delegated ? "受托审批人" : "采购人"}：<strong className="platform-identity">{row.purchaser_name}</strong> · {formatDate(row.created_at)}</p></div><Badge text={statusLabel} /></div>
+      <div className="platform-stock-request-heading"><div><h3 style={styles.h3}>{row.material_name}</h3><div className="platform-request-identity">
+        <div className="platform-request-reference"><span>{formatPublicNumber(row.public_id)}</span><time dateTime={row.created_at}>提交于 {formatDate(row.created_at)}</time></div>
+        <div className="platform-request-people"><span><small>申请人</small><strong className="platform-identity"><PersonName value={row.applicant_name} /></strong></span><span><small>{row.approval_delegated ? "受托审批人" : "采购人"}</small><strong className="platform-identity"><PersonName value={row.purchaser_name} /></strong></span></div>
+      </div></div><Badge text={statusLabel} /></div>
       <dl className="platform-stock-request-grid">{[['批次',formatPublicNumber(row.batch_code)],['申请数量',`${row.quantity} ${row.unit}`],['登记地点',row.storage_location],['用途 / 备注',row.usage_reason || '—']].map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
-      {row.reviewed_at && <p style={styles.meta}>审批人：<strong className="platform-identity">{row.reviewed_by}</strong> · {formatDate(row.reviewed_at)}{row.review_note && <> · 意见：{row.review_note}</>}</p>}
+      {row.reviewed_at && <p style={styles.meta}>审批人：<strong className="platform-identity"><PersonName value={row.reviewed_by} /></strong> · {formatDate(row.reviewed_at)}{row.review_note && <> · 意见：{row.review_note}</>}</p>}
       {(stockApprovalExemptionText(row) || (selfPurchase && ['待采购人审批','已同意待出库'].includes(row.status))) && <p className="platform-stock-request-note">{stockApprovalExemptionText(row) || (row.approval_delegated ? '受托审批人本人，无需审批' : '采购人本人，无需审批')}。</p>}
       {row.completed_at && <p style={styles.meta}>出库完成：{formatDate(row.completed_at)} · {formatPublicNumber(row.transaction_public_id)}</p>}
       {mine && canComplete && <p className="platform-stock-request-note">{!selfPurchase && '采购人已同意。'}完成出库登记后才扣减库存。</p>}

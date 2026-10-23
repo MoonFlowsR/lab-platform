@@ -1,6 +1,8 @@
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 import './platform-dialog.css';
 import { formatPublicNumbers } from '../lib/public-number.js';
+import PersonName from './PersonName.jsx';
+import { isPersonLabel } from '../lib/person-name.js';
 
 const queue = [], listeners = new Set();
 let sequence = 0;
@@ -56,7 +58,7 @@ function DialogContents({ request, dialogRef }) {
     <form noValidate onSubmit={submit}>
       <div className="platform-dialog-header"><h2 id={titleId}>{request.title}</h2><button className="platform-dialog-close" type="button" aria-label="关闭弹窗" onClick={cancel}>×</button></div>
       {request.message && <div id={descriptionId} className={`platform-dialog-message${request.kind === 'alert' ? ` is-${request.tone}` : ''}`}><DialogMessage message={request.message} /></div>}
-      {!!request.details?.length && <dl className="platform-dialog-details">{request.details.map(detail => <div key={detail.label}><dt>{detail.label}</dt><dd><strong>{formatPublicNumbers(detail.value) || '—'}</strong></dd></div>)}</dl>}
+      {!!request.details?.length && <dl className="platform-dialog-details">{request.details.map(detail => <div key={detail.label}><dt>{detail.label}</dt><dd><strong>{isPersonLabel(detail.label) && detail.value ? <PersonName value={detail.value} /> : formatPublicNumbers(detail.value) || '—'}</strong></dd></div>)}</dl>}
       {!!fields.length && <div className="platform-dialog-fields">{fields.map((field, index) => <label key={field.name} className={field.wide ? 'is-wide' : undefined}>
         <span><strong>{field.label.replace(/（必填）/g, '')}</strong>{field.required && <strong className="platform-dialog-critical">（必填）</strong>}</span>
         {field.render ? field.render({ value: values[field.name], onChange: value => { setValues(old => ({ ...old, [field.name]: value })); setError(''); } }) : field.multiline ? <textarea autoFocus={index === 0} required={field.required} rows={4} maxLength={field.maxLength || 2000} value={values[field.name]} onChange={event => { setValues(old => ({ ...old, [field.name]: event.target.value })); setError(''); }} placeholder={field.placeholder || '请填写'} /> : <input autoFocus={index === 0} required={field.required} type={field.type || 'text'} min={field.min} maxLength={field.maxLength} step={field.type === 'number' ? 'any' : undefined} autoComplete={field.autoComplete || 'off'} value={values[field.name]} onChange={event => { setValues(old => ({ ...old, [field.name]: event.target.value })); setError(''); }} placeholder={field.placeholder || '请填写'} />}

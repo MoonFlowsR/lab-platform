@@ -1,0 +1,51 @@
+# 界面维护
+
+界面以待办处理、信息核对和移动操作为主，业务权限仍由后端及原有领域规则决定。
+
+## 文件分工
+
+| 文件 | 维护内容 |
+| --- | --- |
+| `src/app/Workspace.jsx`、`workspace.css` | 电脑侧栏、手机导航抽屉、顶部操作、同步状态和工作区布局 |
+| `src/styles/tokens.css` | 字体、颜色、间距基础、圆角、焦点与动效约定 |
+| `src/app/styles.js` | 现有组件共用的样式对象，引用设计变量 |
+| `src/styles/interface.css` | 表单、工单、统计、登录页的统一外观和小屏调整 |
+| `src/shared/components/Icon.jsx` | 本地 SVG 图标，无外部字体或图片服务 |
+| `src/shared/components/PlatformTitle.jsx`、`platform-title.css` | 根据可用宽度切换标题断行；完整标题与两种分行在 `src/config/platform-settings.json` 配置 |
+| `PageSearch.jsx` | 页面搜索、清空、Ctrl/Cmd K 快捷键 |
+| `RequestIdentity.jsx` | 工单编号、提交时间、申请人与审核教师的共同展示 |
+| `PersonName.jsx`、`person-name.css` | 本人姓名与导师后缀分层显示；侧栏固定分行，记录内随空间换行，导师姓名之间可换行 |
+| `PageLoading.jsx`、`PageBoundary.jsx` | 模块加载与失败恢复，故障时保留导航 |
+| `ui.jsx`、`responsive-table.css` | 公共字段、表格及按可用宽度切换的记录卡片 |
+| `src/features/tasks` | 原有角色待办规则；待办较多时按业务分组展示 |
+| `src/features/dashboard/DashboardMetrics.jsx` | 统计口径及单业务状态定位入口 |
+
+表格继续使用 `DataTable`：电脑显示主要列及可展开明细，手机显示卡片。普通历史默认最新一条，显示总数和展开按钮；待办显示全部对应记录。`RecentRecords` 只控制显示，不截断统计或导出数据。
+
+姓名展示使用 `PersonName`，头像从 `splitPersonName` 返回的本人姓名取末两字。姓名原值、搜索和导出保持完整。手机中的长物品名、存放位置占整行；较长金额扩展到整行，避免数字拆断。新增表格复用 `DataTable` 的容器宽度适配，勿单独固定桌面表宽。
+
+同步状态的字号、间距和手机换行统一在 `workspace.css` 维护。库存等宽表在容器不超过1050px时使用卡片，避免平板横屏仍需左右对照。下拉菜单仅展开时监听外部点击，使用 `pointerdown` 同时处理鼠标和触屏。
+
+帮助讨论只在页面可见且上一请求完成时刷新；恢复可见立即刷新，离开页面取消请求，超时后允许重试。对应实现为 `HelpPage.jsx`，慢请求与后台标签页行为由 `tests/ui/help-polling.mjs` 检查。
+
+帮助页留言和评论选择弹窗复用 `HelpComments.jsx` 中的 `HelpDialog`，打开后限制焦点在弹窗内，关闭后返回原按钮；键盘行为由 `tests/ui/help.mjs` 检查。较长金额在宽屏占两格，手机占整行；视觉测试按实际行高判定换行，兼容不同系统字体。
+
+## 新增或修改功能
+
+1. 在对应 `features` 目录维护业务页面，复用公共字段、筛选、附件、弹窗和记录组件。
+2. 在 `App.jsx` 注册模块与原有权限判断；大型页面按需加载，不把业务权限移入布局组件。
+3. 调整视觉优先使用设计变量。模块独有样式放在模块目录；公共外观在 `interface.css` 中维护。
+4. 新工单类型需要同步工单配置、领域服务、报表、导出和测试，参见 [代码导航](CODE-MAP.md)。
+
+## 两端验证
+
+- 电脑：1440px 及以上固定侧栏；1100px 以下使用导航抽屉。测试 1024px、768px、390px、320px，避免页面横向溢出。
+- 手机：图标按钮均提供名称，导航可关闭，页面背景在抽屉打开时不可操作；长姓名和材料名称可以换行。
+- 键盘：检查菜单焦点循环、Esc 关闭并归还焦点、Ctrl/Cmd K 搜索、Tab 顺序，以及状态定位后的焦点。
+- 动效尊重系统“减少动态效果”。关键状态同时使用文字与颜色表达。
+
+运行 `npm run lint`、`npm test`、`npm run build`、`npm run test:ui`。浏览器测试使用隔离数据与拦截接口，不向正式数据库提交。
+
+发布前备份源码、配置和数据库。纯前端修改可先复制带哈希的资源，最后原子替换 `dist/index.html`，不需要重启服务。保留旧资源以支持已打开的页面；涉及服务端或帮助正文校验数据的修改按部署流程统一重载。
+
+帮助正文在 `src/features/help/content.json`。段落编号是评论锚点：改写时将原段落保留为 `history`，新正文追加到该章节，避免移动旧段落。普通阅读仅显示现行说明，有评论引用时可展开旧文。

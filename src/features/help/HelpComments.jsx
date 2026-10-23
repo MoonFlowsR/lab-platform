@@ -1,11 +1,12 @@
+import PersonName from '../../shared/components/PersonName.jsx';
 import { searchTerms, textMatchesTerms, commentMatchesTerms, commentBranchMatches } from './help-search.js';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { displayStudentComment, studentNameLabel } from '../accounts/student-name-display.js';
 import { clientHeaders } from '../../shared/api/client-platform.js';
 
 const date = value => new Date(value).toLocaleString('zh-CN', { hour12: false });
 const actions = { createHelpComment: '发表评论', replyHelpComment: '回复评论', deleteHelpComment: '删除评论', createHelpMessage: '发表留言', replyHelpMessage: '回复留言', deleteHelpMessage: '删除留言' };
-const roles = { student: '学生', teacher: '教师', admin: '管理员' };
+const roles = { student: '学生', teacher: '教师', admin: '管理员', finance: '财务' };
 
 export async function commentRequest(path, token, options = {}) {
   const response = await fetch(`/api/help-comments${path}`, {
@@ -16,13 +17,37 @@ export async function commentRequest(path, token, options = {}) {
   return json;
 }
 
+export function HelpDialog({ label, busy = false, onClose, children }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const dialog = ref.current, previousFocus = document.activeElement, previousOverflow = document.body.style.overflow;
+    const background = [];
+    for (let current = dialog.parentElement; current && !current.classList.contains('help-page'); current = current.parentElement) {
+      for (const sibling of current.parentElement.children) if (sibling !== current) { background.push([sibling, sibling.inert]); sibling.inert = true; }
+    }
+    document.body.style.overflow = 'hidden';
+    (dialog.querySelector('textarea:not(:disabled),input:not(:disabled),button:not(:disabled),a[href]') || dialog).focus();
+    return () => { background.forEach(([element, inert]) => { element.inert = inert; }); document.body.style.overflow = previousOverflow; if (previousFocus?.isConnected) previousFocus.focus(); };
+  }, []);
+  function handleKey(event) {
+    if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); if (!busy) onClose(); }
+    if (event.key !== 'Tab') return;
+    const controls = [...ref.current.querySelectorAll('button:not(:disabled),input:not(:disabled),textarea:not(:disabled),a[href],[tabindex="0"]')].filter(node => node.getClientRects().length);
+    const first = controls[0], last = controls.at(-1);
+    if (!first) { event.preventDefault(); ref.current.focus(); }
+    else if (event.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  }
+  return <div className="help-composer-overlay"><div ref={ref} role="dialog" aria-modal="true" aria-label={label} tabIndex={-1} onKeyDown={handleKey}>{children}</div></div>;
+}
+
 export function CommentComposer({ quote, parent, account, busy, onSubmit, onCancel, kind = 'comment' }) {
   const [body, setBody] = useState('');
   const message = kind === 'message';
   return <form className="help-comment-composer" onSubmit={async event => { event.preventDefault(); if (body.trim() && account && await onSubmit(body.trim()) !== false) setBody(''); }}>
-    <h3>{parent ? `回复 ${parent.author_name || parent.author_username}` : message ? '直接留言' : '评论所选内容'}</h3>
+    <h3>{parent ? <>回复 <PersonName value={parent.author_name || parent.author_username} /></> : message ? '直接留言' : '评论所选内容'}</h3>
     {parent ? <blockquote>{parent.body}</blockquote> : quote && <blockquote>{quote}</blockquote>}
-    <label><strong>{message ? '留言内容' : '评论内容'}<span className="help-composer-required">（必填）</span></strong><textarea autoFocus required disabled={!account || busy} maxLength={2000} rows={4} value={body} onChange={event => setBody(event.target.value)} placeholder="填写问题或建议（不超过2000字）" /></label>
+    <label><strong>{message ? '留言内容' : '评论内容'}<span className="help-composer-required">（必填）</span></strong><textarea required disabled={!account || busy} maxLength={2000} rows={4} value={body} onChange={event => setBody(event.target.value)} placeholder="填写问题或建议（不超过2000字）" /></label>
     {!account ? <p role="alert">请先注册账号并登录后{message ? '发表留言' : '发表评论'}。<a href="/?register=1">去注册</a> · <a href="/">去登录</a></p> : <p className="help-comment-note">发表人：{account.display_name || account.username}。留言、评论、回复和删除操作会留存记录，管理员可查看。</p>}
     <button type="submit" disabled={!account || busy || !body.trim()}>{busy ? '发表中…' : parent ? '发表回复' : message ? '发表留言' : '发表评论'}</button>
     {onCancel && <button type="button" onClick={onCancel} disabled={busy}>取消</button>}
@@ -34,7 +59,7 @@ export function CommentThread({ terms = [], root, childrenByParent, account, onR
   const children = row => (childrenByParent.get(row.id) || []).filter(child => commentBranchMatches(child,childrenByParent,terms));
   const ownMatches = row => commentMatchesTerms(row,terms);
   const renderReply = (reply, parent, depth) => <div key={reply.id} id={`comment-${reply.id}`} className="help-comment-reply" style={{ paddingLeft: depth > 1 && depth < 4 ? 8 : 0 }}>
-    <div className="help-comment-meta"><b>{reply.author_name || reply.author_username}</b><span className="help-reply-target">回复 <a href={`#comment-${parent.id}`}>{reply.reply_to_name || parent.author_name || reply.reply_to_username || parent.author_username}</a></span><time dateTime={reply.created_at}>{date(reply.created_at)}</time></div>
+    <div className="help-comment-meta"><b><PersonName value={reply.author_name || reply.author_username} /></b><span className="help-reply-target">回复 <a href={`#comment-${parent.id}`}><PersonName value={reply.reply_to_name || parent.author_name || reply.reply_to_username || parent.author_username} /></a></span><time dateTime={reply.created_at}>{date(reply.created_at)}</time></div>
     <p className="help-comment-body" hidden={!ownMatches(reply)}>{reply.deleted_at ? '此回复已删除' : reply.body}</p>
     {ownMatches(reply) && account?.account_type === 'admin' && reply.deleted_at && <p className="help-comment-retained">原文：{reply.body || '请在操作记录中查看原文'} · 删除人：{reply.deleted_by_name || reply.deleted_by || '详见操作记录'}</p>}
     <div className="help-comment-actions">{!reply.deleted_at && <button type="button" onClick={() => onReply(reply)}>回复</button>}{canDelete(reply) && <button className="help-comment-delete" type="button" onClick={() => onDelete(reply)}>删除回复</button>}</div>
@@ -42,7 +67,7 @@ export function CommentThread({ terms = [], root, childrenByParent, account, onR
   </div>;
   return <article className={`help-comment-thread${active ? ' is-active' : ''}`} id={`comment-${root.id}`} tabIndex={-1} aria-label={`${root.author_name || root.author_username} 的评论`}>
     {ownMatches(root) && root.quote ? <button className="help-comment-quote" type="button" onClick={() => onLocate(root)} title={root.quote}>{root.quote}</button> : <span className="help-message-tag">直接留言</span>}
-    <div className="help-comment-meta"><b>{root.author_name || root.author_username}</b><time dateTime={root.created_at}>{date(root.created_at)}</time></div>
+    <div className="help-comment-meta"><b><PersonName value={root.author_name || root.author_username} /></b><time dateTime={root.created_at}>{date(root.created_at)}</time></div>
     <p className="help-comment-body" hidden={!ownMatches(root)}>{root.deleted_at ? (root.section_id === 'general' ? '此留言已删除' : '此评论已删除') : root.body}</p>
     {ownMatches(root) && account?.account_type === 'admin' && root.deleted_at && <p className="help-comment-retained">原文：{root.body || '请在操作记录中查看原文'} · 删除人：{root.deleted_by_name || root.deleted_by || '详见操作记录'}</p>}
     <div className="help-comment-actions">{!root.deleted_at && <button type="button" onClick={() => onReply(root)}>回复</button>}{canDelete(root) && <button className="help-comment-delete" type="button" onClick={() => onDelete(root)}>删除</button>}</div>
@@ -71,7 +96,7 @@ export function CommentAudit({ query = "", token, revision, sectionTitles, comme
     {error && <p role="alert">{error}</p>}
     {!shownEvents.length && !error && <p>{terms.length ? "已加载记录中无相关内容，可继续加载更早记录。" : "暂无评论操作记录。"}</p>}
     {shownEvents.map(event => <article key={event.id} className="help-comment-event">
-      <p><b>{event.operator_name || event.operator_username}</b> · {roles[event.operator_role] || event.operator_role} · {actions[event.action] || event.action} · {date(event.created_at)}</p>
+      <p><b><PersonName value={event.operator_name || event.operator_username} /></b> · {roles[event.operator_role] || event.operator_role} · {actions[event.action] || event.action} · {date(event.created_at)}</p>
       <p>{sectionTitles[event.comment.section_id] || event.comment.section_id} · {event.comment.parent_id ? '回复' : event.comment.section_id === 'general' ? '留言' : '评论'} #{event.comment_id} · 作者：{event.comment.author_name || event.comment.author_username}</p>
       {event.comment.parent_id && <p>回复对象：{event.comment.reply_to_name || event.comment.reply_to_username || commentAuthors[event.comment.parent_id] || `评论 #${event.comment.parent_id}`}</p>}
       {event.comment.quote && <blockquote>{event.comment.quote}</blockquote>}<p className="help-comment-body">{event.comment.body}</p>

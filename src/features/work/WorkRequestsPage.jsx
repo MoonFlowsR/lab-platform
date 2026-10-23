@@ -1,3 +1,4 @@
+import PersonName from '../../shared/components/PersonName.jsx';
 import { workFeeKey } from './work-types.js';
 import { useEffect, useMemo, useState } from "react";
 import { splitReviewedWorkSections } from "../../shared/lib/request-sections.js";
@@ -123,7 +124,7 @@ function WorkRequestForm({ workHistory = [], teacherAccounts = [], fixedType, on
     <div style={styles.cardHeader}>
       <div>
         <h2 style={styles.h2}>{isEditing ? `修改并重新提交${fixedType}` : `新建${fixedType}申请`}</h2>
-        <p style={styles.muted}>申请人：<strong className="platform-identity">{initialData?.applicant_name || initialData?.applicant_username || currentUser?.display_name || currentUser?.username}</strong> · 提交日期和时间由系统自动记录。</p>
+        <p className="platform-request-form-meta" style={styles.muted}><span>申请人：<strong className="platform-identity"><PersonName value={initialData?.applicant_name || initialData?.applicant_username || currentUser?.display_name || currentUser?.username} /></strong></span><span>提交日期和时间由系统自动记录。</span></p>
       </div>
       {isEditing ? <button type="button" style={styles.lightButton} onClick={onCancel}>取消修改</button> : <button type="button" style={styles.primaryButton} onClick={() => setShow(!show)}>{show ? "收起表单" : `新建${fixedType}`}</button>}
     </div>

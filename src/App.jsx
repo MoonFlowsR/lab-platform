@@ -1,3 +1,7 @@
+import PageBoundary from './shared/components/PageBoundary.jsx';
+import Workspace from './app/Workspace.jsx';
+import PageSearch from './shared/components/PageSearch.jsx';
+import PageLoading from './shared/components/PageLoading.jsx';
 import { purchaseSupplierOptions, matchesPurchaseSupplier } from "./features/purchases/purchase-filter.js";
 import { useCallback, useEffect, useEffectEvent, useMemo, useState, lazy, Suspense } from "react";
 import { apiPost, clearStoredAccount, getStoredAccount, saveStoredAccount } from "./app/api.js";
@@ -7,13 +11,13 @@ import { createTeacherContext, inventorySearchFlags, recordMatchesTeacher, recor
 import { createSyncController } from "./shared/api/sync-controller.js";
 import { createStudentNameDisplay, displayStudentAccount, sameRows } from "./features/accounts/student-name-display.js";
 import { containsQuery, sortByCreatedAt } from "./app/formatters.js";
-import { AUTO_LOGOUT_MS, PLATFORM_TITLE, accountTypeLabels } from "./app/config.js";
+import { AUTO_LOGOUT_MS } from "./app/config.js";
 import { defaultViewScope, teacherScopeMatches, workScopeMatches, workRecordVisible } from "./shared/lib/review-scope.js";
 import { datedModules, recordInDateRange } from "./shared/lib/module-date.js";
 import { chinaDate } from "./features/reports/report-data.js";
 import { summarizeMaterials, searchMaterialBatches } from "./features/inventory/material-summary.js";
 import { filterInventoryCategory, inventoryCategoryOptions } from "./features/inventory/inventory-category.js";
-import { styles, tabStyle } from "./app/styles.js";
+import { styles } from "./app/styles.js";
 import { DateInput, Field, SearchableSelect } from "./shared/components/ui.jsx";
 import AccountSettingsDialog from "./features/accounts/AccountSettingsDialog.jsx";
 const HelpPage = lazy(() => import("./features/help/HelpPage.jsx"));
@@ -25,13 +29,13 @@ import { TaskFilterBanner } from "./features/tasks/TaskCenter.jsx";
 import { Dashboard } from "./features/dashboard/Dashboard.jsx";
 import { WORK_DEFINITIONS, WORK_MODULES, workModule } from './features/work/work-types.js';
 import { workInstitutionOptions, matchesWorkInstitution } from "./features/work/work-history.js";
-import { WorkRequestsPage } from "./features/work/WorkRequestsPage.jsx";
-import { PurchasesPage } from "./features/purchases/PurchasesPage.jsx";
-import { StockPage } from "./features/stock/StockPage.jsx";
-import { InventoryPage } from "./features/inventory/InventoryPage.jsx";
+const WorkRequestsPage = lazy(() => import("./features/work/WorkRequestsPage.jsx").then(module => ({ default: module.WorkRequestsPage })));
+const PurchasesPage = lazy(() => import("./features/purchases/PurchasesPage.jsx").then(module => ({ default: module.PurchasesPage })));
+const StockPage = lazy(() => import("./features/stock/StockPage.jsx").then(module => ({ default: module.StockPage })));
+const InventoryPage = lazy(() => import("./features/inventory/InventoryPage.jsx").then(module => ({ default: module.InventoryPage })));
 const ReportsPage = lazy(() => import("./features/reports/ReportsPage.jsx"));
 import MaterialBatchEditor from "./features/inventory/MaterialBatchEditor.jsx";
-import { AccountManagementPage } from "./features/accounts/AccountManagementPage.jsx";
+const AccountManagementPage = lazy(() => import("./features/accounts/AccountManagementPage.jsx").then(module => ({ default: module.AccountManagementPage })));
 import { createAttachmentsActions } from "./shared/api/attachments-actions.jsx";
 import { createAccountsActions } from "./features/accounts/accounts-actions.jsx";
 import { createWorkActions } from "./features/work/work-actions.jsx";
@@ -284,6 +288,7 @@ function App() {
     if (module === "stock") { setStockViewScope("mine"); setStockMovementType(""); }
     if (module === "materials") setInventoryCategory("");
     setActiveTab(module);
+    window.scrollTo({ top: 0 });
   }
 
   const dashboardRecordVisible = item => activeTab !== "dashboard" || (isStudent ? item.applicant_username === currentUser.username : teacherScopeMatches(item, currentUser, defaultViewScope(currentUser)));
@@ -294,14 +299,6 @@ function App() {
   const activeTask = useMemo(() => taskId === `module:${activeTab}` ? moduleTaskGroup(taskCenter, activeTab) : taskCenter.groups.find(group => group.id === taskId && group.module === activeTab), [taskCenter, taskId, activeTab]);
   const inTask = (module, row) => activeTask?.module !== module || taskContains(activeTask, row);
   useEffect(() => { setTaskId(""); }, [accountUsername]);
-  useEffect(() => {
-    if (!taskId) return;
-    const timer = requestAnimationFrame(() => {
-      const target = document.getElementById("platform-task-results");
-      target?.focus({ preventScroll: true }); target?.scrollIntoView({ block: "start" });
-    });
-    return () => cancelAnimationFrame(timer);
-  }, [taskId, activeTab]);
   function openTask(id) {
     const group = taskCenter.groups.find(item => item.id === id);
     if (!group) return;
@@ -315,20 +312,20 @@ function App() {
   function openOverview() { setTaskId(""); setQuery(""); setActiveTab("dashboard"); window.scrollTo({ top: 0 }); }
   function leaveTask() { setTaskId(""); setQuery(""); if (activeTab === "stock") setStockViewScope("all"); if (activeTab === "purchases") setPurchaseViewScope("all"); if (WORK_MODULES.includes(activeTab) || activeTab === "purchases") setReviewScope("all"); }
 
-  const filteredAccounts = accounts.filter(row => inTask("admin", row) && (!selectedModuleStudent || row.username === selectedModuleStudent) && (!selectedModuleTeacher || row.username === selectedModuleTeacher) && recordInDateRange(row,dateRange) && containsQuery(row,query));
-  const filteredWorkRequests = visibleWorkRequests.filter((item) => dashboardRecordVisible(item) && inTask(workModule(item.request_type), item) && (activeTask || isAdmin || !isHiddenForMe("lab_work_requests", item)) && searchRequest(item, "lab_work_requests", query) && (!WORK_MODULES.includes(activeTab) || (requestDateMatches(item) && matchesWorkInstitution(item, selectedInstitution) && recordMatchesStudent(item, selectedModuleStudent, activeTab) && moduleTeacherMatches(item, activeTab) && workScopeMatches(item, currentUser, reviewScope))));
+  const filteredAccounts = activeTab !== "admin" ? [] : accounts.filter(row => inTask("admin", row) && (!selectedModuleStudent || row.username === selectedModuleStudent) && (!selectedModuleTeacher || row.username === selectedModuleTeacher) && recordInDateRange(row,dateRange) && containsQuery(row,query));
+  const filteredWorkRequests = !WORK_MODULES.includes(activeTab) ? [] : visibleWorkRequests.filter((item) => dashboardRecordVisible(item) && inTask(workModule(item.request_type), item) && (activeTask || isAdmin || !isHiddenForMe("lab_work_requests", item)) && searchRequest(item, "lab_work_requests", query) && (!WORK_MODULES.includes(activeTab) || (requestDateMatches(item) && matchesWorkInstitution(item, selectedInstitution) && recordMatchesStudent(item, selectedModuleStudent, activeTab) && moduleTeacherMatches(item, activeTab) && workScopeMatches(item, currentUser, reviewScope))));
   const inventoryMatches = useCallback(item => taskContains(activeTask?.module === "materials" ? activeTask : null, item) && recordInDateRange(item, dateRange) && recordMatchesStudent(item, selectedModuleStudent, "materials") && moduleTeacherMatches(item, "materials"), [dateRange, selectedModuleStudent, moduleTeacherMatches, activeTask]);
   const categoryInventory = useMemo(() => filterInventoryCategory(materials, materialBatches, activeTab === "materials" ? inventoryCategory : ""), [materials, materialBatches, activeTab, inventoryCategory]);
   const summaryBatches = useMemo(() => categoryInventory.batches.filter(item => activeTab !== "materials" || inventoryMatches(item)), [categoryInventory.batches, activeTab, inventoryMatches]);
-  const materialSummaryIndex = useMemo(() => summarizeMaterials(categoryInventory.materials, summaryBatches).map(item => ({ item, searchRecord: {name_cn:item.name_cn,stock_by_spec:item.stock_by_spec,batch_codes:item.batch_codes,storage_locations:item.storage_locations,_search_text:item.stock_by_spec.map(spec=>`${spec.spec} · ${spec.storage_room || "未登记房间"}：${spec.quantity} ${spec.unit}`).join("；")} })), [categoryInventory.materials, summaryBatches]);
-  const filteredMaterials = materialSummaryIndex.filter(({item, searchRecord}) => containsQuery(searchRecord, query) && (activeTab !== "materials" || item.batches.length || (!activeTask && !selectedModuleStudent && !selectedModuleTeacher && item.material_records.some(row => recordInDateRange(row, dateRange))))).map(({item}) => item);
+  const materialSummaryIndex = useMemo(() => activeTab !== "materials" ? [] : summarizeMaterials(categoryInventory.materials, summaryBatches).map(item => ({ item, searchRecord: {name_cn:item.name_cn,stock_by_spec:item.stock_by_spec,batch_codes:item.batch_codes,storage_locations:item.storage_locations,_search_text:item.stock_by_spec.map(spec=>`${spec.spec} · ${spec.storage_room || "未登记房间"}：${spec.quantity} ${spec.unit}`).join("；")} })), [categoryInventory.materials, summaryBatches, activeTab]);
+  const filteredMaterials = activeTab !== "materials" ? [] : materialSummaryIndex.filter(({item, searchRecord}) => containsQuery(searchRecord, query) && (activeTab !== "materials" || item.batches.length || (!activeTask && !selectedModuleStudent && !selectedModuleTeacher && item.material_records.some(row => recordInDateRange(row, dateRange))))).map(({item}) => item);
   const scopedBatches = useMemo(() => categoryInventory.batches.map(item => ({ ...item, associated_teacher_names: recordTeacherNames(item, "materials", teacherContext), _search_text: inventorySearchFlags(item,todayForSearch) })).filter(item => activeTab !== "materials" || inventoryMatches(item)), [categoryInventory.batches, teacherContext, todayForSearch, activeTab, inventoryMatches]);
-  const filteredBatches = searchMaterialBatches(scopedBatches, query, containsQuery);
-  const filteredPurchases = purchaseRequests.filter((item) => dashboardRecordVisible(item) && inTask("purchases", item) && (activeTask || isAdmin || !isHiddenForMe("lab_purchase_requests", item)) && searchRequest(item, "lab_purchase_requests", query) && (activeTab !== "purchases" || (matchesPurchaseSupplier(item, selectedInstitution) && recordInDateRange(item, dateRange) && recordMatchesStudent(item, selectedModuleStudent, activeTab) && moduleTeacherMatches(item, activeTab) && (!isStudent || purchaseViewScope === "all" || item.applicant_username === currentUser.username) && teacherScopeMatches(item, currentUser, reviewScope))));
+  const filteredBatches = activeTab !== "materials" ? [] : searchMaterialBatches(scopedBatches, query, containsQuery);
+  const filteredPurchases = activeTab !== "purchases" ? [] : purchaseRequests.filter((item) => dashboardRecordVisible(item) && inTask("purchases", item) && (activeTask || isAdmin || !isHiddenForMe("lab_purchase_requests", item)) && searchRequest(item, "lab_purchase_requests", query) && (activeTab !== "purchases" || (matchesPurchaseSupplier(item, selectedInstitution) && recordInDateRange(item, dateRange) && recordMatchesStudent(item, selectedModuleStudent, activeTab) && moduleTeacherMatches(item, activeTab) && (!isStudent || purchaseViewScope === "all" || item.applicant_username === currentUser.username) && teacherScopeMatches(item, currentUser, reviewScope))));
   const searchableStocks = useMemo(() => stockTransactions.map(item => ({ ...item, associated_teacher_names: recordTeacherNames(item, "stock", teacherContext) })), [stockTransactions, teacherContext]);
   const searchableStockOutRequests = useMemo(() => stockOutRequests.map(item => ({ ...item, associated_teacher_names: recordTeacherNames(item, "stock", teacherContext) })), [stockOutRequests, teacherContext]);
-  const filteredStocks = searchableStocks.filter((item) => containsQuery(item, query) && (activeTab !== "stock" || (recordInDateRange(item, dateRange) && recordMatchesStudent(item, selectedModuleStudent, activeTab) && moduleTeacherMatches(item, "stock") && (!isStudent || stockViewScope === "all" || item.operator_username === currentUser.username))));
-  const filteredStockOutRequests = searchableStockOutRequests.filter(item => inTask("stock", item) && containsQuery(item, query) && (activeTab !== "stock" || (recordInDateRange(item, dateRange) && recordMatchesStudent(item, selectedModuleStudent, "stock") && moduleTeacherMatches(item, "stock") && (!isStudent || stockViewScope === "all" || item.applicant_username === currentUser.username || item.purchaser_username === currentUser.username))));
+  const filteredStocks = activeTab !== "stock" ? [] : searchableStocks.filter((item) => containsQuery(item, query) && (activeTab !== "stock" || (recordInDateRange(item, dateRange) && recordMatchesStudent(item, selectedModuleStudent, activeTab) && moduleTeacherMatches(item, "stock") && (!isStudent || stockViewScope === "all" || item.operator_username === currentUser.username))));
+  const filteredStockOutRequests = activeTab !== "stock" ? [] : searchableStockOutRequests.filter(item => inTask("stock", item) && containsQuery(item, query) && (activeTab !== "stock" || (recordInDateRange(item, dateRange) && recordMatchesStudent(item, selectedModuleStudent, "stock") && moduleTeacherMatches(item, "stock") && (!isStudent || stockViewScope === "all" || item.applicant_username === currentUser.username || item.purchaser_username === currentUser.username))));
 
   async function setReimbursementStatus(collection, row, reimbursed) {
     const result = await apiPost("ops/setReimbursementStatus", { collection, id: row._id, reimbursed, expected_updated_at: row.updated_at }, sessionToken);
@@ -352,10 +349,10 @@ function App() {
     <span>{notice.text}</span><button type="button" aria-label="关闭操作提示" onClick={() => setMessage("")}>×</button>
   </div>;
   const accountSettings = <AccountSettingsDialog key={currentUser?.username} account={currentUser || {}} teachers={registeredTeacherAccounts} required={profileRequired} onSaveProfile={saveMyStudentProfile} onSavePassword={saveMyPassword} onLogout={logoutAccount} onClose={() => setAccountSettingsOpen(false)}    />;
-  if (currentUser && !sessionChecked) return <div className="platform-shell platform-login" style={styles.page}><div style={styles.card}>正在核对登录信息…</div></div>;
+  if (currentUser && !sessionChecked) return <PageLoading full message="正在核对登录信息…" />;
   if (currentUser && profileRequired) return <div className="platform-shell" style={styles.page}>{accountSettings}</div>;
-  if (["/help", "/help/"].includes(window.location.pathname)) return <Suspense fallback={<p style={styles.muted}>正在打开帮助文档…</p>}><HelpPage currentUser={currentUser} /></Suspense>;
-  if (loading) return <div className="platform-shell platform-login" style={styles.page}><div style={styles.card}>正在连接本地服务器...</div></div>;
+  if (["/help", "/help/"].includes(window.location.pathname)) return <Suspense fallback={<PageLoading full message="正在打开帮助文档…" />}><HelpPage currentUser={currentUser} /></Suspense>;
+  if (loading) return <PageLoading full message="正在连接平台…" />;
   if (!currentUser) return <LoginPage onLogin={loginAccount} onRegister={registerAccount} message={message} />;
 
   const tabs = [
@@ -371,43 +368,28 @@ function App() {
   const workRows = filteredWorkRequests.filter(row => row.request_type === institutionType);
 
   return (
-    <div className="platform-shell" style={styles.page}>
-      <header className="platform-header" style={styles.header}>
-        <div>
-          <h1 style={styles.title}>{PLATFORM_TITLE}</h1>
-
-          <p className="platform-sync-status" style={styles.meta}><span>当前账号：{currentUser.display_name || currentUser.username}（{accountTypeLabels[currentUser.account_type]}） · 同步状态：{syncStatus}</span><strong className="platform-sync-guidance">请在状态为“同步完成”后操作</strong></p>
-        </div>
-        <div className="platform-header-actions" style={styles.headerRight}>
-          <button type="button" className="platform-task-entry" onClick={openOverview} aria-label={`我的待办，${taskCenter.total} 条`}>待办 <b>{taskCenter.total}</b></button>
-          <button style={styles.secondaryButton} disabled={syncing} onClick={loadAll}>{syncing ? "同步中…" : "手动同步"}</button>
-          <a href="/help" style={{ ...styles.lightButton, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>帮助文档</a>
-          <button style={styles.lightButton} onClick={() => setAccountSettingsOpen(true)}>账户设置</button>
-          <button style={styles.lightButton} onClick={logoutAccount}>退出登录</button>
-        </div>
-      </header>
-
+    <Workspace account={currentUser} tabs={tabs} activeTab={activeTab} taskCenter={taskCenter} syncing={syncing} syncStatus={syncStatus} onNavigate={openModule} onOverview={openOverview} onSync={loadAll} onSettings={() => setAccountSettingsOpen(true)} onLogout={logoutAccount}>
       {message}
-      <nav className="platform-nav" style={styles.nav}>{tabs.map(([key, label]) => <button key={key} style={tabStyle(activeTab === key)} onClick={() => openModule(key)} aria-label={label} title={taskCenter.byModule[key] ? `查看本模块 ${taskCenter.byModule[key]} 条待办` : label}>{label}{taskCenter.byModule[key] > 0 && <span className="platform-nav-task-count" aria-hidden="true">{taskCenter.byModule[key]}</span>}</button>)}</nav>
-
       {<section className={`platform-filter-bar${activeTab === "materials" ? " has-inventory-category" : ""}`} style={styles.filterBar}>
-        <input style={styles.input} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="搜索页面内任意内容" aria-label="搜索记录" />
+        <PageSearch value={query} onChange={setQuery} />
         {activeTab === "materials" && !activeTask && <Field label="材料类别"><SearchableSelect value={inventoryCategory} onChange={setInventoryCategory} clearOnInput={false} options={inventoryCategoryOptions} placeholder="搜索或选择材料类别" fixedOptions={[""]} /></Field>}
         {datedModules.includes(activeTab) && !showStudentFilter && !activeTask && <ModuleDateFilter SearchableSelect={SearchableSelect} DateInput={DateInput} module={activeTab} range={dateRange} onChange={range => setModuleRanges(prev => ({ ...prev, [activeTab]: range }))} />}
       </section>}
       {showStudentFilter && !activeTask && <RecordFilters module={activeTab} extraSummary={activeTab === "stock" ? stockMovementType : selectedInstitution} onResetSearch={() => { setQuery(""); setModuleInstitutions(prev => ({ ...prev, [activeTab]: "" })); setStockMovementType(''); if (activeTab === "materials") setInventoryCategory(""); }} extraFields={activeTab === "stock" ? <Field label="出入退库类型"><SearchableSelect value={stockMovementType} onChange={setStockMovementType} clearOnInput={false} options={[{value:"",label:"全部"},...["出库","入库","退库"].map(value=>({value,label:value}))]} fixedOptions={[""]} placeholder="搜索或选择出入退库类型" /></Field> : showInstitutionFilter ? <Field label={institutionLabel}><SearchableSelect key={activeTab} value={selectedInstitution} onChange={value => setModuleInstitutions(prev => ({ ...prev, [activeTab]: value }))} clearOnInput={false} options={[{value:"",label:"全部"}, ...institutionOptions.map(value => ({value,label:value}))]} fixedOptions={[""]} placeholder={"搜索或选择" + institutionLabel} /></Field> : null} showTeacherFilter={isAdmin} teachers={filterTeacherAccounts} teacher={selectedModuleTeacher} onTeacherChange={teacher => setModuleTeachers(prev => ({ ...prev, [activeTab]: teacher }))} students={studentAccounts} student={selectedModuleStudent} onStudentChange={student => setModuleStudents(prev => ({ ...prev, [activeTab]: student }))} range={dateRange} onRangeChange={range => setModuleRanges(prev => ({ ...prev, [activeTab]: range }))} styles={styles} Field={Field} SearchableSelect={SearchableSelect} DateInput={DateInput} />}
 
+      <PageBoundary key={activeTab}><Suspense fallback={<PageLoading message="正在打开模块…" />}>
       {activeTask && <TaskFilterBanner task={activeTask} query={query} onBack={openOverview} onClear={leaveTask} />}
       {activeTab === "dashboard" && <Dashboard currentUser={currentUser} center={taskCenter} query={query} batchCount={materialBatches.length} onOpenTask={openTask} setActiveTab={openDashboardModule} />}
       {WORK_MODULES.includes(activeTab) && <WorkRequestsPage key={activeTab + ":" + (activeTask?.id || "records")} task={activeTask} onReimbursementChange={setReimbursementStatus} workHistory={visibleWorkRequests} teacherAccounts={teacherAccounts} reviewScope={reviewScope} onReviewScopeChange={setReviewScope} fixedType={institutionType} rows={workRows} logs={reviewLogs} attachments={attachments} currentUser={currentUser} units={units} canSubmit={isStudent} canReview={canReview} isAdmin={isAdmin} onAdd={addWorkRequest} onResubmit={resubmitWorkRequest} onWithdraw={withdrawWorkRequest} onReview={reviewWorkRequest} onComplete={completeWorkRequest} onCloseRejected={closeRejectedOrder} onDeleteRecord={deleteRecordPermanently} onHideRecord={hideRecordForMe} onUploadAttachment={uploadAttachment} onDownloadAttachment={downloadAttachment} onDeleteAttachment={deleteAttachment} onExport={() => exportModule(activeTab, workRows)} />}
       {activeTab === "purchases" && <PurchasesPage key={activeTab + ":" + (activeTask?.id || "records")} task={activeTask} onReimbursementChange={setReimbursementStatus} registeredTeacherAccounts={registeredTeacherAccounts} teacherAccounts={teacherAccounts} reviewScope={reviewScope} onReviewScopeChange={setReviewScope} viewScope={purchaseViewScope} onViewScopeChange={setPurchaseViewScope} materialCatalog={materialCatalog} logs={reviewLogs} rows={filteredPurchases} attachments={attachments} batches={materialBatches} purchaseHistory={purchaseRequests} purchaseCatalog={purchaseCatalog} fundSummary={fundSummary} currentUser={currentUser} units={units} canSubmit={isStudent} canReview={canReview} isAdmin={isAdmin} onAdd={addPurchaseRequest} onResubmit={resubmitPurchaseRequest} onWithdraw={withdrawPurchaseRequest} onReview={reviewPurchase} onCompleteInbound={completePurchaseInbound} onCloseRejected={closeRejectedOrder} onDeleteRecord={deleteRecordPermanently} onHideRecord={hideRecordForMe} onUploadAttachment={uploadAttachment} onDownloadAttachment={downloadAttachment} onDeleteAttachment={deleteAttachment} onExport={() => exportModule("purchases", filteredPurchases)} />}
       {activeTab === "stock" && <StockPage key={activeTab + ":" + (activeTask?.id || "records")} task={activeTask} movementType={isStudent ? "" : stockMovementType} currentUser={currentUser} purchaseRequests={purchaseRequests} teacherAccounts={registeredTeacherAccounts} requests={filteredStockOutRequests} onReviewRequest={reviewStockOutRequest} onCompleteRequest={completeStockOutRequest} onWithdrawRequest={withdrawStockOutRequest} onExportRequests={rows => exportModule("stockRequests", rows)} viewScope={stockViewScope} onViewScopeChange={setStockViewScope} canSubmit={isStudent} materialCatalog={materialCatalog} rows={filteredStocks} batches={materialBatches} attachments={attachments} isAdmin={isAdmin} onDeleteRecord={deleteRecordPermanently} isManager={isRecordViewer} onAdd={addStockTransaction} onDownloadAttachment={downloadAttachment} onExport={rows => exportModule("stock", rows)} />}
       {activeTab === "materials" && (canInboundStock || isFinance) && <InventoryPage key={activeTab + ":" + (activeTask?.id || "records")} task={activeTask} searchQuery={query} canInitialize={isStudent} materialCatalog={materialCatalog} onInitialize={initializeMaterialStock} initializationMaterials={materials} initializationBatches={materialBatches} initializationUnits={units} materials={filteredMaterials} batches={filteredBatches} isAdmin={isAdmin} onDeleteRecord={deleteRecordPermanently} attachments={attachments} onDownloadAttachment={downloadAttachment} canManageStock={canManageStock} canEditBatchInformation={canEditBatchInformation} onUpdateBatch={updateMaterialBatch} onExportMaterials={() => exportModule("materials", filteredMaterials)} onExportBatches={() => exportModule("batches", filteredBatches)} />}
-      {activeTab === "reports" && canViewReports && <Suspense fallback={<p style={styles.muted}>正在打开数据报表…</p>}><ReportsPage currentUser={currentUser} onReimbursementChange={setReimbursementStatus} onMessage={setMessage} onQueryChange={setQuery} query={query} canFilterTeacher={isAdmin} teachers={filterTeacherAccounts} data={{ teachers: filterTeacherAccounts, workRequests: visibleWorkRequests, materials, batches: materialBatches, purchases: purchaseRequests, stockTransactions, stockOutRequests, reviewLogs, attachments }} students={studentAccounts} /></Suspense>}
+      {activeTab === "reports" && canViewReports && <Suspense fallback={<PageLoading message="正在打开数据报表…" />}><ReportsPage currentUser={currentUser} onReimbursementChange={setReimbursementStatus} onMessage={setMessage} onQueryChange={setQuery} query={query} canFilterTeacher={isAdmin} teachers={filterTeacherAccounts} data={{ teachers: filterTeacherAccounts, workRequests: visibleWorkRequests, materials, batches: materialBatches, purchases: purchaseRequests, stockTransactions, stockOutRequests, reviewLogs, attachments }} students={studentAccounts} /></Suspense>}
       {accountSettingsOpen && accountSettings}
       {editingBatch && canEditBatchInformation && <MaterialBatchEditor row={editingBatch} materialCatalog={materialCatalog} materials={materials} attachments={attachments} onDownload={downloadAttachment} onSave={saveMaterialBatchInformation} onClose={() => setEditingBatch(null)}       />}
       {activeTab === "admin" && isAdmin && <AccountManagementPage key={activeTab + ":" + (activeTask?.id || "records")} task={activeTask} allAccounts={accounts} teachers={registeredTeacherAccounts} onReload={loadAll} accounts={filteredAccounts} auditProps={{account:currentUser,student:selectedModuleStudent,teacher:selectedModuleTeacher,range:dateRange,query,revision:auditRevision}} onSetAccountStatus={adminSetAccountStatus} onResetPassword={adminResetPassword} onExportAccounts={() => exportModule("accounts", filteredAccounts)} />}
-    </div>
+      </Suspense></PageBoundary>
+    </Workspace>
   );
 }
 export default App;
