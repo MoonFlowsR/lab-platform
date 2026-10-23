@@ -1,6 +1,6 @@
 import PersonName from '../../shared/components/PersonName.jsx';
 import { searchTerms, textMatchesTerms, commentMatchesTerms, commentBranchMatches } from './help-search.js';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { displayStudentComment, studentNameLabel } from '../accounts/student-name-display.js';
 import { clientHeaders } from '../../shared/api/client-platform.js';
 
@@ -17,13 +17,37 @@ export async function commentRequest(path, token, options = {}) {
   return json;
 }
 
+export function HelpDialog({ label, busy = false, onClose, children }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const dialog = ref.current, previousFocus = document.activeElement, previousOverflow = document.body.style.overflow;
+    const background = [];
+    for (let current = dialog.parentElement; current && !current.classList.contains('help-page'); current = current.parentElement) {
+      for (const sibling of current.parentElement.children) if (sibling !== current) { background.push([sibling, sibling.inert]); sibling.inert = true; }
+    }
+    document.body.style.overflow = 'hidden';
+    (dialog.querySelector('textarea:not(:disabled),input:not(:disabled),button:not(:disabled),a[href]') || dialog).focus();
+    return () => { background.forEach(([element, inert]) => { element.inert = inert; }); document.body.style.overflow = previousOverflow; if (previousFocus?.isConnected) previousFocus.focus(); };
+  }, []);
+  function handleKey(event) {
+    if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); if (!busy) onClose(); }
+    if (event.key !== 'Tab') return;
+    const controls = [...ref.current.querySelectorAll('button:not(:disabled),input:not(:disabled),textarea:not(:disabled),a[href],[tabindex="0"]')].filter(node => node.getClientRects().length);
+    const first = controls[0], last = controls.at(-1);
+    if (!first) { event.preventDefault(); ref.current.focus(); }
+    else if (event.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  }
+  return <div className="help-composer-overlay"><div ref={ref} role="dialog" aria-modal="true" aria-label={label} tabIndex={-1} onKeyDown={handleKey}>{children}</div></div>;
+}
+
 export function CommentComposer({ quote, parent, account, busy, onSubmit, onCancel, kind = 'comment' }) {
   const [body, setBody] = useState('');
   const message = kind === 'message';
   return <form className="help-comment-composer" onSubmit={async event => { event.preventDefault(); if (body.trim() && account && await onSubmit(body.trim()) !== false) setBody(''); }}>
     <h3>{parent ? <>回复 <PersonName value={parent.author_name || parent.author_username} /></> : message ? '直接留言' : '评论所选内容'}</h3>
     {parent ? <blockquote>{parent.body}</blockquote> : quote && <blockquote>{quote}</blockquote>}
-    <label><strong>{message ? '留言内容' : '评论内容'}<span className="help-composer-required">（必填）</span></strong><textarea autoFocus required disabled={!account || busy} maxLength={2000} rows={4} value={body} onChange={event => setBody(event.target.value)} placeholder="填写问题或建议（不超过2000字）" /></label>
+    <label><strong>{message ? '留言内容' : '评论内容'}<span className="help-composer-required">（必填）</span></strong><textarea required disabled={!account || busy} maxLength={2000} rows={4} value={body} onChange={event => setBody(event.target.value)} placeholder="填写问题或建议（不超过2000字）" /></label>
     {!account ? <p role="alert">请先注册账号并登录后{message ? '发表留言' : '发表评论'}。<a href="/?register=1">去注册</a> · <a href="/">去登录</a></p> : <p className="help-comment-note">发表人：{account.display_name || account.username}。留言、评论、回复和删除操作会留存记录，管理员可查看。</p>}
     <button type="submit" disabled={!account || busy || !body.trim()}>{busy ? '发表中…' : parent ? '发表回复' : message ? '发表留言' : '发表评论'}</button>
     {onCancel && <button type="button" onClick={onCancel} disabled={busy}>取消</button>}

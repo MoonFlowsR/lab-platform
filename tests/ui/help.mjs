@@ -43,6 +43,15 @@ export async function checkHelp(browser, origin, out, snapshot, users) {
     await search.fill('');
     assert.equal(await page.getByText('导出 Excel：首行自带筛选并冻结表头。', { exact: true }).count(), 0);
     await page.screenshot({ path: path.join(out, `help-current-${role}-${width}.png`), fullPage: true });
+    const openMessage = page.locator('.help-comment-tools').getByRole('button', { name: '直接留言', exact: true });
+    await openMessage.click();
+    const composer = page.getByRole('dialog', { name: '直接留言', exact: true });
+    await composer.getByRole('button', { name: '取消', exact: true }).focus();
+    await page.keyboard.press('Tab');
+    assert(await composer.getByRole('textbox').evaluate(node => node === document.activeElement), 'Dialog traps keyboard focus');
+    await page.keyboard.press('Escape');
+    await composer.waitFor({ state: 'detached' });
+    assert(await openMessage.evaluate(node => node === document.activeElement), 'Closing returns focus to the opener');
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
     results.push({ helpCurrentRole: role, width, overflow, errors });
     await page.close();

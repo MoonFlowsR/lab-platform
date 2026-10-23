@@ -168,6 +168,9 @@
 .platform-request-record .platform-detail-grid {
   margin: 12px 0 !important;
 }
+.platform-detail-grid > .platform-info.is-long-amount {
+  grid-column: span 2;
+}
 .platform-info.is-amount > div:last-child {
   color: #2158bd !important;
   font-size: 18px !important;

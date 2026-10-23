@@ -3,6 +3,25 @@ import path from 'node:path';
 import { openNavigation } from './navigation.mjs';
 import { showModuleRecords } from './module-records.mjs';
 
+async function assertSingleLine(node, message) {
+  const geometry = await node.evaluate(element => {
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    const rects = [...range.getClientRects()].filter(rect => rect.width && rect.height);
+    // Font fallback can produce several glyph runs on one visual line.
+    const lines = [];
+    for (const rect of rects) {
+      const line = lines.find(value => Math.min(value.bottom, rect.bottom) > Math.max(value.top, rect.top));
+      if (line) { line.top = Math.max(line.top, rect.top); line.bottom = Math.min(line.bottom, rect.bottom); }
+      else lines.push({ top: rect.top, bottom: rect.bottom });
+    }
+    const box = element.getBoundingClientRect();
+    return { lines: lines.length, fits: rects.every(rect => rect.left >= box.left - 1 && rect.right <= box.right + 1), text: element.textContent, width: box.width };
+  });
+  assert.equal(geometry.lines, 1, `${message}: ${JSON.stringify(geometry)}`);
+  assert(geometry.fits, `${message} must fit its field: ${JSON.stringify(geometry)}`);
+}
+
 export async function checkReadability(browser, origin, out, snapshot, users) {
   const results=[];
   const student={...users[2],display_name:'示例同学',student_profile:{...users[2].student_profile,responsible_teacher_name:'示例责任导师',guiding_teacher_name:'示例指导导师'}};
@@ -21,11 +40,11 @@ export async function checkReadability(browser, origin, out, snapshot, users) {
       assert.equal(await footer.locator('.platform-person-mentors').textContent(),'（示例责任导师，示例指导导师）');
       const name=await footer.locator('.platform-person-primary').boundingBox(),mentors=await footer.locator('.platform-person-mentors').boundingBox();
       assert(mentors.y>=name.y+name.height,'Mentors start on a separate line');
-      for(const node of await footer.locator('.platform-person-mentors > span').all())assert.equal(await node.evaluate(e=>{const r=document.createRange();r.selectNodeContents(e);return r.getClientRects().length;}),1,'Do not split a mentor name');
+      for(const node of await footer.locator('.platform-person-mentors > span').all())await assertSingleLine(node,'Do not split a mentor name');
       await page.screenshot({path:path.join(out,`readability-navigation-${width}.png`)});
       await page.locator('.platform-nav').getByRole('button',{name:'测试',exact:true}).click();await showModuleRecords(page);
       const amounts=page.locator('.platform-info.is-amount > div:last-child').filter({hasText:'¥1,250,000.88'});await amounts.first().waitFor();
-      for(const node of await amounts.all())assert.equal(await node.evaluate(e=>{const r=document.createRange();r.selectNodeContents(e);return r.getClientRects().length;}),1,'Full monetary value stays together');
+      for(const node of await amounts.all())await assertSingleLine(node,'Full monetary value stays together');
     }else{
       await page.locator('.platform-nav').getByRole('button',{name:'账号管理',exact:true}).click();await showModuleRecords(page);
       const section=page.locator('main > section').filter({has:page.getByRole('heading',{name:'账号列表',exact:true})});

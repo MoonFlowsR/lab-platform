@@ -5,7 +5,7 @@ import { showConfirm } from '../../shared/components/platform-dialog.jsx';
 import content from './content.json';
 import { filterHelpSections, searchTerms, commentBranchMatches } from './help-search.js';
 import './HelpPage.css';
-import { CommentAudit, CommentComposer, CommentThread, commentRequest } from './HelpComments.jsx';
+import { CommentAudit, CommentComposer, CommentThread, HelpDialog, commentRequest } from './HelpComments.jsx';
 import { liveCommentRoots, sectionAnnotations } from './help-annotations.js';
 import { createStudentNameIndex, displayStudentAccount, displayStudentComment } from '../accounts/student-name-display.js';
 import { HELP_VIEWS, helpRoleForAccount, findHelpSection, helpSectionsForView, legacyCommentSections } from './help-role-sections.js';
@@ -146,12 +146,6 @@ export default function HelpPage({ currentUser }) {
     else if (section) { setShowLegacy(true); setLegacyAnchor(root.block_id || section.id); }
     setActiveComment(root); setJump({ id: `comment-${target.id}`, comment: true }); setInitialCommentId(null);
   }, [initialCommentId, comments]);
-  useEffect(() => {
-    if (!commentTargets) return;
-    const escape = event => { if (event.key === 'Escape') setCommentTargets(null); };
-    document.addEventListener('keydown', escape);
-    return () => document.removeEventListener('keydown', escape);
-  }, [commentTargets]);
   const captureSelection = useCallback(() => {
     const next = selectedHelpText();
     setSelection(previous => previous?.section_id === next?.section_id && previous?.block_id === next?.block_id && previous?.quote === next?.quote ? previous : next);
@@ -237,12 +231,12 @@ export default function HelpPage({ currentUser }) {
         {(selectionError || error) && !composer && <p className="help-composer-error" role="alert">{selectionError || error}</p>}
       </section>
       {selection && !composer && <div className="help-selection-bar" role="status" onPointerDown={event => event.preventDefault()}><span>已选 {selection.quote.length} 字</span><button type="button" disabled={selection.quote.length > 1000} onClick={commentSelection}>评论所选内容</button><button type="button" onClick={clearSelection}>取消选择</button></div>}
-      {composer && <div className="help-composer-overlay"><div role="dialog" aria-modal="true" aria-label={composer.parent ? '回复评论' : composer.kind === 'message' ? '直接留言' : '评论所选内容'}><CommentComposer key={composer.parent?.id || composer.kind || composer.anchor.quote} kind={composer.kind} quote={composer.anchor.quote} parent={composer.parent} account={account} busy={busy} onSubmit={publish} onCancel={() => setComposer(null)} />{error && <p className="help-composer-error" role="alert">{error}</p>}</div></div>}
-      {commentTargets && <div className="help-composer-overlay"><div role="dialog" aria-modal="true" aria-label="选择对应评论">
+      {composer && <HelpDialog label={composer.parent ? '回复评论' : composer.kind === 'message' ? '直接留言' : '评论所选内容'} busy={busy} onClose={() => setComposer(null)}><CommentComposer key={composer.parent?.id || composer.kind || composer.anchor.quote} kind={composer.kind} quote={composer.anchor.quote} parent={composer.parent} account={account} busy={busy} onSubmit={publish} onCancel={() => setComposer(null)} />{error && <p className="help-composer-error" role="alert">{error}</p>}</HelpDialog>}
+      {commentTargets && <HelpDialog label="选择对应评论" onClose={() => setCommentTargets(null)}>
         <h3>选择对应评论</h3><p>这段文字有多条评论，请选择要查看的一条。</p>
-        <div className="help-comment-targets">{commentTargets.map((row, index) => <button autoFocus={index === 0} key={row.id} type="button" onClick={() => showComment(row)}><b>{row.author_name || row.author_username}</b><span>{row.deleted_at ? '原评论已删除，仍有后续回复' : row.body}</span></button>)}</div>
+        <div className="help-comment-targets">{commentTargets.map(row => <button key={row.id} type="button" onClick={() => showComment(row)}><b>{row.author_name || row.author_username}</b><span>{row.deleted_at ? '原评论已删除，仍有后续回复' : row.body}</span></button>)}</div>
         <button type="button" onClick={() => setCommentTargets(null)}>关闭</button>
-      </div></div>}
+      </HelpDialog>}
       <div className="help-layout">
         <aside className="help-toc"><button className="help-toc-toggle" type="button" aria-expanded={tocOpen} aria-controls="help-toc-nav" onClick={() => setTocOpen(!tocOpen)}>{terms.length ? '搜索结果目录' : tocLabel}<span aria-hidden="true">{tocOpen ? '▴' : '▾'}</span></button><nav id="help-toc-nav" className={tocOpen ? 'is-open' : undefined} aria-label="帮助目录"><h2>{terms.length ? '搜索结果目录' : tocLabel}</h2>{sections.map(section => <a key={section.id} href={`#${section.id}`} onClick={() => setTocOpen(false)}>{section.legacy ? `历史评论 · ${section.title}` : section.title}</a>)}<a href="#help-messages" onClick={() => setTocOpen(false)}>留言与讨论</a>{!sections.length && <p>暂无匹配章节</p>}</nav></aside>
         <div className="help-articles">
