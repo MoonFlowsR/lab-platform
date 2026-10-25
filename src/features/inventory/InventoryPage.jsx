@@ -1,7 +1,7 @@
 import ExportButton from '../../shared/components/ExportButton.jsx';
 import { showAlert } from '../../shared/components/platform-dialog.jsx';
 import SupplierChangeHistory from "../../shared/components/SupplierChangeHistory.jsx";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import { styles } from "../../app/styles.js";
 import { formatDate } from "../../app/formatters.js";
 import RecordActions from "../../shared/components/RecordActions.jsx";
@@ -22,7 +22,8 @@ function StockPhotoLinks({ row, attachments, onDownload, batch = false }) {
     {item && <button style={styles.lightButton} onClick={() => onDownload?.(item)}>物品特写</button>}
   </div>;
 }
-function InventoryPage({ task, canInitialize = false, materialCatalog = [], isAdmin = false, onDeleteRecord, attachments = [], onDownloadAttachment, onInitialize, initializationMaterials, initializationBatches, initializationUnits, materials, batches, canManageStock, canEditBatchInformation = false, onUpdateBatch, onExportMaterials, onExportBatches, searchQuery = "" }) {
+function InventoryPage({ task, canInitialize = false, materialCatalog = [], isAdmin = false, onDeleteRecord, attachments = [], onDownloadAttachment, onInitialize, initializationMaterials, initializationBatches, initializationUnits, materials, batches, canManageStock, canEditBatchInformation = () => false, onUpdateBatch, onExportMaterials, onExportBatches, searchQuery = "" }) {
+  const showActions = canManageStock || batches.some(canEditBatchInformation);
   const showSafetyNotes = batches.some(batch => batch.safety_notes);
   const showRemarks = batches.some(batch => batch.remark);
   const showAssociatedTeachers = batches.some(batch => batch.associated_teacher_names);
@@ -31,7 +32,7 @@ function InventoryPage({ task, canInitialize = false, materialCatalog = [], isAd
     try { await downloadTable("inventorySummary", batchGroups); }
     catch (error) { showAlert(error.message || '导出失败，请重试。'); }
   }
-  const batchColumns = ["批次", "材料", "材料类别", "采购人", "入库人", "采购渠道", "规格", "使用目的", "当前库存", "位置", "有效期", ...(showSafetyNotes ? ["安全事项"] : []), ...(showRemarks ? ["备注"] : []), ...(showAssociatedTeachers ? ["关联教师"] : []), "建立时间", "入库证明", ...((canManageStock || canEditBatchInformation) ? ["操作"] : [])];
+  const batchColumns = ["批次", "材料", "材料类别", "采购人", "入库人", "采购渠道", "规格", "使用目的", "当前库存", "位置", "有效期", ...(showSafetyNotes ? ["安全事项"] : []), ...(showRemarks ? ["备注"] : []), ...(showAssociatedTeachers ? ["关联教师"] : []), "建立时间", "入库证明", ...(showActions ? ["操作"] : [])];
   const batchRow = (b) => [
     b.batch_code,
     b.material_name,
@@ -49,7 +50,7 @@ function InventoryPage({ task, canInitialize = false, materialCatalog = [], isAd
     ...(showAssociatedTeachers ? [b.associated_teacher_names || "未关联"] : []),
     formatDate(b.created_at),
     <StockPhotoLinks key={`proof-${b._id}`} batch row={b} attachments={attachments} onDownload={onDownloadAttachment} />,
-    ...((canManageStock || canEditBatchInformation) ? [<RecordActions key={`actions-${b._id}`} compact dangerous={isAdmin && <button style={styles.dangerButton} onClick={() => onDeleteRecord?.("lab_material_batches", b)}>永久删除批次</button>}><button style={styles.secondaryButton} onClick={() => onUpdateBatch?.(b)}>{canEditBatchInformation ? "修改物品信息" : "修改库存"}</button></RecordActions>] : []),
+    ...(showActions ? [(canManageStock || canEditBatchInformation(b)) ? <RecordActions key={`actions-${b._id}`} compact dangerous={isAdmin && <button style={styles.dangerButton} onClick={() => onDeleteRecord?.("lab_material_batches", b)}>永久删除批次</button>}><button style={styles.secondaryButton} onClick={() => onUpdateBatch?.(b)}>{canEditBatchInformation(b) ? "修改物品信息" : "修改库存"}</button></RecordActions> : null] : []),
   ];
   return <main>
     <Toolbar title="库存" description={canInitialize ? "查看库存、有效期和入库证明；现存材料可在此建库。" : "查看和筛选库存、有效期及入库证明。"} />
@@ -102,14 +103,10 @@ function groupExpiry(batches) {
   return { label: "有效期", text: longTerm ? `长期${values.includes("") ? "（部分未登记）" : ""}` : "未登记", tone: "" };
 }
 function BatchGroup({ group, children, searchQuery }) {
-  const [expanded, setExpanded] = useState(Boolean(searchQuery.trim()));
-  const detailRef = useRef(null);
-  useEffect(() => {
-    if (searchQuery.trim()) detailRef.current?.querySelectorAll("details").forEach(detail => { detail.open = true; });
-  }, [searchQuery]);
+
   const locations = [...new Set(group.batches.map(batch => batch.storage_detail || batch.storage_location).filter(Boolean))];
   const expiry = groupExpiry(group.batches);
-  return <details className="platform-stock-group" open={expanded} onToggle={event => setExpanded(event.currentTarget.open)}>
+  return <details className="platform-stock-group">
     <summary>
       <span className="platform-stock-group-field platform-stock-group-name"><small>材料</small><strong>{group.material_name}</strong></span>
       <span className="platform-stock-group-field"><small>规格</small><span>{group.spec || "无"}</span></span>
@@ -119,7 +116,7 @@ function BatchGroup({ group, children, searchQuery }) {
       <MaterialModelMatch name={group.material_name} specifications={[group.spec]} query={searchQuery} />
       <span className="platform-stock-group-meta"><span className="platform-stock-group-locations" title={locations.join("；")}><b>位置：</b>{locations.join("；") || "未登记"}</span><span className={expiry.tone}><b>{expiry.label}：</b>{expiry.text}</span></span>
     </summary>
-    <div className="platform-stock-group-detail" ref={detailRef}>{children}</div>
+    <div className="platform-stock-group-detail">{children}</div>
   </details>;
 }
 export { InventoryPage, StockPhotoLinks };

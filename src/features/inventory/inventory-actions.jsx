@@ -1,8 +1,9 @@
+import { BATCH_EDIT_DENIED } from './batch-edit-policy.js';
 import { callLabOps } from "../../app/api.js";
 import { showAlert, showForm } from "../../shared/components/platform-dialog.jsx";
 import { validatePhotoFile } from "../../app/attachment-validation.js";
 
-export function createInventoryActions({ uploadStockEvidence, currentUser, loadAll, setMessage, canEditBatchInformation, setEditingBatch, canManageStock }) {
+export function createInventoryActions({ uploadStockEvidence, currentUser, loadAll, setMessage, canEditBatchInformation, setEditingBatch, canManageStock, materialBatches }) {
 async function initializeMaterialStock(form, file) {
     validatePhotoFile(file);
     const evidence = await uploadStockEvidence(file);
@@ -14,8 +15,8 @@ async function initializeMaterialStock(form, file) {
 
 
 async function updateMaterialBatch(row) {
-    if (canEditBatchInformation) { setEditingBatch(row); return; }
-    if (!canManageStock) return showAlert("只有教师或管理员账号可以修改库存。");
+    if (canEditBatchInformation(row)) { setEditingBatch(row); return; }
+    if (!canManageStock) return showAlert(BATCH_EDIT_DENIED);
     const values = await showForm({ title: '修改库存', message: '核对批次及修正后数量。修改原因必填，系统记录修改前后数值、操作人和时间。', confirmText: '确认修改',
       details: [{ label: '材料', value: row.material_name }, { label: '批次', value: row.batch_code }, { label: '当前库存', value: `${row.current_qty} ${row.unit}` }],
       fields: [
@@ -48,7 +49,8 @@ async function updateMaterialBatch(row) {
   }
 
 async function saveMaterialBatchInformation(form, photo) {
-    if (!canEditBatchInformation) throw new Error("只有学生或管理员可以修改物品信息。");
+    const row = materialBatches.find(batch => String(batch._id) === String(form.id));
+    if (!canEditBatchInformation(row)) throw new Error(BATCH_EDIT_DENIED);
     const evidence = photo ? await uploadStockEvidence(photo) : null;
     await callLabOps("updateMaterialBatchInformation", { ...form, ...(evidence ? { photo_attachment_id: evidence._id } : {}) }, currentUser);
     setMessage("物品信息已修改，并已记录修改前后信息和原因。");

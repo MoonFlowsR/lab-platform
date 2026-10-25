@@ -14,7 +14,7 @@ function fixture() {
     storageDetails: p => ({storage_room:p.storage_room,storage_detail:p.storage_detail,storage_location:p.storage_room+' · '+p.storage_detail}),
   };
   const material = c.insertRecord('lab_materials',{name_cn:'示例材料',name:'示例材料'});
-  const purchase = c.insertRecord('lab_purchase_requests',{public_id:'PUR-20261018-000001',preferred_supplier:'原渠道',material_name:'示例材料',status:'已完成',received_status:'已入库',quantity:4,estimated_price:100,reviewed_by:'示例教师',reviewed_at:'2026-10-18T01:00:00Z'});
+  const purchase = c.insertRecord('lab_purchase_requests',{public_id:'PUR-20261018-000001',preferred_supplier:'原渠道',material_name:'示例材料',status:'已完成',received_status:'已入库',applicant_username:c.account.username,completed_at:'2026-10-18T01:00:00Z',quantity:4,estimated_price:100,reviewed_by:'示例教师',reviewed_at:'2026-10-18T01:00:00Z'});
   const other = c.insertRecord('lab_purchase_requests',{...purchase,_id:undefined,id:undefined,public_id:'PUR-261018-000002'});
   const batch = c.insertRecord('lab_material_batches',{material_id:material._id,material_name:'示例材料',supplier:'原渠道',batch_code:'BATCH-261019-000003',purchase_category:'耗材',spec:'无',unit:'盒',current_qty:4,min_qty:0,purchase_purpose:'公用',storage_room:'A101',storage_detail:'示例柜',expiry_date:'长期',related_purchase_record_id:purchase._id,related_purchase_id:'PUR-261018-000001'});
   c.updateRecord('lab_purchase_requests',purchase._id,{inbound_batch_id:batch._id});
@@ -49,6 +49,7 @@ test('unchanged channel does not touch purchase or create channel history; stale
 
 for(const mode of ['public-only','reverse-only','deleted','standalone','inconsistent'])test('supplier relationship: '+mode,()=>{
  const f=fixture();try{
+  if(['deleted','standalone','inconsistent'].includes(mode))f.c.account={...f.c.account,account_type:'admin'};
   if(mode==='public-only')f.c.updateRecord('lab_material_batches',f.batch._id,{related_purchase_record_id:''});
   if(mode==='reverse-only'){f.c.updateRecord('lab_material_batches',f.batch._id,{related_purchase_record_id:'',related_purchase_id:''});}
   if(mode==='deleted')f.db.prepare('DELETE FROM records WHERE id=?').run(f.purchase._id);
