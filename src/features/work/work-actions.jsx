@@ -22,10 +22,10 @@ async function addWorkRequest(form, pendingAttachments = []) {
   }
 
 async function withdrawWorkRequest(row) {
-    if (!await showConfirm(`确定撤回这条${row.request_type || "测试/加工/维修"}申请吗？撤回后可以修改并重新提交。`, { title: '撤回申请确认', confirmText: '确认撤回', details: [{ label: '申请编号', value: row.public_id }, { label: '申请人', value: row.applicant_name || row.applicant_username }] })) return;
+    if (!await showConfirm(`确定撤回这条${row.request_type || "测试/加工/维修"}申请吗？撤回后将从记录列表移除。`, { title: '撤回申请确认', confirmText: '确认撤回', details: [{ label: '申请编号', value: row.public_id }, { label: '申请人', value: row.applicant_name || row.applicant_username }] })) return;
     try {
       await callLabOps("withdrawWorkRequest", { id: row._id }, currentUser);
-      setMessage("申请已撤回，可修改后重新提交。");
+      setMessage("申请已撤回，已从记录列表移除。");
       await loadAll();
     } catch (error) {
       showAlert(error.message || error);

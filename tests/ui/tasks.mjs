@@ -41,7 +41,7 @@ export async function checkTasks(browser, origin, out, base, users) {
       return route.fulfill({json:{ok:true,rows:[],total:0,comments:[]}});
     });
     await page.goto(origin);await page.waitForFunction(()=>document.querySelector('.platform-sync-status')?.textContent.includes('同步状态：同步完成'));
-    const expected={student:14,teacher:6,finance:4,admin:2}[role],header=page.locator('.platform-task-entry');
+    const expected={student:10,teacher:6,finance:4,admin:2}[role],header=page.locator('.platform-task-entry');
     assert.equal(await page.getByTestId('task-total').innerText(),String(expected));assert.equal(await header.locator('b').innerText(),String(expected));
     assert.equal(await page.locator('.platform-business-metrics').count(),0);
     assert.equal(await page.getByRole('button',{name:'同意',exact:true}).count(),0);
@@ -62,7 +62,7 @@ export async function checkTasks(browser, origin, out, base, users) {
       assert.equal(await queuedRows.count(),module.count,'Module badge must open every actionable record, across stages');
       if(role==='student'&&module.label==='测试') {
         assert.equal(await page.getByRole('button',{name:'确认完成',exact:true}).count(),1);
-        assert.equal(await page.getByRole('button',{name:'修改/重新提交',exact:true}).count(),2);
+        assert.equal(await page.getByRole('button',{name:'修改/重新提交',exact:true}).count(),1);
         assert.equal(await page.getByRole('button',{name:'关闭工单',exact:true}).count(),1);
       }
       assert.equal(await page.locator('main > .platform-section-create').count(),0);

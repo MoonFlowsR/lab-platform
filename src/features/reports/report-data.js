@@ -1,4 +1,5 @@
 import { createTeacherContext, recordMatchesTeacher, recordTeacherNames, recordMatchesSearch, inventorySearchFlags } from '../../shared/lib/teacher-filter.js';
+import { requestRecordVisible } from '../../shared/lib/review-scope.js';
 const chineseDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' });
 const enrichedRows = new WeakMap();
 export function chinaDate(value = new Date()) {
@@ -38,11 +39,11 @@ export function selectReportData(data, { student = '', teacher = '', query = '',
     return Boolean(day) && (!startDate || day >= startDate) && (!endDate || day <= endDate);
   };
   const ownRequest = row => (!student || row.applicant_username === student) && teacherMatches(row, 'requests');
-  const workRequests = work.filter(row => ownRequest(row) && searchMatches(row) && dateMatches(row.created_at));
-  const selectedPurchases = purchases.filter(row => ownRequest(row) && searchMatches(row) && dateMatches(row.created_at));
+  const workRequests = work.filter(row => requestRecordVisible(row) && ownRequest(row) && searchMatches(row) && dateMatches(row.created_at));
+  const selectedPurchases = purchases.filter(row => requestRecordVisible(row) && ownRequest(row) && searchMatches(row) && dateMatches(row.created_at));
   const stockTransactions = stock.map(row => enrich(row, 'stock')).filter(row => (!student || row.operator_username === student) && teacherMatches(row, 'stock') && searchMatches(row) && dateMatches(row.created_at));
   const outRequests = data.stockOutRequests || [];
-  const stockOutRequests = outRequests.map(row=>enrich(row,'stock')).filter(row=>(!student || row.applicant_username===student) && teacherMatches(row,'stock') && searchMatches(row) && dateMatches(row.created_at));
+  const stockOutRequests = outRequests.filter(requestRecordVisible).map(row=>enrich(row,'stock')).filter(row=>(!student || row.applicant_username===student) && teacherMatches(row,'stock') && searchMatches(row) && dateMatches(row.created_at));
   const requestKeys = new Set([...work.filter(ownRequest), ...purchases.filter(ownRequest),...outRequests.filter(row=>(!student || row.applicant_username===student) && teacherMatches(row,'stock'))].flatMap(row => [String(row._id ?? ''), row.public_id]).filter(Boolean));
   const reviewLogs = (data.reviewLogs || []).filter(log => dateMatches(log.created_at) && (!(student || teacher) || requestKeys.has(String(log.target_id)) || requestKeys.has(log.target_public_id)) && (!query.trim() || searchMatches(log)));
   const batchIds = new Set([...stockTransactions.map(row => String(row.batch_id)), ...selectedPurchases.map(row => String(row.inbound_batch_id))]);

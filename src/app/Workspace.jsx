@@ -221,6 +221,10 @@ export default function Workspace({
               <Icon name="help" />
               <span>帮助文档</span>
             </a>
+            <span className="workspace-current-account" title={`${avatarName} · ${role}`} aria-label={`当前账号：${avatarName}，${role}`}>
+              <span className="workspace-avatar workspace-current-avatar" aria-hidden="true">{Array.from(avatarName).slice(-2).join("")}</span>
+              <strong>{avatarName}</strong>
+            </span>
             <button
               type="button"
               className="workspace-tool"
@@ -231,9 +235,6 @@ export default function Workspace({
               <Icon name="settings" />
               <span>账户设置</span>
             </button>
-            <span className="workspace-current-account" title={`${avatarName} · ${role}`} aria-label={`当前账号：${avatarName}，${role}`}>
-              {avatarName}
-            </span>
             <button
               type="button"
               className="workspace-tool workspace-logout"

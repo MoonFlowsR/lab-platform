@@ -60,8 +60,9 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     assert.equal(await page.locator(".workspace-welcome .platform-person-name").count(), 0);
     assert.equal(await page.locator(".platform-sync-status").count(), 1);
     assert.equal(await page.locator(".workspace-topbar .platform-sync-status").count(), Number(width >= 1100));
-    assert.equal(await page.locator(".workspace-current-account").isVisible(), width > 640);
-    assert.equal(await page.locator(".workspace-current-account").evaluate(node => node.nextElementSibling?.getAttribute("aria-label")), "退出登录");
+    assert.equal(await page.locator(".workspace-current-account").isVisible(), true);
+    assert.equal(await page.locator(".workspace-current-account > strong").isVisible(), width > 640);
+    assert.equal(await page.locator(".workspace-current-account").evaluate(node => node.nextElementSibling?.getAttribute("aria-label")), "账户设置");
     assert.equal(await page.locator(".workspace-sidebar-footer .platform-person-suffix").textContent(), "（教师账号）");
     const menu = page.getByRole("button", {
       name: "打开模块导航",

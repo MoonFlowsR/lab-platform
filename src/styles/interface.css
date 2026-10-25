@@ -105,6 +105,17 @@
 .platform-field textarea {
   line-height: 1.5;
 }
+.platform-field textarea { display: block; }
+.platform-form-notes {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.platform-form-notes > :only-child { grid-column: 1 / -1; }
+@media (max-width: 640px) {
+  .platform-form-notes { grid-template-columns: minmax(0, 1fr); }
+}
 .platform-field:focus-within > div:first-child {
   color: var(--accent);
 }

@@ -61,3 +61,37 @@ test('Excel limits produce an explicit error instead of a corrupt download',()=>
  assert.throws(()=>buildWorkbook([{headers:['名称'],rows:[[]]}]),/列数/);
  assert.throws(()=>buildWorkbook([{headers:['名称'],rows:{length:1048576}}]),/范围/);
 });
+
+test('reports and Excel exclude every withdrawn request while preserving its audit trail and stock movements',()=>{
+ const at='2026-10-20T00:00:00Z';
+ const common={applicant_username:'student-a',review_teacher_username:'teacher-a',created_at:at};
+ const workRequests=['测试','加工','维修'].flatMap((request_type,index)=>[
+  {...common,_id:10+index,public_id:'VISIBLE-WORK-'+index,request_type,work_content:'保留'+request_type,status:'已完成',cost_test:11,cost_processing:12,cost_repair:13},
+  {...common,_id:100+index,public_id:'WITHDRAWN-WORK-'+index,request_type,work_content:'撤回'+request_type,status:'已撤回',cost_test:999,cost_processing:999,cost_repair:999},
+ ]);
+ const data={workRequests,purchases:[
+  {...common,_id:20,public_id:'VISIBLE-PURCHASE',material_name:'保留采购',status:'已完成',received_status:'已入库',actual_total_price:17},
+  {...common,_id:120,public_id:'WITHDRAWN-PURCHASE',material_name:'撤回采购',status:'已撤回',estimated_price:999},
+ ],stockOutRequests:[
+  {...common,_id:30,public_id:'VISIBLE-STOCK-REQUEST',material_name:'保留出库申请',status:'待采购人审批'},
+  {...common,_id:130,public_id:'WITHDRAWN-STOCK-REQUEST',material_name:'撤回出库申请',status:'已撤回'},
+ ],stockTransactions:[{_id:40,public_id:'STOCK-MOVEMENT',operator_username:'student-a',material_name:'历史库存流水',quantity:1,unit:'瓶',transaction_type:'出库',created_at:at}],
+ reviewLogs:[100,101,102,120,130].map((target_id,index)=>({_id:index+1,target_id,action:'撤回',reviewer_name:'审计保留人员',created_at:at}))};
+ const original=JSON.stringify(data);
+ for(const filters of [{},{student:'student-a'}]){
+  const result=buildReportExport(data,filters,new Date(at));
+  assert.deepEqual(result.selected.workRequests.map(row=>row._id),[10,11,12]);
+  assert.deepEqual(result.selected.purchases.map(row=>row._id),[20]);
+  assert.deepEqual(result.selected.stockOutRequests.map(row=>row._id),[30]);
+  assert.deepEqual(result.selected.stockTransactions.map(row=>row._id),[40]);
+  assert.equal(result.selected.reviewLogs.length,5);
+  for(const title of ['测试明细','加工明细','维修明细','采购明细','出库申请']){
+   const table=result.tables.find(table=>table.title===title);assert.equal(table.rows.length,1);assert(!JSON.stringify(table.rows).includes('撤回'));
+  }
+  assert.equal(result.tables.find(table=>table.title==='审批明细').rows.length,5);
+  const summary=new Map(result.tables.find(table=>table.title==='统计汇总').rows.map(row=>[row[0],row[1]]));
+  assert.equal(summary.get('测试已完成最终费用'),11);assert.equal(summary.get('加工已完成最终费用'),12);assert.equal(summary.get('维修已完成最终费用'),13);assert.equal(summary.get('采购已入库金额'),17);
+  assert.equal(summary.get('出入退库记录数'),1);assert.equal(summary.get('审批记录数'),5);
+ }
+ assert.equal(JSON.stringify(data),original);
+});
