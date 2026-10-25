@@ -166,6 +166,7 @@
 }
 .workspace-topbar-actions {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 5px;
 }
@@ -254,6 +255,7 @@
 }
 .workspace-welcome {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
   gap: 12px;
@@ -264,11 +266,12 @@
   font-size: var(--text-label);
   margin: 0 0 5px;
 }
-.workspace-welcome > div { min-width: 0; }
-.workspace-welcome time { flex-shrink: 0; }
+.workspace-welcome > div { min-width: 0; flex: 1 1 min-content; }
+.workspace-welcome time { flex-shrink: 0; white-space: nowrap; }
 .workspace-footer > span { min-width: 0; text-wrap: pretty; }
 .workspace-footer > a { flex-shrink: 0; white-space: nowrap; }
 .workspace-welcome h1 {
+  white-space: nowrap;
   font-size: 27px;
   font-weight: 730;
   letter-spacing: -0.6px;
@@ -445,7 +448,6 @@
   }
   .workspace-welcome time {
     font-size: var(--text-caption);
-    max-width: 85px;
     text-align: right;
   }
   .workspace-sidebar .platform-nav {
@@ -467,7 +469,7 @@
     bottom: max(12px, env(safe-area-inset-bottom));
   }
 }
-@media (max-width: 359px) {
+@media (max-width: 420px) {
   .workspace-context {
     font-size: var(--text-caption);
     gap: 3px;
