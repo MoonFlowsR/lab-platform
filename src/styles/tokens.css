@@ -3,6 +3,15 @@ business styling stays with features. */
 :root {
   --font-ui:
     "Segoe UI", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+  /* CSS viewport widths at 100% zoom; never infer physical monitor size. */
+  --text-caption: .8125rem;
+  --text-label: .875rem;
+  --text-body: 1rem;
+  --text-heading: 1.125rem;
+  --text-section: 1.25rem;
+  --text-page: 1.5rem;
+  --sidebar-width: 240px;
+  --workspace-gutter: clamp(16px, 1.5vw, 28px);
   --canvas: #f4f6fa;
   --surface: #ffffff;
   --surface-muted: #f7f9fc;
@@ -21,8 +30,20 @@ business styling stays with features. */
   --shadow: 0 2px 5px #1c365707, 0 8px 24px #1c365704;
   --focus-ring: 0 0 0 3px #245bdd25;
 }
+@media (min-width: 1800px) {
+  :root {
+    --text-caption: .875rem;
+    --text-label: .9375rem;
+    --text-body: 1.0625rem;
+    --text-heading: 1.25rem;
+    --text-section: 1.375rem;
+    --text-page: 1.625rem;
+    --sidebar-width: 272px;
+  }
+}
 body {
   font-family: var(--font-ui);
+  font-size: var(--text-body);
   color: var(--ink);
 }
 .platform-icon {
