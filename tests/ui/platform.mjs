@@ -1,3 +1,5 @@
+import { checkInventoryPermissions } from './inventory-permissions.mjs';
+import { checkHelpInteractions } from './help-interactions.mjs';
 import { checkWorkspace } from './workspace.mjs';
 import { checkReadability } from './readability.mjs';
 import { checkTypography } from './typography.mjs';
@@ -98,7 +100,9 @@ async function checkOperations() {
  ];
 }
 try {
- if (process.env.UI_SUITE === 'wrapping') { results.push(...await checkWrapping(browser,origin,snapshot,[admin,teachers[0],studentA])); }
+ if (process.env.UI_SUITE === 'help-interactions') { results.push(...await checkHelpInteractions(browser,origin,studentA)); }
+ else if (process.env.UI_SUITE === 'inventory-permissions') { results.push(...await checkInventoryPermissions(browser,origin,snapshot,[admin,teachers[0],studentA])); }
+ else if (process.env.UI_SUITE === 'wrapping') { results.push(...await checkWrapping(browser,origin,snapshot,[admin,teachers[0],studentA])); }
  else if (process.env.UI_SUITE === 'typography') { results.push(...await checkTypography(browser,origin,snapshot,[admin,teachers[0],studentA])); }
  else if (process.env.UI_SUITE === 'operations') { results.push(...await checkOperations()); }
  else if (process.env.UI_SUITE === 'workspace') { results.push(...await checkWorkspace(browser,origin,out,snapshot,[admin,teachers[0],studentA])); } else {
@@ -204,8 +208,10 @@ try {
  results.push(...await checkTypography(browser,origin,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkKeyInformation(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkWrapping(browser,origin,snapshot,[admin,teachers[0],studentA]));
+ results.push(...await checkInventoryPermissions(browser,origin,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkRecordVisibility(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkHelp(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
+ results.push(...await checkHelpInteractions(browser,origin,studentA));
  results.push(...await checkHelpPolling(browser,origin,[admin,teachers[0],studentA]));
  results.push(...await checkExcelExports(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkAuditClients(browser,origin,out,snapshot,admin));

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { platformSettings } from '../../shared/lib/platform-settings.js';
 import { usePageSearchHighlight } from '../../shared/hooks/page-search-highlight.js';
 import { showConfirm } from '../../shared/components/platform-dialog.jsx';
@@ -68,9 +68,12 @@ export default function HelpPage({ currentUser }) {
   const comments = useMemo(() => rawComments.map(row => displayStudentComment(row, studentNameIndex)), [rawComments, studentNameIndex]);
   const [commentsRequireLogin, setCommentsRequireLogin] = useState(false);
   const [selection, setSelection] = useState(null), [composer, setComposer] = useState(null);
+  const selectionPress = useRef(null);
   const [activeComment, setActiveComment] = useState(null), [error, setError] = useState(''), [busy, setBusy] = useState(false);
   const [jump, setJump] = useState(initialView.anchor ? { id: initialView.anchor } : null), [commentTargets, setCommentTargets] = useState(null);
   const [history, setHistory] = useState(() => window.location.hash === '#comment-audit'), [revision, setRevision] = useState(0);
+  const [refreshState, setRefreshState] = useState('idle');
+  const manualRefresh = useRef(null);
   const [auditCommentsLoaded, setAuditCommentsLoaded] = useState(false);
   const token = currentUser?.session_token || '';
   const isAdmin = account?.account_type === 'admin';
@@ -101,6 +104,11 @@ export default function HelpPage({ currentUser }) {
     return () => { alive = false; };
   }, [token]);
   useEffect(() => {
+    if (refreshState !== 'done') return;
+    const timer = setTimeout(() => setRefreshState('idle'), 5300);
+    return () => clearTimeout(timer);
+  }, [refreshState]);
+  useEffect(() => {
     let alive = true, anonymousDenied = false, activeRequest = null;
     if (!history || !isAdmin) setAuditCommentsLoaded(false);
     const load = async () => {
@@ -109,9 +117,10 @@ export default function HelpPage({ currentUser }) {
       const timeout = setTimeout(() => controller.abort(), 30000);
       try {
         const json = await commentRequest(history && isAdmin ? '/admin' : '', token, { signal: controller.signal });
-        if (alive) { setCommentsRequireLogin(false); setComments(json.comments); setStudentNames(json.student_name_labels || []); setError(''); if (history && isAdmin) setAuditCommentsLoaded(true); }
+        if (alive) { setCommentsRequireLogin(false); setComments(json.comments); setStudentNames(json.student_name_labels || []); setError(''); if (history && isAdmin) setAuditCommentsLoaded(true); if (manualRefresh.current) { manualRefresh.current = null; setRefreshState('done'); } }
       } catch (failure) {
         if (!alive) return;
+        if (manualRefresh.current) { manualRefresh.current = null; setRefreshState('idle'); }
         if (!token && [401, 403].includes(failure.status)) { anonymousDenied = true; setCommentsRequireLogin(true); setComments([]); setError(''); }
         else setError(failure.name === 'AbortError' ? '读取讨论超时，请稍后重试。' : failure.message);
       } finally { clearTimeout(timeout); if (activeRequest === controller) activeRequest = null; }
@@ -147,6 +156,9 @@ export default function HelpPage({ currentUser }) {
     setActiveComment(root); setJump({ id: `comment-${target.id}`, comment: true }); setInitialCommentId(null);
   }, [initialCommentId, comments]);
   const captureSelection = useCallback(() => {
+    // Touch browsers may collapse the selection between pressing and releasing
+    // the comment button. Keep that gesture's quote until release or cancellation.
+    if (selectionPress.current) return;
     const next = selectedHelpText();
     setSelection(previous => previous?.section_id === next?.section_id && previous?.block_id === next?.block_id && previous?.quote === next?.quote ? previous : next);
   }, []);
@@ -154,12 +166,28 @@ export default function HelpPage({ currentUser }) {
     document.addEventListener('selectionchange', captureSelection);
     return () => document.removeEventListener('selectionchange', captureSelection);
   }, [captureSelection]);
-  function commentSelection() {
-    const anchor = selectedHelpText();
+  function commentSelection(anchor = selectedHelpText()) {
     if (!anchor || anchor.quote.length > 1000) { captureSelection(); return; }
     setComposer({ anchor }); setError(''); clearSelection();
   }
-  function clearSelection() { window.getSelection()?.removeAllRanges(); setSelection(null); }
+  function beginSelectionComment(event) {
+    if (!event.isPrimary || event.button !== 0) return;
+    const anchor = selectedHelpText();
+    if (!anchor || anchor.quote.length > 1000) return;
+    selectionPress.current = { pointerId: event.pointerId, anchor };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+  function endSelectionComment(event) {
+    const press = selectionPress.current;
+    if (!press || press.pointerId !== event.pointerId) return;
+    selectionPress.current = null;
+    const rect = event.currentTarget.getBoundingClientRect();
+    if (event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom) commentSelection(press.anchor);
+    else captureSelection();
+  }
+  function cancelSelectionComment() { selectionPress.current = null; captureSelection(); }
+  function clearSelection() { selectionPress.current = null; window.getSelection()?.removeAllRanges(); setSelection(null); }
+  function refreshComments() { manualRefresh.current = true; setRefreshState('loading'); setError(''); setRevision(value => value + 1); }
   async function publish(body) {
     setBusy(true); setError('');
     try {
@@ -225,11 +253,11 @@ export default function HelpPage({ currentUser }) {
       </section>
       <section className="help-comment-tools" aria-label="帮助评论">
         <span>选中正文可评论</span>
-        <div className="help-comment-actions"><button type="button" onClick={openMessage}>直接留言</button><a href="#help-messages">查看留言（{messages.length}）</a><button type="button" onClick={() => setRevision(value => value + 1)}>刷新讨论</button>{(legacyCommentCount > 0 || showLegacy) && <button type="button" aria-pressed={showLegacy} onClick={() => { setShowLegacy(!showLegacy); setLegacyAnchor(''); setJump(null); }}>{showLegacy ? '收起历史正文评论' : `历史正文评论（${legacyCommentCount}）`}</button>}{isAdmin && <label><input type="checkbox" checked={history} onChange={event => setHistory(event.target.checked)} />查看已删除评论与操作记录</label>}</div>
+        <div className="help-comment-actions"><button type="button" onClick={openMessage}>直接留言</button><a href="#help-messages">查看留言（{messages.length}）</a><button type="button" onClick={refreshComments} disabled={refreshState === 'loading'} aria-busy={refreshState === 'loading'}>{refreshState === 'loading' ? '刷新中…' : '刷新讨论'}</button>{refreshState === 'done' && <span className="help-refresh-status" role="status">讨论已刷新</span>}{(legacyCommentCount > 0 || showLegacy) && <button type="button" aria-pressed={showLegacy} onClick={() => { setShowLegacy(!showLegacy); setLegacyAnchor(''); setJump(null); }}>{showLegacy ? '收起历史正文评论' : `历史正文评论（${legacyCommentCount}）`}</button>}{isAdmin && <label><input type="checkbox" checked={history} onChange={event => setHistory(event.target.checked)} />查看已删除评论与操作记录</label>}</div>
         {commentsRequireLogin && <p className="help-comment-note"><a href="/">登录</a>后查看留言和评论。</p>}
         {(selectionError || error) && !composer && <p className="help-composer-error" role="alert">{selectionError || error}</p>}
       </section>
-      {selection && !composer && <div className="help-selection-bar" role="status" onPointerDown={event => event.preventDefault()}><span>已选 {selection.quote.length} 字</span><button type="button" disabled={selection.quote.length > 1000} onClick={commentSelection}>评论所选内容</button><button type="button" onClick={clearSelection}>取消选择</button></div>}
+      {selection && !composer && <div className="help-selection-bar" role="status"><span>已选 {selection.quote.length} 字</span><button type="button" disabled={selection.quote.length > 1000} onMouseDown={event => event.preventDefault()} onPointerDown={beginSelectionComment} onPointerUp={endSelectionComment} onPointerCancel={cancelSelectionComment} onLostPointerCapture={cancelSelectionComment} onClick={() => commentSelection()}>评论所选内容</button><button type="button" onClick={clearSelection}>取消选择</button></div>}
       {composer && <HelpDialog label={composer.parent ? '回复评论' : composer.kind === 'message' ? '直接留言' : '评论所选内容'} busy={busy} onClose={() => setComposer(null)}><CommentComposer key={composer.parent?.id || composer.kind || composer.anchor.quote} kind={composer.kind} quote={composer.anchor.quote} parent={composer.parent} account={account} busy={busy} onSubmit={publish} onCancel={() => setComposer(null)} />{error && <p className="help-composer-error" role="alert">{error}</p>}</HelpDialog>}
       {commentTargets && <HelpDialog label="选择对应评论" onClose={() => setCommentTargets(null)}>
         <h3>选择对应评论</h3><p>这段文字有多条评论，请选择要查看的一条。</p>

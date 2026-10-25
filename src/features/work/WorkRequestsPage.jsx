@@ -32,7 +32,6 @@ function WorkRequestsPage({ task, onReimbursementChange, workHistory = [], teach
       key={row._id}
       currentUser={currentUser} onReimbursementChange={onReimbursementChange}
       row={row}
-      completionDetailsOpen={row.completion_modified === true}
       historyPanel={canReview && row.status === "待教师审核" && <WorkHistory type={fixedType} rows={recentSameWork(row, historyIndex)} />}
       logs={logs.filter((log) => String(log.target_id) === String(row._id) || log.target_public_id === row.public_id)}
       attachmentPanel={<AttachmentPanel targetCollection="lab_work_requests" row={row} attachments={rowAttachments} onUpload={onUploadAttachment} onDownload={onDownloadAttachment} />}

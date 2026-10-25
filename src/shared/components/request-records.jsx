@@ -55,7 +55,7 @@ function ReviewHistory({ row, logs = [] }) {
   if (!history.length) return null;
   return <details style={styles.logBox}><summary>审批记录（{history.length} 条）</summary><RecentRecords rows={sortByCreatedAt(history)}>{shown => <DataTable mobileColumns={["审批人", "审批结果", "审批意见", "审批时间"]} columns={["审批时间", "审批人", "审批结果", "审批意见"]} rows={shown.map(log => [formatDate(log.created_at), log.reviewer_name || log.reviewer_username || "-", log.action, log.review_note || "未填写"])} />}</RecentRecords></details>;
 }
-function WorkRequestCard({ currentUser, onReimbursementChange, row, logs = [], compact = false, completionDetailsOpen = false, attachmentPanel, actions, historyPanel }) {
+function WorkRequestCard({ currentUser, onReimbursementChange, row, logs = [], compact = false, attachmentPanel, actions, historyPanel }) {
   return <div className="platform-request-record" style={styles.listItem}>
     <div style={styles.rowBetween}>
       <div>
@@ -79,7 +79,7 @@ function WorkRequestCard({ currentUser, onReimbursementChange, row, logs = [], c
     {row.status === "已关闭" && <ClosureInfo row={row} />}
     {isCompletedWork(row) && <p style={styles.meta}>完成人：<strong className="platform-identity"><PersonName value={row.completed_by || row.completed_username || "未记录"} /></strong> · 完成时间：{formatDate(row.completed_at)}</p>}
     {!compact && <>
-      {row.completion_modified && <details open={completionDetailsOpen} style={styles.logBox}><summary><strong>完成时修改记录</strong></summary><p style={styles.note}>{completionChangesText(row)}</p></details>}
+      {row.completion_modified && <details style={styles.logBox}><summary><strong>完成时修改记录</strong></summary><p style={styles.note}>{completionChangesText(row)}</p></details>}
       {(row.safety_notes || row.remark || row.completion_note) && <div style={styles.detailGrid2}>
         {row.safety_notes && <Info label="安全事项" value={row.safety_notes} />}
         {row.remark && <Info label="备注" value={row.remark} />}

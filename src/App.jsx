@@ -1,3 +1,4 @@
+import useBatchEditPermission from './features/inventory/use-batch-edit-permission.js';
 import PageBoundary from './shared/components/PageBoundary.jsx';
 import Workspace from './app/Workspace.jsx';
 import PageSearch from './shared/components/PageSearch.jsx';
@@ -120,7 +121,7 @@ function App() {
   const teacherContext = useMemo(() => createTeacherContext({ purchases: purchaseRequests, batches: materialBatches, teachers: filterTeacherAccounts }), [purchaseRequests, materialBatches, filterTeacherAccounts]);
   const moduleTeacherMatches = useCallback((item, module) => recordMatchesTeacher(item, selectedModuleTeacher, module, teacherContext), [selectedModuleTeacher, teacherContext]);
   const canManageStock = isTeacher || isAdmin;
-  const canEditBatchInformation = isStudent || isAdmin;
+  const canEditBatchInformation = useBatchEditPermission(currentUser, materialBatches, purchaseRequests);
   const canInboundStock = isStudent || canManageStock;
   const canViewReports = isRecordViewer;
 
@@ -339,7 +340,7 @@ function App() {
   const { uploadStockEvidence, downloadAttachment, deleteAttachment, uploadAttachment } = createAttachmentsActions({ currentUser, setMessage, loadAll });
   const { saveMyStudentProfile, saveMyPassword, adminSetAccountStatus, adminResetPassword, registerAccount, loginAccount, logoutAccount } = createAccountsActions({ currentUser, setCurrentUser, setAccountSettingsOpen, setMessage, loadAll, isAdmin, setSessionChecked, setActiveTab, setModuleRanges, setModuleStudents, setModuleReviewScopes, setPurchaseViewScope, setStockViewScope, setStockMovementType, setInventoryCategory, setModuleTeachers, setQuery, setEditingBatch, setWorkRequests, setReviewLogs, setMaterials, setMaterialBatches, setPurchaseRequests, setStockTransactions, setStockOutRequests, setAttachments, setAccounts });
   const { addWorkRequest, withdrawWorkRequest, resubmitWorkRequest, reviewWorkRequest, closeRejectedOrder, completeWorkRequest } = createWorkActions({ currentUser, setMessage, loadAll, canReview, workRequests, units });
-  const { initializeMaterialStock, updateMaterialBatch, saveMaterialBatchInformation } = createInventoryActions({ uploadStockEvidence, currentUser, loadAll, setMessage, canEditBatchInformation, setEditingBatch, canManageStock });
+  const { initializeMaterialStock, updateMaterialBatch, saveMaterialBatchInformation } = createInventoryActions({ uploadStockEvidence, currentUser, loadAll, setMessage, canEditBatchInformation, setEditingBatch, canManageStock, materialBatches });
   const { addPurchaseRequest, withdrawPurchaseRequest, resubmitPurchaseRequest, reviewPurchase, completePurchaseInbound } = createPurchasesActions({ currentUser, setMessage, loadAll, canReview });
   const { addStockTransaction, reviewStockOutRequest, completeStockOutRequest, withdrawStockOutRequest } = createStockActions({ uploadStockEvidence, currentUser, setMessage, loadAll, materialBatches, purchaseRequests });
   const { exportModule, deleteRecordPermanently, hideRecordForMe } = createRecordsActions({ attachments, setMessage, isAdmin, currentUser, loadAll });
@@ -386,7 +387,7 @@ function App() {
       {activeTab === "materials" && (canInboundStock || isFinance) && <InventoryPage key={activeTab + ":" + (activeTask?.id || "records")} task={activeTask} searchQuery={query} canInitialize={isStudent} materialCatalog={materialCatalog} onInitialize={initializeMaterialStock} initializationMaterials={materials} initializationBatches={materialBatches} initializationUnits={units} materials={filteredMaterials} batches={filteredBatches} isAdmin={isAdmin} onDeleteRecord={deleteRecordPermanently} attachments={attachments} onDownloadAttachment={downloadAttachment} canManageStock={canManageStock} canEditBatchInformation={canEditBatchInformation} onUpdateBatch={updateMaterialBatch} onExportMaterials={() => exportModule("materials", filteredMaterials)} onExportBatches={() => exportModule("batches", filteredBatches)} />}
       {activeTab === "reports" && canViewReports && <Suspense fallback={<PageLoading message="正在打开数据报表…" />}><ReportsPage currentUser={currentUser} onReimbursementChange={setReimbursementStatus} onMessage={setMessage} onQueryChange={setQuery} query={query} canFilterTeacher={isAdmin} teachers={filterTeacherAccounts} data={{ teachers: filterTeacherAccounts, workRequests: visibleWorkRequests, materials, batches: materialBatches, purchases: purchaseRequests, stockTransactions, stockOutRequests, reviewLogs, attachments }} students={studentAccounts} /></Suspense>}
       {accountSettingsOpen && accountSettings}
-      {editingBatch && canEditBatchInformation && <MaterialBatchEditor row={editingBatch} materialCatalog={materialCatalog} materials={materials} attachments={attachments} onDownload={downloadAttachment} onSave={saveMaterialBatchInformation} onClose={() => setEditingBatch(null)}       />}
+      {editingBatch && canEditBatchInformation(editingBatch) && <MaterialBatchEditor row={editingBatch} materialCatalog={materialCatalog} materials={materials} attachments={attachments} onDownload={downloadAttachment} onSave={saveMaterialBatchInformation} onClose={() => setEditingBatch(null)}       />}
       {activeTab === "admin" && isAdmin && <AccountManagementPage key={activeTab + ":" + (activeTask?.id || "records")} task={activeTask} allAccounts={accounts} teachers={registeredTeacherAccounts} onReload={loadAll} accounts={filteredAccounts} auditProps={{account:currentUser,student:selectedModuleStudent,teacher:selectedModuleTeacher,range:dateRange,query,revision:auditRevision}} onSetAccountStatus={adminSetAccountStatus} onResetPassword={adminResetPassword} onExportAccounts={() => exportModule("accounts", filteredAccounts)} />}
       </Suspense></PageBoundary>
     </Workspace>

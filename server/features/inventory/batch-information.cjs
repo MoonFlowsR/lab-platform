@@ -1,5 +1,6 @@
 const { syncPurchaseSupplier } = require('./purchase-supplier.cjs');
 const options = require('../../../src/config/dropdown-options.json');
+const { createBatchEditPolicy, BATCH_EDIT_DENIED } = require('../../../src/features/inventory/batch-edit-policy.js');
 
 module.exports = function updateBatchInformation(context) {
   const { db, req, account, payload, getRecord, listRecords, insertRecord, updateRecord, nextPublicId, addAudit, nowISO, requiredPurchaseExpiryDate, storageDetails, requireItemPhoto, bindStockEvidence } = context;
@@ -26,6 +27,7 @@ module.exports = function updateBatchInformation(context) {
   Object.assign(values, storageDetails(payload));
   values.expiry_date = requiredPurchaseExpiryDate(payload.expiry_date);
   return db.transaction(() => {
+    if (!createBatchEditPolicy(listRecords('lab_purchase_requests')).canEdit(account, before, Date.parse(nowISO()))) throw new Error(BATCH_EDIT_DENIED);
     if (getRecord('lab_material_batches', before._id)?.updated_at !== before.updated_at) throw new Error('该批次已被更新，请关闭窗口并刷新库存后再修改。');
     const photo = payload.photo_attachment_id ? requireItemPhoto(account, payload) : null;
     const originalMaterial = getRecord('lab_materials', before.material_id);
