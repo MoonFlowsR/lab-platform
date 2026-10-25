@@ -1063,6 +1063,9 @@
   .platform-filter-bar.has-inventory-category .platform-date-filter:has(label:nth-child(2)) {
     grid-column: 1 / -1;
   }
+  .platform-filter-bar.has-inventory-category > .platform-date-filter:not(:has(label:nth-child(2))) {
+    grid-column: auto;
+  }
   .platform-filter-bar.has-inventory-category .platform-date-filter label:only-child { flex: 1; }
 }
 @media (min-width: 1800px) {
