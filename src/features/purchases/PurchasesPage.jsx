@@ -114,7 +114,7 @@ function PurchasesPage({ task, onReimbursementChange, registeredTeacherAccounts 
       units={units}
     />}
 
-    {!task && currentUser?.account_type === "teacher" && <RequestViewScope scope={reviewScope} onChange={onReviewScopeChange} label="采购审核查看范围" />}
+    {!task && currentUser?.account_type === "teacher" && <RequestViewScope scope={reviewScope} onChange={onReviewScopeChange} label="采购审核查看范围" moduleName="采购/入库" />}
     {!task && currentUser?.account_type === "student" && <section aria-label="采购查看范围" className="platform-purchase-scope" style={styles.card}>
       <Field label="查看范围"><SearchableSelect value={viewScope} onChange={onViewScopeChange} clearOnInput={false} options={[{ value: "mine", label: "本人" }, { value: "all", label: "全部" }]} placeholder="搜索或选择查看范围" /></Field>
       <small style={styles.muted}>调整查看范围可查看团队内其它采购/入库进度</small>
