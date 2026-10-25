@@ -87,10 +87,20 @@ export default function Workspace({
   }
   const status = (
     <div className={`workspace-statusbar platform-sync-status${desktop ? " is-in-toolbar" : ""}`}>
-      <span
-        className={`workspace-sync-dot${syncing ? " is-busy" : syncStatus === "同步完成" || syncStatus === "同步完成。" ? "" : " is-warning"}`}
-      />
-      <span title={`同步状态：${syncStatus}`}>同步状态：{syncStatus}</span>
+      <button
+        type="button"
+        className="workspace-sync-control"
+        disabled={syncing}
+        onClick={onSync}
+        title="手动同步"
+        aria-label={syncing ? "同步中…" : "手动同步"}
+      >
+        <Icon name="refresh" className={syncing ? "is-spinning" : ""} />
+      </button>
+      <span className="workspace-sync-state" title={`同步状态：${syncStatus}`}>
+        <span className={`workspace-sync-dot${syncing ? " is-busy" : syncStatus === "同步完成" || syncStatus === "同步完成。" ? "" : " is-warning"}`} />
+        <span>同步状态：{syncStatus}</span>
+      </span>
       <strong className="platform-sync-guidance">
         请在状态为“同步完成”后操作
       </strong>
@@ -200,17 +210,6 @@ export default function Workspace({
               <Icon name="tasks" />
               <span>待办</span>
               <b>{taskCenter.total}</b>
-            </button>
-            <button
-              type="button"
-              className="workspace-tool"
-              disabled={syncing}
-              onClick={onSync}
-              title="手动同步"
-              aria-label={syncing ? "同步中…" : "手动同步"}
-            >
-              <Icon name="refresh" className={syncing ? "is-spinning" : ""} />
-              <span>手动同步</span>
             </button>
             <a
               className="workspace-tool"

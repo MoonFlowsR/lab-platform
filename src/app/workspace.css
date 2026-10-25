@@ -253,6 +253,34 @@
   line-height: 1.5;
   color: var(--muted);
 }
+.workspace-sync-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 36px;
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px;
+  color: #4c5f78;
+  background: var(--surface);
+  cursor: pointer;
+}
+.workspace-sync-control:hover { color: var(--accent); background: var(--accent-soft); }
+.workspace-sync-control .platform-icon { width: 18px; height: 18px; }
+.workspace-sync-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.workspace-sync-state > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .workspace-sync-dot {
   width: 6px;
   height: 6px;
@@ -421,8 +449,14 @@
     display: none;
   }
   .workspace-statusbar {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 2px 8px;
     padding: 10px 20px 0;
   }
+  .workspace-statusbar > .workspace-sync-control { grid-column: 1; grid-row: 1 / span 2; min-width: 44px; min-height: 44px; }
+  .workspace-statusbar > .workspace-sync-state { grid-column: 2; grid-row: 1; }
+  .workspace-statusbar > .platform-sync-guidance { grid-column: 2; grid-row: 2; margin-left: 0; }
   .workspace-content {
     padding: 20px;
   }
@@ -474,7 +508,7 @@
   }
   .workspace-statusbar {
     padding: 9px 13px 0;
-    gap: 4px 6px;
+    gap: 2px 8px;
   }
   .workspace-statusbar .platform-sync-guidance {
     flex-basis: 100%;

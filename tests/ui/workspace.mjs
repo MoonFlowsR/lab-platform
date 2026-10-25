@@ -64,6 +64,9 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     assert.equal(await page.locator(".workspace-current-account > strong").isVisible(), width > 640);
     assert.equal(await page.locator(".workspace-current-account").evaluate(node => node.nextElementSibling?.getAttribute("aria-label")), "账户设置");
     assert.equal(await page.locator(".workspace-sidebar-footer .platform-person-suffix").textContent(), "（教师账号）");
+    const syncButton = await page.getByRole("button", { name: "手动同步", exact: true }).boundingBox();
+    const syncText = await page.locator(".workspace-sync-state").boundingBox();
+    assert(syncButton.x + syncButton.width <= syncText.x + 1, "Manual sync stays to the left of synchronization status");
     const menu = page.getByRole("button", {
       name: "打开模块导航",
       exact: true,
