@@ -39,7 +39,6 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
 .platform-attachment-item>.platform-record-actions{flex:1 1 230px}
 .platform-data-table td[data-label="管理操作"]:before{text-align:right}
 .platform-shell :is(button,a,input,select,textarea):focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
-@media(min-width:1000px){.platform-filter-bar{grid-template-columns:minmax(230px,1fr) auto!important}.platform-filter-bar:has(.platform-date-filter label:nth-child(3)){grid-template-columns:minmax(220px,1fr) minmax(560px,auto)!important}}
 .platform-mobile-records{display:none}
 .platform-material-batches{margin-top:10px;font-size: var(--text-label);line-height:1.6}
 .platform-material-batches summary{cursor:pointer;color:#475569;font-weight:600}
@@ -102,7 +101,6 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
 .platform-section-approved{border:3px solid #6095cd!important}
 .platform-same-work-history>summary{cursor:pointer;font-weight:650;padding:4px 0}
 .platform-section-reviewed{border:3px solid #4d9d73!important}
-.platform-filter-bar:has(+ .platform-student-filter){grid-template-columns:minmax(0,1fr)!important}
 @media(max-width:640px){.platform-student-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}.platform-student-filter-grid>label:nth-child(-n+2){grid-column:1/-1}}
 
 .platform-initialization-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;align-items:start}
@@ -197,7 +195,6 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
 .platform-warning-tags{display:flex;gap:5px;flex-wrap:wrap}.platform-warning-tags strong{border-radius:6px;padding:3px 7px;font-size: var(--text-caption);white-space:nowrap;font-weight:700}.platform-warning-tags .is-danger{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}.platform-warning-tags .is-warning{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
 @media(max-width:640px){.platform-business-metrics.is-single .platform-business-card{display:block;padding:12px 14px}.platform-business-metrics.is-single .platform-business-headline{margin:6px 0 10px}.platform-inventory-metrics[aria-label="库存流水统计"] dl{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.platform-warning-heading h2{font-size: var(--text-body)}}
 
-.platform-filter-bar:has(>input:only-child){grid-template-columns:minmax(0,1fr)!important}
 .platform-student-filter-grid.has-teacher{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 @media(max-width:640px){.platform-student-filter-grid.has-teacher{grid-template-columns:repeat(2,minmax(0,1fr))!important}.platform-student-filter-grid.has-teacher>label:nth-child(-n+3){grid-column:1/-1}}
 
@@ -248,9 +245,6 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
 .platform-sync-guidance{min-width:0;max-width:100%;color:#b91c1c;font-size: var(--text-body);font-weight:750;line-height:1.6;overflow-wrap:anywhere}
 @media(max-width:640px){.platform-sync-status{gap:3px 8px}.platform-sync-guidance{font-size: var(--text-body)}}
 
-.platform-shell .platform-filter-bar.has-inventory-category,.platform-shell .platform-filter-bar.has-inventory-category:has(.platform-date-filter){grid-template-columns:minmax(0,1fr) minmax(170px,220px)!important;align-items:end}
-.platform-filter-bar.has-inventory-category>.platform-date-filter{grid-column:1/-1}
-@media(max-width:640px){.platform-shell .platform-filter-bar.has-inventory-category,.platform-shell .platform-filter-bar.has-inventory-category:has(.platform-date-filter){grid-template-columns:minmax(0,1fr)!important}}
 
 .platform-business-card.is-repair{--business-color:#0e7490}
 
