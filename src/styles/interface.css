@@ -1032,13 +1032,6 @@
     scroll-margin-top: 74px;
   }
 }
-.help-navigation-guide {
-  color: var(--muted);
-  font-size: var(--text-label);
-  line-height: 1.7;
-  padding: 0 1px;
-  margin: -4px 0 18px;
-}
 @media (max-width: 640px) {
   .workspace-tasks > span {
     display: inline;
@@ -1063,10 +1056,6 @@
   }
   .platform-login-mobile-roles strong {
     color: var(--ink);
-  }
-  .help-navigation-guide {
-    font-size: var(--text-caption);
-    margin: 0 0 14px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

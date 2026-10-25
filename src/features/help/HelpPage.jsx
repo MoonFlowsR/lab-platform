@@ -214,7 +214,6 @@ export default function HelpPage({ currentUser }) {
       <a className="help-return" href="/">返回平台</a>
     </header>
     <main className="help-main">
-      <p className="help-navigation-guide">切换模块：电脑用左侧导航，手机用左上角菜单。</p>
       <section className="help-role-switch" aria-label="选择帮助类别">
         <span>查看说明</span><div>{HELP_VIEWS.map(role => <button key={role.value} type="button" aria-pressed={helpRole === role.value} onClick={() => chooseRole(role.value)}>{role.label}</button>)}</div>
         <a className="help-source-link" href="https://github.com/MoonFlowsR/lab-platform" target="_blank" rel="noopener noreferrer">平台代码已在Github开源 ↗</a>
