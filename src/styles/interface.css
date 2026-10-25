@@ -54,6 +54,25 @@
 }
 .platform-module-filters > .platform-field { flex: 0 1 220px; }
 .platform-module-filters > .platform-date-filter { flex: 1 1 220px; }
+.platform-query-tools.is-student {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.platform-query-tools.is-student > .platform-filter-bar {
+  flex: 1 1 260px;
+  min-width: min(100%, 220px);
+  align-content: center;
+}
+.platform-query-tools.is-student > .platform-module-filters {
+  flex: 0 1 240px;
+  max-width: 100%;
+}
+.platform-query-tools.is-student > .platform-module-filters:has(> .platform-field) { flex-basis: 512px; }
+.platform-query-tools.is-student > .platform-module-filters:has(.platform-date-control) { flex-basis: 100%; }
+.platform-workspace .platform-query-tools.is-student > section { margin-bottom: 0 !important; }
 .platform-page-heading {
   padding: 3px 0 0 !important;
   margin: 5px 0 18px !important;
@@ -830,6 +849,11 @@
   }
   .platform-module-filters > .platform-field,
   .platform-module-filters > .platform-date-filter { flex-basis: 100%; }
+  .platform-query-tools.is-student { gap: 10px; margin-bottom: 12px; }
+  .platform-query-tools.is-student > .platform-filter-bar { flex-basis: 100%; }
+  .platform-query-tools.is-student > .platform-module-filters { flex-grow: 1; }
+  .platform-query-tools.is-student > .platform-module-filters,
+  .platform-query-tools.is-student > .platform-module-filters:has(> .platform-field) { flex-basis: 100%; }
   .platform-page-heading {
     gap: 8px !important;
     margin-bottom: 14px !important;

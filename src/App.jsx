@@ -374,6 +374,7 @@ function App() {
   return (
     <Workspace account={currentUser} tabs={tabs} activeTab={activeTab} taskCenter={taskCenter} syncing={syncing} syncStatus={syncStatus} onNavigate={openModule} onOverview={openOverview} onSync={loadAll} onSettings={() => setAccountSettingsOpen(true)} onLogout={logoutAccount}>
       {message}
+      <div className={`platform-query-tools${isStudent ? " is-student" : ""}`}>
       <section className="platform-filter-bar" aria-label="页面搜索" style={styles.filterBar}>
         <PageSearch value={query} onChange={setQuery} />
       </section>
@@ -381,6 +382,7 @@ function App() {
         {activeTab === "materials" && inventoryCategoryField}
         {datedModules.includes(activeTab) && <ModuleDateFilter SearchableSelect={SearchableSelect} DateInput={DateInput} module={activeTab} range={dateRange} onChange={range => setModuleRanges(prev => ({ ...prev, [activeTab]: range }))} />}
       </section>}
+      </div>
       {showStudentFilter && !activeTask && <RecordFilters module={activeTab} extraSummary={activeTab === "stock" ? stockMovementType : selectedInstitution} onResetSearch={() => { setQuery(""); setModuleInstitutions(prev => ({ ...prev, [activeTab]: "" })); setStockMovementType(''); if (activeTab === "materials") setInventoryCategory(""); }} extraFields={activeTab === "materials" ? inventoryCategoryField : activeTab === "stock" ? <Field label="出入退库类型"><SearchableSelect value={stockMovementType} onChange={setStockMovementType} clearOnInput={false} options={[{value:"",label:"全部"},...["出库","入库","退库"].map(value=>({value,label:value}))]} fixedOptions={[""]} placeholder="搜索或选择出入退库类型" /></Field> : showInstitutionFilter ? <Field label={institutionLabel}><SearchableSelect key={activeTab} value={selectedInstitution} onChange={value => setModuleInstitutions(prev => ({ ...prev, [activeTab]: value }))} clearOnInput={false} options={[{value:"",label:"全部"}, ...institutionOptions.map(value => ({value,label:value}))]} fixedOptions={[""]} placeholder={"搜索或选择" + institutionLabel} /></Field> : null} showTeacherFilter={isAdmin} teachers={filterTeacherAccounts} teacher={selectedModuleTeacher} onTeacherChange={teacher => setModuleTeachers(prev => ({ ...prev, [activeTab]: teacher }))} students={studentAccounts} student={selectedModuleStudent} onStudentChange={student => setModuleStudents(prev => ({ ...prev, [activeTab]: student }))} range={dateRange} onRangeChange={range => setModuleRanges(prev => ({ ...prev, [activeTab]: range }))} styles={styles} Field={Field} SearchableSelect={SearchableSelect} DateInput={DateInput} />}
 
       <PageBoundary key={activeTab}><Suspense fallback={<PageLoading message="正在打开模块…" />}>

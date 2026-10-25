@@ -70,7 +70,9 @@ export async function checkTypography(browser, origin, snapshot, users) {
       const search = page.locator('.platform-filter-bar');
       const filter = page.locator('.platform-module-filters');
       assert.equal(await search.getByRole('combobox').count(), 0, 'Search has its own row');
-      assert((await filter.boundingBox()).y >= (await search.boundingBox()).y + (await search.boundingBox()).height, 'Filters appear below search');
+      const searchBox = await search.boundingBox(), filterBox = await filter.boundingBox();
+      assert(Math.abs(searchBox.y - filterBox.y) <= 2, 'Student search and filters share a row');
+      assert(filterBox.x >= searchBox.x + searchBox.width + 8, 'Search and filters stay in separate cards');
       const category = await filter.getByPlaceholder('搜索或选择材料类别').boundingBox();
       const date = await filter.getByPlaceholder('搜索或选择时间范围').boundingBox();
       assert(Math.abs(category.y - date.y) <= 2, 'Default inventory filters share one row');
