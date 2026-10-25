@@ -17,6 +17,7 @@ import { FilePicker } from "../../shared/components/attachments.jsx";
 import ItemPhotoFields from "../../shared/components/ItemPhotoFields.jsx";
 import { batchIsPurchaserSelf, batchPurchaser, privateStockPurpose, stockApprovalExemptionText } from "./stock-out-policy.js";
 import { formatPublicNumber } from "../../shared/lib/public-number.js";
+import { RequestViewScope } from "../../shared/components/request-records.jsx";
 
 function StockPage({ task, movementType = "", currentUser, purchaseRequests = [], teacherAccounts = [], requests = [], onReviewRequest, onCompleteRequest, onWithdrawRequest, onExportRequests, viewScope = "mine", onViewScopeChange, materialCatalog = [], rows, batches, attachments = [], isAdmin = false, onDeleteRecord, isManager, canSubmit, onAdd, onDownloadAttachment, onExport }) {
   const movementTypes = ["入库", "出库", "退库"];
@@ -26,12 +27,9 @@ function StockPage({ task, movementType = "", currentUser, purchaseRequests = []
   return <main>
     <Toolbar title={isManager ? "出入退库" : "出/退库"} description={isManager ? "按学生、日期和出入退库类型筛选，分别查看入库、出库、退库。" : "登记出库和退库，查看库存流水及证明。"} onExport={() => task ? onExportRequests(requests) : onExport(selectedRows)} />
     {canSubmit && !task && <StockForm currentUser={currentUser} purchaseRequests={purchaseRequests} teacherAccounts={teacherAccounts} materialCatalog={materialCatalog} batches={batches} isManager={isManager} onSubmit={onAdd} />}
-    {canSubmit && !task && <section aria-label="出退库查看范围" className="platform-purchase-scope" style={styles.card}>
-      <Field label="查看范围"><SearchableSelect value={viewScope} onChange={onViewScopeChange} clearOnInput={false} options={[{ value: "mine", label: "本人" }, { value: "all", label: "全部" }]} placeholder="搜索或选择查看范围" /></Field>
-      <small style={styles.muted}>调整查看范围可查看团队内其它出库/退库记录</small>
-    </section>}
+    {!task && <MovementMetrics rows={selectedRows} viewScope={canSubmit && <RequestViewScope scope={viewScope} onChange={onViewScopeChange} label="出退库查看范围" moduleName="出库/退库" recordLabel="记录" />} />}
     {(!movementType || movementType === '出库') && <StockOutRequests defaultExpanded={Boolean(task)} rows={requests} currentUser={currentUser} batches={batches} purchaseRequests={purchaseRequests} attachments={attachments} onReview={onReviewRequest} onComplete={onCompleteRequest} onWithdraw={onWithdrawRequest} onDelete={onDeleteRecord} onDownload={onDownloadAttachment} onExport={onExportRequests} styles={styles} formatDate={formatDate} Badge={Badge} />}
-    {!task && <><MovementMetrics rows={selectedRows} />
+    {!task && <>
     {isManager ? movementTypes.filter(type => !movementType || type === movementType).map(type => <StockHistorySection key={type} title={`${type}历史`} rows={selectedRows.filter(row => row.transaction_type === type)} {...historyProps} extra={type === "入库" && otherRows.length > 0 ? <details><summary>库存修正记录（{otherRows.length}）</summary><StockHistorySection embedded title="库存修正" rows={otherRows} {...historyProps} /></details> : null} />) : <StockHistorySection title="库存流水历史" rows={selectedRows} {...historyProps} />}
     </>}
   </main>;

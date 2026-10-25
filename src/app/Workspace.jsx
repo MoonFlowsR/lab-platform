@@ -29,6 +29,7 @@ export default function Workspace({
   children,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [desktop, setDesktop] = useState(() => window.matchMedia("(min-width: 1100px)").matches);
   const navRef = useRef(null);
   const menuButton = useRef(null);
   const currentTitle = tabs.find(([key]) => key === activeTab)?.[1] || "总览";
@@ -37,6 +38,12 @@ export default function Workspace({
   const avatarName = account.account_type === "student"
     ? splitPersonName(user).name
     : user.trim();
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 1100px)");
+    const update = () => setDesktop(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
   useEffect(() => {
     if (!menuOpen) return;
     const previousOverflow = document.body.style.overflow,
@@ -78,6 +85,17 @@ export default function Workspace({
     setMenuOpen(false);
     window.scrollTo({ top: 0 });
   }
+  const status = (
+    <div className={`workspace-statusbar platform-sync-status${desktop ? " is-in-toolbar" : ""}`}>
+      <span
+        className={`workspace-sync-dot${syncing ? " is-busy" : syncStatus === "同步完成" || syncStatus === "同步完成。" ? "" : " is-warning"}`}
+      />
+      <span title={`同步状态：${syncStatus}`}>同步状态：{syncStatus}</span>
+      <strong className="platform-sync-guidance">
+        请在状态为“同步完成”后操作
+      </strong>
+    </div>
+  );
   return (
     <div className="platform-shell platform-workspace">
       <a className="platform-skip-link" href="#platform-content">
@@ -148,8 +166,7 @@ export default function Workspace({
             {Array.from(avatarName).slice(-2).join("")}
           </span>
           <div>
-            <strong><PersonName value={user} stacked mentorLabel={account.account_type === "student"} /></strong>
-            <small>{role}</small>
+            <strong><PersonName value={user} stacked mentorLabel={account.account_type === "student"} suffix={role} /></strong>
           </div>
         </div>
       </aside>
@@ -172,6 +189,7 @@ export default function Workspace({
             </span>
             <span>{currentTitle}</span>
           </div>
+          {desktop && status}
           <div className="workspace-topbar-actions">
             <button
               type="button"
@@ -213,6 +231,9 @@ export default function Workspace({
               <Icon name="settings" />
               <span>账户设置</span>
             </button>
+            <span className="workspace-current-account" title={`${avatarName} · ${role}`} aria-label={`当前账号：${avatarName}，${role}`}>
+              {avatarName}
+            </span>
             <button
               type="button"
               className="workspace-tool workspace-logout"
@@ -225,25 +246,11 @@ export default function Workspace({
             </button>
           </div>
         </header>
-        <div className="workspace-statusbar platform-sync-status">
-          <span
-            className={`workspace-sync-dot${syncing ? " is-busy" : syncStatus === "同步完成" || syncStatus === "同步完成。" ? "" : " is-warning"}`}
-          />
-          <span>同步状态：{syncStatus}</span>
-          <strong className="platform-sync-guidance">
-            请在状态为“同步完成”后操作
-          </strong>
-          <span className="workspace-mobile-account">
-            <PersonName value={user} /> · {role}
-          </span>
-        </div>
+        {!desktop && status}
         <div id="platform-content" className="workspace-content" tabIndex={-1}>
           {activeTab === "dashboard" && (
             <div className="workspace-welcome">
               <div>
-                <p>
-                  {role} · <PersonName value={user} />
-                </p>
                 <h1>{roleHeadings[account.account_type] || "工作台"}</h1>
               </div>
               <time>

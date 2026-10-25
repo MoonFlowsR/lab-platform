@@ -10,9 +10,9 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
 .platform-shell :where(p,h1,h2,h3,a){overflow-wrap:anywhere}
 .platform-filter-bar{align-items:center}
 .platform-date-filter{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
-.platform-date-filter label{display:grid;gap:4px;font-size: var(--text-caption);color:#475569;flex:0 1 175px;min-width:0}
+.platform-date-filter label{display:grid;gap:4px;font-size: var(--text-label);line-height:1.5;color:#475569;flex:0 1 175px;min-width:0}
 .platform-date-filter :is(select,input){width:100%;min-height:40px;border:1px solid #cbd5e1;border-radius:10px;padding:7px 10px;background:white;color:#0f172a;font:inherit;font-size: var(--text-body)}
-.platform-date-filter>button{min-height:40px;border:1px solid #cbd5e1;border-radius:10px;padding:7px 12px;background:#f8fafc;font-size: var(--text-label);cursor:pointer}
+.platform-date-filter>button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;border:1px solid #cbd5e1;border-radius:10px;padding:7px 12px;background:#f8fafc;font-size: var(--text-label);cursor:pointer}
 .platform-date-filter p{flex-basis:100%;margin:0;font-size: var(--text-caption);color:#64748b}
 .platform-date-filter p[role=alert]{color:#b91c1c}
 .platform-date-control{position:relative;min-width:0}
@@ -117,10 +117,6 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
 
 @media(max-width:360px){.platform-purchase-inbound{padding:10px!important}.platform-purchase-inbound .platform-search-select input::placeholder{font-size: var(--text-label)}}
 
-.platform-purchase-scope{display:flex;align-items:center;gap:12px 20px;flex-wrap:wrap}
-.platform-purchase-scope>label{flex:0 1 230px;min-width:0;width:100%;margin:0!important}
-.platform-purchase-scope>small{flex:1 1 260px;min-width:0;line-height:1.7}
-@media(max-width:640px){.platform-purchase-scope{gap:8px}.platform-purchase-scope>label,.platform-purchase-scope>small{flex-basis:100%}}
 
 /* Shared overview and report statistics: color identifies business; white cards keep the page calm. */
 .platform-metric-scope{margin:0 0 12px;color:#64748b;font-size: var(--text-label);line-height:1.6}

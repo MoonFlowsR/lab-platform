@@ -3,14 +3,16 @@ import { businessMetrics } from './dashboard-metrics.js';
 import { reimbursementMetrics } from '../finance/reimbursement.js';
 import { ReimbursementFigures } from '../finance/ReimbursementSummary.jsx';
 
-export default function DashboardMetrics({ workRequests, purchases, mode = 'review', money, onOpen, showReimbursement = false, types = ['测试', '加工', '维修', '采购'] }) {
+export default function DashboardMetrics({ workRequests, purchases, mode = 'review', money, onOpen, viewScope, showReimbursement = false, types = ['测试', '加工', '维修', '采购'] }) {
   const reimbursement = showReimbursement ? reimbursementMetrics(workRequests, purchases) : null;
   return <div className={`platform-business-metrics${types.length === 1 ? " is-single" : ""}`}>
     {businessMetrics(workRequests, purchases).filter(metric => types.includes(metric.type)).map(metric => {
       const purchase = metric.type === '采购';
+      const scope = types.length === 1 && viewScope;
       const statuses = [['待审批', metric.sections.pending], ['已审批', metric.sections.reviewed], ['已完成', metric.sections.completed], ['完成时修改', metric.sections.modified]];
-      return <section key={metric.type} aria-label={`${metric.type}统计`} className={`platform-business-card is-${purchase ? 'purchase' : workModule(metric.type)}`}>
-        <div className="platform-business-heading"><h2>{purchase ? '采购/入库' : metric.type}</h2>{onOpen && <button type="button" onClick={() => onOpen(purchase ? 'purchases' : workModule(metric.type))}>{mode === 'review' ? '去审核' : '查看'} →</button>}</div>
+      const heading = <div className="platform-business-heading"><h2>{purchase ? '采购/入库' : metric.type}</h2>{onOpen && <button type="button" onClick={() => onOpen(purchase ? 'purchases' : workModule(metric.type))}>{mode === 'review' ? '去审核' : '查看'} →</button>}</div>;
+      return <section key={metric.type} aria-label={`${metric.type}统计`} className={`platform-business-card is-${purchase ? 'purchase' : workModule(metric.type)}${scope ? ' has-view-scope' : ''}`}>
+        {scope ? <div className="platform-business-topline">{heading}{scope}</div> : heading}
         <div className="platform-business-headline"><strong>{metric.total}</strong><span>申请总数</span></div>
         <dl className="platform-business-statuses">{statuses.map(([label, value], index) => <div key={label}><dt>{label}</dt><dd>{types.length === 1 ? <button type="button" className="platform-status-jump" aria-label={`查看${label}工单，共${value}条`} onClick={() => {
           const target = document.querySelector(`main > .platform-section-${['pending', 'approved', 'reviewed', 'modified'][index]}`);
@@ -40,7 +42,8 @@ export function InventoryMetrics({ inventory, label = '团队库存', onOpen }) 
   </section>;
 }
 
-export function MovementMetrics({ rows = [], onOpen, label = '库存流水' }) {
+export function MovementMetrics({ rows = [], onOpen, label = '库存流水', viewScope }) {
   const types = ['入库', '出库', '退库'];
-  return <section className="platform-inventory-metrics" aria-label="库存流水统计"><div className="platform-inventory-heading"><strong>{label}</strong><small>{rows.length} 条记录</small></div><dl>{[...types, '库存修正'].map(type => <div key={type}><dt>{type}</dt><dd>{rows.filter(row => type === '库存修正' ? !types.includes(row.transaction_type) : row.transaction_type === type).length}<small> 条</small></dd></div>)}</dl>{onOpen && <button onClick={onOpen}>查看流水 →</button>}</section>;
+  const heading = <div className="platform-inventory-heading"><strong>{label}</strong><small>{rows.length} 条记录</small></div>;
+  return <section className={`platform-inventory-metrics${viewScope ? ' has-view-scope' : ''}`} aria-label="库存流水统计">{viewScope ? <div className="platform-movement-topline">{heading}{viewScope}</div> : heading}<dl>{[...types, '库存修正'].map(type => <div key={type}><dt>{type}</dt><dd>{rows.filter(row => type === '库存修正' ? !types.includes(row.transaction_type) : row.transaction_type === type).length}<small> 条</small></dd></div>)}</dl>{onOpen && <button onClick={onOpen}>查看流水 →</button>}</section>;
 }

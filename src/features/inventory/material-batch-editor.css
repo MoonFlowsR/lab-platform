@@ -2,7 +2,7 @@
 .platform-batch-editor-context{font-size: var(--text-body);line-height:1.65;margin:0 0 16px;color:#475569;overflow-wrap:anywhere}
 .platform-batch-editor fieldset{border:0;margin:0;padding:0;min-width:0}
 .platform-batch-editor-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:start}
-.platform-batch-editor-grid label{display:grid;gap:6px;font-size: var(--text-body)}
+.platform-batch-editor-grid label{display:grid;gap:0;font-size: var(--text-body)}
 .platform-batch-editor-grid :is(input,textarea){font-size: var(--text-body)}
 .platform-batch-editor-grid .platform-batch-half{grid-column:span 2}
 .platform-batch-editor-grid .platform-batch-wide{grid-column:1/-1}

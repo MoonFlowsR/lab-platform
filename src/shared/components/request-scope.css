@@ -1,0 +1,87 @@
+.platform-business-topline,
+.platform-movement-topline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 18px;
+  min-width: 0;
+  width: 100%;
+}
+.platform-business-metrics.is-single .platform-business-topline {
+  grid-column: 1 / -1;
+}
+.platform-business-metrics.is-single .has-view-scope .platform-business-statuses {
+  grid-row: 2;
+}
+.platform-request-scope {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px 12px;
+  min-width: 0;
+}
+.platform-request-scope > .platform-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  min-width: 0;
+  margin: 0;
+}
+.platform-request-scope > .platform-field > div:first-child {
+  flex-shrink: 0;
+  margin: 0 !important;
+  white-space: nowrap;
+}
+.platform-request-scope .platform-search-select {
+  width: 118px !important;
+  min-width: 0;
+}
+.platform-request-scope input {
+  color: var(--accent);
+  background: var(--accent-soft) !important;
+  border-color: #b4cafa !important;
+  font-weight: 750;
+}
+.platform-request-scope > small {
+  color: var(--muted);
+  font-size: var(--text-caption);
+  line-height: 1.5;
+}
+.platform-movement-topline > .platform-inventory-heading {
+  flex: 0 0 auto;
+}
+.platform-inventory-metrics.has-view-scope > dl {
+  flex-basis: 100%;
+}
+@media (max-width: 900px) {
+  .platform-request-scope > small {
+    flex-basis: 100%;
+    text-align: right;
+  }
+}
+@media (max-width: 640px) {
+  .platform-business-metrics.is-single .has-view-scope .platform-business-statuses {
+    grid-row: auto;
+  }
+  .platform-request-scope {
+    flex: 1 1 175px;
+    gap: 4px 8px;
+  }
+  .platform-business-topline > .platform-business-heading {
+    flex-shrink: 0;
+  }
+  .platform-request-scope .platform-search-select {
+    width: 108px !important;
+  }
+  .platform-request-scope > small {
+    font-size: var(--text-caption);
+  }
+  .platform-movement-topline > .platform-inventory-heading {
+    flex-basis: auto;
+    display: grid;
+    gap: 0;
+  }
+}
