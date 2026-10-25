@@ -64,3 +64,12 @@
     margin-top: 12px;
   }
 }
+@container (min-width: 641px) and (max-width: 1050px) {
+  .platform-mobile-record dl {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .platform-mobile-record dl > div:is([data-label="材料"], [data-label="材料名称"], [data-label="物品"], [data-label="名称"], [data-label="对象"], [data-label="姓名"], [data-label="位置"], [data-label="地点"], [data-label="具体位置简述"]) {
+    grid-column: span 2;
+  }
+  .platform-mobile-record details dl > div { grid-column: 1 / -1; }
+}

@@ -56,6 +56,23 @@ export async function checkTypography(browser, origin, snapshot, users) {
       assert(geometry[key].every(size => size >= 16), `${width} ${key}: ${geometry[key]}`);
     }
     assert(geometry.labels.length > 0 && geometry.labels.every(size => size >= 14));
+    await openNavigation(page);
+    await page.locator('.platform-nav').getByRole('button', { name: '库存', exact: true }).click();
+    await showModuleRecords(page);
+    const table = page.locator('.platform-table-responsive').first();
+    await table.waitFor();
+    const tableWidth = (await table.boundingBox()).width;
+    if (tableWidth > 641 && tableWidth <= 1050) {
+      const columns = await table.locator('.platform-mobile-record > dl').first().evaluate(e => getComputedStyle(e).gridTemplateColumns.split(' ').length);
+      assert.equal(columns, 4, 'Tablet/laptop cards use available horizontal room');
+    }
+    if (account.account_type === 'student' && width >= 1100) {
+      const filter = page.locator('.platform-filter-bar');
+      const category = await filter.getByPlaceholder('搜索或选择材料类别').boundingBox();
+      const date = await filter.getByPlaceholder('搜索或选择时间范围').boundingBox();
+      assert(Math.abs(category.y - date.y) <= 2, 'Default inventory filters share one row');
+    }
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
     assert.deepEqual(errors, []);
     results.push({ typography: true, role: account.account_type, width, deviceScaleFactor, ...geometry, errors });
     await page.close();
