@@ -138,7 +138,13 @@ try {
      results.push({latestOneAndExpand:true,exportNotTruncated:true});
     }
     if(tabs[i]==='采购记录'){
+     const approval = page.locator('details').filter({has:page.locator('summary').filter({hasText:/^审批记录/})}).first();
+     assert.equal(await approval.evaluate(element=>element.open),false);
+     assert.equal(await page.getByText('示例唯一审批意见',{exact:true}).filter({visible:true}).count(),0);
+     await approval.locator('summary').first().click();
      assert.equal(await page.getByText('示例唯一审批意见',{exact:true}).filter({visible:true}).count(),1);
+     await approval.locator('summary').first().click();
+     assert.equal(await approval.evaluate(element=>element.open),false);
      assert.equal(await page.locator('main').getByText('系统责任教师',{exact:true}).count(),0);
      results.push({approvalOpinionShownOnce:true});
     }

@@ -43,17 +43,17 @@ function RequestHistorySection({ title, rows, renderCard, emptyText, className =
 function ReviewTeacherField({ teachers, value, onChange }) {
   return <Field required label="审核教师"><SearchableSelect required value={value || ""} onChange={onChange} options={teachers.map(teacher => ({ value: teacher.username, label: teacher.display_name && teacher.display_name !== teacher.username ? `${teacher.display_name}（${teacher.username}）` : teacher.display_name || teacher.username }))} placeholder="搜索或选择审核教师" />{teachers.length === 0 && <small style={{ ...styles.muted, color: "#b91c1c" }}>暂无可选教师，请联系管理员启用教师账号。</small>}</Field>;
 }
-function RequestViewScope({ scope, onChange, label }) {
+function RequestViewScope({ scope, onChange, label, moduleName }) {
   return <section aria-label={label} className="platform-purchase-scope" style={styles.card}>
     <Field label="查看范围"><SearchableSelect value={scope} onChange={onChange} clearOnInput={false} options={[{ value: "mine", label: "本人" }, { value: "all", label: "全部" }]} placeholder="搜索或选择查看范围" /></Field>
-    <small style={styles.muted}>调整查看范围可查看团队内其它测试/加工/维修/采购/入库进度</small>
+    <small style={styles.muted}>调整查看范围可查看团队内其它{moduleName}进度</small>
   </section>;
 }
 function ReviewHistory({ row, logs = [] }) {
   const matching = logs.filter(log => log.action !== "完成" && (String(log.target_id) === String(row._id) || (log.target_public_id && log.target_public_id === row.public_id)));
   const history = matching.length ? matching : (row.reviewed_at || row.review_note || row.reviewed_by) ? [{ _id: "latest-review", created_at: row.reviewed_at, reviewer_name: row.reviewed_by, reviewer_username: row.reviewed_username, action: row.status === "已关闭" ? row.closed_from_status || "已驳回" : ["待入库", "已完成", "已归档"].includes(row.status) ? "已通过" : row.status, review_note: row.review_note }] : [];
   if (!history.length) return null;
-  return <details open style={styles.logBox}><summary>审批记录（{history.length} 条）</summary><RecentRecords rows={sortByCreatedAt(history)}>{shown => <DataTable mobileColumns={["审批人", "审批结果", "审批意见", "审批时间"]} columns={["审批时间", "审批人", "审批结果", "审批意见"]} rows={shown.map(log => [formatDate(log.created_at), log.reviewer_name || log.reviewer_username || "-", log.action, log.review_note || "未填写"])} />}</RecentRecords></details>;
+  return <details style={styles.logBox}><summary>审批记录（{history.length} 条）</summary><RecentRecords rows={sortByCreatedAt(history)}>{shown => <DataTable mobileColumns={["审批人", "审批结果", "审批意见", "审批时间"]} columns={["审批时间", "审批人", "审批结果", "审批意见"]} rows={shown.map(log => [formatDate(log.created_at), log.reviewer_name || log.reviewer_username || "-", log.action, log.review_note || "未填写"])} />}</RecentRecords></details>;
 }
 function WorkRequestCard({ currentUser, onReimbursementChange, row, logs = [], compact = false, completionDetailsOpen = false, attachmentPanel, actions, historyPanel }) {
   return <div className="platform-request-record" style={styles.listItem}>
