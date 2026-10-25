@@ -188,8 +188,8 @@ function identityLabel(label) { return isPersonLabel(label); }
 const numberedValue = (label, value) => /编号|^批次$|批次号|流水号/.test(label) ? formatPublicNumbers(value) : isPersonLabel(label) && typeof value === 'string' && value ? <PersonName value={value} /> : value;
 function Info({ label, value, strong, danger }) {
   strong = strong || identityLabel(label);
-  const amount = /费|金额/.test(label), longAmount = amount && typeof value === 'string' && value.replace(/\s/gu, '').length > 8;
-  return <div className={`platform-info${amount ? ' is-amount' : ''}${longAmount ? ' is-long-amount' : ''}`} style={styles.info}><div style={styles.infoLabel}>{label}</div><div style={{ ...styles.infoValue, fontWeight: strong ? 800 : 500, color: danger ? "#dc2626" : identityLabel(label) ? "#1e40af" : "#0f172a" }}>{numberedValue(label, value) || "-"}</div></div>;
+  const amount = /(?:费|费用|金额)$/.test(label), longAmount = amount && typeof value === 'string' && value.replace(/\s/gu, '').length > 8;
+  return <div className={`platform-info${amount ? ' is-amount' : ''}${longAmount ? ' is-long-amount' : ''}`} data-label={label} style={styles.info}><div style={styles.infoLabel}>{label}</div><div style={{ ...styles.infoValue, fontWeight: strong ? 800 : 500, color: danger ? "#dc2626" : identityLabel(label) ? "#1e40af" : "#0f172a" }}>{numberedValue(label, value) || "-"}</div></div>;
 }
 function Badge({ text }) {
   let style = styles.badge;

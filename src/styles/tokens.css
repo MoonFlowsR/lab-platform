@@ -10,6 +10,8 @@ business styling stays with features. */
   --text-heading: 1.125rem;
   --text-section: 1.25rem;
   --text-page: 1.5rem;
+  --text-key: 1.25rem;
+  --text-metric: 1.75rem;
   --sidebar-width: 240px;
   --workspace-gutter: clamp(16px, 1.5vw, 28px);
   --canvas: #f4f6fa;
@@ -38,6 +40,8 @@ business styling stays with features. */
     --text-heading: 1.25rem;
     --text-section: 1.375rem;
     --text-page: 1.625rem;
+    --text-key: 1.375rem;
+    --text-metric: 2rem;
     --sidebar-width: 272px;
   }
 }

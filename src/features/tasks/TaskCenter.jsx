@@ -13,7 +13,7 @@ export function TaskLink({
   return (
     <button
       type="button"
-      className={`platform-task-link${compact ? " is-compact" : ""}`}
+      className={`platform-task-link${compact ? " is-compact" : ""}${showAmount && group.amount != null ? " has-amount" : ""}`}
       data-task={group.id}
       onClick={() => onOpen(group.id)}
     >
