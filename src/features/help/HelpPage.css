@@ -1,7 +1,7 @@
 .platform-login-help{flex-shrink:0;display:inline-block;color:#1d4ed8;font-size: var(--text-label);font-weight:700;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
 .platform-login-help:hover{color:#1e40af}
 .help-page{min-height:100vh;background:#f7f9fc;color:#172033;font:var(--text-body)/1.8 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;overflow-wrap:anywhere}
-.help-header{max-width:none;width:100%;margin:0;padding:24px clamp(10px,1.4vw,24px) 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:24px}
+.help-header{max-width:none;width:100%;margin:0;padding:24px clamp(10px,1.4vw,24px) 20px;display:flex;justify-content:space-between;align-items:center;gap:24px}
 .help-brand{margin:0;color:#475569;font-size: var(--text-body)}
 .help-header h1{margin:4px 0;font-size:30px;font-weight:750;line-height:1.4;color:#0f172a}
 .help-subtitle{margin:6px 0 0;color:#64748b;font-size: var(--text-body)}
@@ -10,7 +10,7 @@
 .help-main{max-width:none;width:100%;margin:0;padding:0 clamp(10px,1.4vw,24px) 32px}
 .help-search{padding:20px 24px;background:white;border:1px solid #e2e8f0;border-radius:14px;margin-bottom:24px}
 .help-search label{display:block;font-weight:700;margin-bottom:8px}
-.help-search-row{display:flex;gap:12px}
+.help-search-row{display:flex;align-items:center;gap:12px}
 .help-search input{box-sizing:border-box;min-width:0;flex:1;width:100%;background:white;border:1px solid #cbd5e1;border-radius:9px;font:inherit;padding:10px 14px}
 .help-page button{font:inherit;font-weight:600;cursor:pointer;padding:8px 16px;border:1px solid #cbd5e1;border-radius:9px;color:#334155;background:#f8fafc}
 .help-page button:disabled{cursor:default;opacity:.55}
