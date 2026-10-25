@@ -37,7 +37,7 @@ export async function checkReadability(browser, origin, out, snapshot, users) {
       const footer=page.locator('.workspace-sidebar-footer');
       assert.equal(await footer.locator('.workspace-avatar').textContent(),'同学');
       assert.equal(await footer.locator('.platform-person-primary').textContent(),'示例同学');
-      assert.equal(await footer.locator('.platform-person-mentors').textContent(),'（示例责任导师，示例指导导师）');
+      assert.equal(await footer.locator('.platform-person-mentors').textContent(),'导师：示例责任导师、示例指导导师');
       const name=await footer.locator('.platform-person-primary').boundingBox(),mentors=await footer.locator('.platform-person-mentors').boundingBox();
       assert(mentors.y>=name.y+name.height,'Mentors start on a separate line');
       for(const node of await footer.locator('.platform-person-mentors > span').all())await assertSingleLine(node,'Do not split a mentor name');

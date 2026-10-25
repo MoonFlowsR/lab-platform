@@ -148,7 +148,7 @@ export default function Workspace({
             {Array.from(avatarName).slice(-2).join("")}
           </span>
           <div>
-            <strong><PersonName value={user} stacked /></strong>
+            <strong><PersonName value={user} stacked mentorLabel={account.account_type === "student"} /></strong>
             <small>{role}</small>
           </div>
         </div>
