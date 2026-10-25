@@ -1,6 +1,7 @@
 import { checkWorkspace } from './workspace.mjs';
 import { checkReadability } from './readability.mjs';
 import { checkTypography } from './typography.mjs';
+import { checkKeyInformation } from './key-information.mjs';
 import { checkWrapping } from './wrapping.mjs';
 import { openNavigation } from './navigation.mjs';
 import { showModuleRecords } from './module-records.mjs';
@@ -195,6 +196,7 @@ try {
  results.push(...await checkWorkspace(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkReadability(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkTypography(browser,origin,snapshot,[admin,teachers[0],studentA]));
+ results.push(...await checkKeyInformation(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkWrapping(browser,origin,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkRecordVisibility(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkHelp(browser,origin,out,snapshot,[admin,teachers[0],studentA]));

@@ -23,8 +23,8 @@ export default function DashboardMetrics({ workRequests, purchases, mode = 'revi
           {metric.withdrawn > 0 && <span>已撤回 <b>{metric.withdrawn}</b> 条</span>}
           {metric.closed > 0 && <span>已关闭 <b>{metric.closed}</b> 条</span>}
           {metric.other > 0 && <span>其它状态 <b>{metric.other}</b> 条</span>}
-          <span>{purchase ? '实际入库' : '实际完成'} {metric.completed} 条 · {purchase ? '金额' : '最终费用'} <b>{money(metric.completedAmount)}</b></span>
-          {purchase && <><span>待入库预计金额 <b>{money(metric.readyAmount)}</b></span><span>待审核预计金额 <b>{money(metric.pendingAmount)}</b></span>{metric.legacyEstimatedCount > 0 && <span>{metric.legacyEstimatedCount} 条旧记录沿用预计金额</span>}</>}
+          <span className="platform-business-amount">{purchase ? '实际入库' : '实际完成'} {metric.completed} 条 · {purchase ? '金额' : '最终费用'} <b>{money(metric.completedAmount)}</b></span>
+          {purchase && <><span className="platform-business-amount">待入库预计金额 <b>{money(metric.readyAmount)}</b></span><span className="platform-business-amount">待审核预计金额 <b>{money(metric.pendingAmount)}</b></span>{metric.legacyEstimatedCount > 0 && <span>{metric.legacyEstimatedCount} 条旧记录沿用预计金额</span>}</>}
         </div>
         {reimbursement && <ReimbursementFigures metric={reimbursement.byType.find(row => row.type === metric.type)} money={money} compact />}
       </section>;

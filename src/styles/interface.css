@@ -173,8 +173,9 @@
 }
 .platform-info.is-amount > div:last-child {
   color: #2158bd !important;
-  font-size: 18px !important;
-  font-weight: 700 !important;
+  font-size: var(--text-key) !important;
+  font-weight: 750 !important;
+  white-space: nowrap;
   letter-spacing: -0.3px;
   font-variant-numeric: tabular-nums;
 }
@@ -186,7 +187,8 @@
   align-items: center;
   border-radius: 6px !important;
   padding: 4px 8px !important;
-  font-size: var(--text-caption) !important;
+  font-size: var(--text-label) !important;
+  font-weight: 700;
   line-height: 1.5;
 }
 .platform-record-actions {
@@ -271,7 +273,9 @@
   font-weight: 720;
 }
 .platform-business-statuses dt {
-  font-size: var(--text-caption);
+  font-size: var(--text-label);
+  color: #435770;
+  font-weight: 600;
   white-space: nowrap;
 }
 .platform-status-jump {
@@ -297,6 +301,22 @@
 }
 .platform-business-footer {
   padding-top: 12px;
+  font-size: var(--text-label);
+  color: #435770;
+}
+.platform-business-statuses dd { font-size: 24px; }
+.platform-business-footer b { font-size: var(--text-body); font-variant-numeric: tabular-nums; }
+.platform-business-footer .platform-business-amount {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+}
+.platform-business-amount b {
+  font-size: var(--text-key);
+  font-weight: 750;
+  color: #2158bd;
+  white-space: nowrap;
 }
 .platform-task-center,
 .platform-overview-section {
@@ -354,7 +374,7 @@
   align-items: center;
   gap: 8px;
   font-size: var(--text-body);
-  font-weight: 600;
+  font-weight: 700;
   text-wrap: pretty;
 }
 .platform-task-name .platform-icon {
@@ -366,11 +386,70 @@
   font-weight: 700;
 }
 .platform-task-action {
-  font-size: var(--text-caption);
-}
-.platform-task-amount {
   font-size: var(--text-label);
+  font-weight: 700;
 }
+/* Financial tasks put the amount first, with the count and action in a separate footer. */
+.platform-task-link.has-amount {
+  container-type: inline-size;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 12px;
+  border-color: #bacdeb;
+}
+.platform-task-link.has-amount .platform-task-name { grid-column: 1 / -1; grid-row: 1; }
+.platform-task-link.has-amount > strong { grid-column: 1; grid-row: 3; font-size: 22px; }
+.platform-task-link.has-amount .platform-task-action { grid-column: 2; grid-row: 3; }
+.platform-task-amount {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  font-size: clamp(24px, 9cqi, 32px);
+  font-weight: 750;
+  line-height: 1.3;
+  letter-spacing: -0.5px;
+  color: #174ca6;
+  white-space: nowrap;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #dfe8f7;
+}
+.platform-reimbursement-figures {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+}
+.platform-reimbursement-figures > div { container-type: inline-size; }
+.platform-reimbursement-figures dt { font-size: var(--text-body); }
+.platform-reimbursement-figures dt span { font-size: var(--text-label); font-weight: 600; color: #435770; }
+.platform-reimbursement-figures dd:not(.platform-reimbursement-breakdown) {
+  font-size: clamp(24px, 9cqi, var(--text-metric));
+  line-height: 1.35;
+  white-space: nowrap;
+}
+.platform-reimbursement-figures.is-compact { grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); }
+.platform-reimbursement-figures.is-compact dt { font-size: var(--text-label); }
+.platform-reimbursement-breakdown li { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.platform-reimbursement-breakdown li > span { justify-content: space-between; }
+.platform-reimbursement-breakdown strong { font-size: var(--text-key); white-space: nowrap; color: var(--reimbursement-color); }
+.platform-reimbursement-state { font-size: var(--text-body); font-weight: 650; }
+.platform-reimbursement-check { min-height: 44px; color: #92400e; }
+.platform-reimbursement-check input { width: 20px; height: 20px; }
+.platform-reimbursement-state .is-unreimbursed { color: #92400e; font-weight: 700; }
+.platform-reimbursement-state[data-reimbursed="false"] > :is(.platform-reimbursement-check, .is-unreimbursed) {
+  background: #fff5df;
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+.platform-inventory-metrics dt, .platform-flow-metrics dt { font-size: var(--text-label); font-weight: 600; color: #435770; }
+.platform-inventory-metrics dd, .platform-flow-metrics dd { font-size: 26px; font-variant-numeric: tabular-nums; }
+.platform-warning-tags strong { font-size: var(--text-label); }
+.platform-info:is([data-label="工作量"], [data-label$="数量"], [data-label$="状态"]) > div:last-child { font-weight: 700 !important; }
+.platform-data-table td:is([data-label$="金额"], [data-label="金额（元）"], [data-label*="费用"], [data-label*="总测试费"], [data-label*="总加工费"], [data-label*="总维修费"]) {
+  font-weight: 750;
+  font-size: var(--text-key);
+  color: #2158bd;
+  white-space: nowrap;
+}
+.platform-mobile-record :is([data-label$="金额"], [data-label="金额（元）"], [data-label*="费用"]) { grid-column: 1 / -1; }
+.platform-mobile-record :is([data-label$="金额"], [data-label="金额（元）"], [data-label*="费用"]) dd { font-size: var(--text-key); font-weight: 750; color: #2158bd; white-space: nowrap; }
+.platform-data-table td[data-label="当前库存"], .platform-mobile-record [data-label="当前库存"] dd { font-size: var(--text-heading); font-weight: 750; }
+
 .platform-task-empty {
   display: flex;
   align-items: center;
@@ -706,14 +785,14 @@
     padding: 13px;
   }
   .platform-task-name {
-    font-size: var(--text-label);
+    font-size: var(--text-body);
     gap: 7px;
   }
   .platform-task-grid {
     grid-template-columns: minmax(0, 1fr);
   }
   .platform-task-link.is-compact .platform-task-name {
-    font-size: var(--text-caption);
+    font-size: var(--text-body);
   }
   .platform-task-link.is-compact .platform-task-name svg {
     width: 15px;
@@ -739,7 +818,7 @@
     gap: 0;
   }
   .platform-task-action {
-    font-size: var(--text-caption);
+    font-size: var(--text-label);
   }
   .platform-task-report-link {
     padding: 8px;
@@ -754,22 +833,20 @@
     gap: 7px;
   }
   .platform-business-metrics.is-single .platform-business-statuses dt {
-    font-size: var(--text-caption);
+    font-size: var(--text-label);
   }
   .platform-status-jump {
-    font-size: 21px;
+    font-size: 24px;
     gap: 6px;
   }
   .platform-business-footer {
     gap: 5px 12px;
-    font-size: var(--text-caption);
+    font-size: var(--text-label);
   }
   .platform-info {
     padding: 8px 10px !important;
   }
-  .platform-info.is-amount > div:last-child {
-    font-size: var(--text-heading) !important;
-  }
+
   .platform-detail-grid > .platform-info.is-long-amount { grid-column: 1 / -1; }
   .platform-request-record > div:first-child {
     gap: 8px !important;
@@ -880,24 +957,24 @@
   background: transparent;
   padding: 8px 2px;
   gap: 6px;
-  grid-template-columns: minmax(0, 1fr) auto auto !important;
+  grid-template-columns: minmax(0, 1fr) auto;
   box-shadow: none;
 }
 .platform-task-module .platform-task-link + .platform-task-link {
   border-top: 1px solid #e4ebf7;
 }
 .platform-task-module .platform-task-name {
-  font-size: var(--text-caption);
+  font-size: var(--text-body);
 }
 .platform-task-module .platform-task-name svg {
   display: none;
 }
 .platform-task-module .platform-task-link > strong {
-  font-size: 19px;
+  font-size: 22px;
 }
 .platform-task-module .platform-task-action {
-  grid-column: auto;
-  font-size: var(--text-caption);
+  grid-column: 1 / -1;
+  font-size: var(--text-label);
 }
 .platform-request-identity {
   margin-top: 8px;
@@ -992,7 +1069,11 @@
   }
   .platform-task-module .platform-task-link {
     min-height: 44px !important;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
+  .platform-task-module .platform-task-action { grid-column: 1 / -1; }
+  .platform-team-progress .platform-task-name { grid-column: 1 / -1; }
+  .platform-team-progress .platform-task-link > strong { grid-row: 2; }
   .platform-request-people {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1119,7 +1200,9 @@
     grid-column: 1 / -1;
   }
   .platform-team-progress .platform-task-link:not(:has(.platform-task-amount)) {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto;
   }
-  .platform-team-progress .platform-task-link > strong { grid-row: 2; }
+  .platform-team-progress section > div { grid-template-columns: minmax(0, 1fr); }
+  .platform-team-progress .platform-task-name { grid-column: 1; }
+  .platform-team-progress .platform-task-link > strong { grid-row: 1; }
 }
