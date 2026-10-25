@@ -12,7 +12,7 @@ test('module tasks combine every actionable stage and exclude other people, wait
   const center = buildTaskCenter({ account:student, workRequests:requests });
   const queue = moduleTaskGroup(center,'test');
   assert.equal(queue.count,center.byModule.test);
-  assert.deepEqual([...queue.ids],['1','2','3']);
+  assert.deepEqual([...queue.ids],['1','2']);
   assert.equal(queue.title,'测试待办事项');
   assert.equal(moduleTaskGroup(buildTaskCenter({account:student}),'test').count,0);
 });
@@ -43,8 +43,23 @@ test('student tasks separate decisions and completion from waiting, closed and o
   workRequests.push(row(99,'已通过',{applicant_username:'other'}));
   const purchases=[row(40,'待入库',{request_type:undefined}),row(41,'已通过',{request_type:undefined}),row(42,'已完成',{request_type:undefined})];
   const center=buildTaskCenter({account:student,workRequests,purchases});
-  assert.equal(center.total,5); assert.equal(center.byModule.test,4); assert.equal(group(center,'test-waiting').count,1);
+  assert.equal(center.total,4); assert.equal(center.byModule.test,3); assert.equal(group(center,'test-waiting').count,1);
   assert.deepEqual(group(center,'purchases-complete').rows.map(r=>r._id),[40]);
+});
+
+test('withdrawn work, purchase and private-stock requests never become tasks or progress for any role', async () => {
+  const { buildTaskCenter, moduleTaskGroup } = await model;
+  for (const account_type of ['student', 'teacher', 'finance', 'admin']) {
+    const account = { ...student, account_type };
+    const withdrawn = Object.freeze({ ...row(81, '已撤回'), purchaser_username: student.username, review_teacher_username: student.username });
+    const workRequests = ['测试', '加工', '维修'].map((request_type, index) => Object.freeze({ ...withdrawn, _id: 81 + index, request_type }));
+    const center = buildTaskCenter({ account, workRequests, purchases: [withdrawn], stockOutRequests: [withdrawn] });
+    assert.equal(center.total, 0);
+    assert(center.groups.every(item => item.count === 0));
+    for (const module of ['test', 'processing', 'repair', 'purchases', 'stock']) assert.equal(moduleTaskGroup(center, module).count, 0);
+    assert(workRequests.every(item => item.status === '已撤回'));
+    assert.equal(withdrawn.status, '已撤回');
+  }
 });
 test('finance actionable tasks require completed invoice status and use final amounts once',async()=>{
   const {buildTaskCenter}=await model;

@@ -87,10 +87,20 @@ export default function Workspace({
   }
   const status = (
     <div className={`workspace-statusbar platform-sync-status${desktop ? " is-in-toolbar" : ""}`}>
-      <span
-        className={`workspace-sync-dot${syncing ? " is-busy" : syncStatus === "同步完成" || syncStatus === "同步完成。" ? "" : " is-warning"}`}
-      />
-      <span title={`同步状态：${syncStatus}`}>同步状态：{syncStatus}</span>
+      <button
+        type="button"
+        className="workspace-sync-control"
+        disabled={syncing}
+        onClick={onSync}
+        title="手动同步"
+        aria-label={syncing ? "同步中…" : "手动同步"}
+      >
+        <Icon name="refresh" className={syncing ? "is-spinning" : ""} />
+      </button>
+      <span className="workspace-sync-state" title={`同步状态：${syncStatus}`}>
+        <span className={`workspace-sync-dot${syncing ? " is-busy" : syncStatus === "同步完成" || syncStatus === "同步完成。" ? "" : " is-warning"}`} />
+        <span>同步状态：{syncStatus}</span>
+      </span>
       <strong className="platform-sync-guidance">
         请在状态为“同步完成”后操作
       </strong>
@@ -201,17 +211,6 @@ export default function Workspace({
               <span>待办</span>
               <b>{taskCenter.total}</b>
             </button>
-            <button
-              type="button"
-              className="workspace-tool"
-              disabled={syncing}
-              onClick={onSync}
-              title="手动同步"
-              aria-label={syncing ? "同步中…" : "手动同步"}
-            >
-              <Icon name="refresh" className={syncing ? "is-spinning" : ""} />
-              <span>手动同步</span>
-            </button>
             <a
               className="workspace-tool"
               href="/help"
@@ -221,6 +220,10 @@ export default function Workspace({
               <Icon name="help" />
               <span>帮助文档</span>
             </a>
+            <span className="workspace-current-account" title={`${avatarName} · ${role}`} aria-label={`当前账号：${avatarName}，${role}`}>
+              <span className="workspace-avatar workspace-current-avatar" aria-hidden="true">{Array.from(avatarName).slice(-2).join("")}</span>
+              <strong>{avatarName}</strong>
+            </span>
             <button
               type="button"
               className="workspace-tool"
@@ -231,9 +234,6 @@ export default function Workspace({
               <Icon name="settings" />
               <span>账户设置</span>
             </button>
-            <span className="workspace-current-account" title={`${avatarName} · ${role}`} aria-label={`当前账号：${avatarName}，${role}`}>
-              {avatarName}
-            </span>
             <button
               type="button"
               className="workspace-tool workspace-logout"

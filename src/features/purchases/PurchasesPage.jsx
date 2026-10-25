@@ -32,7 +32,7 @@ function PurchasesPage({ task, onReimbursementChange, registeredTeacherAccounts 
   useEffect(() => { if (editingRow && !rows.some(row => row._id === editingRow._id)) setEditingRow(null); }, [rows, editingRow]);
   const [inboundRow, setInboundRow] = useState(null);
   const { pending, reviewed, completed, modified } = splitReviewedPurchaseSections(rows);
-  const studentCanEdit = (row) => canSubmit && row.applicant_username === currentUser?.username && ["已撤回", "需修改", "已驳回"].includes(row.status);
+  const studentCanEdit = (row) => canSubmit && row.applicant_username === currentUser?.username && ["需修改", "已驳回"].includes(row.status);
   const studentCanClose = row => canSubmit && row.applicant_username === currentUser?.username && ["已驳回", "需修改"].includes(row.status);
   const studentCanWithdraw = (row) => currentUser?.account_type === "student" && row.applicant_username === currentUser.username && row.status === "待教师审核";
   const canInbound = (row) => canSubmit && currentUser?.account_type === "student" && row.applicant_username === currentUser.username && row.status === "待入库";
@@ -252,9 +252,12 @@ function PurchaseForm({ teacherAccounts = [], materialCatalog = [], onSubmit, pu
         <ReviewTeacherField teachers={teacherAccounts} value={form.review_teacher_username} onChange={value => set("review_teacher_username", value)} />
         <Field required label="预计金额 / 元"><input required type="number" min="0" step="any" style={styles.input} value={form.estimated_price} onChange={(e) => set("estimated_price", Number(e.target.value))} /></Field>
 
-        <Field wide required={isFirstPurchase} label={isFirstPurchase ? "安全事项（首次采购必填）" : "安全事项（可沿用历史）"}>
+        <div className="platform-form-notes">
+        <Field required={isFirstPurchase} label={isFirstPurchase ? "安全事项（首次采购必填）" : "安全事项（可沿用历史）"}>
           <textarea required={isFirstPurchase} style={styles.textarea} value={form.safety_notes} onChange={(e) => set("safety_notes", e.target.value)} placeholder={latestSame?.safety_notes ? `历史记录：${latestSame.safety_notes}` : "危险性、储存要求、个人防护、特殊操作/废弃要求等"} />
         </Field>
+        <Field label="备注（可选）"><textarea style={styles.textarea} value={form.remark} onChange={(e) => set("remark", e.target.value)} /></Field>
+        </div>
 
         {!isFirstPurchase && <Field wide required label="重复采购确认">
           <label style={styles.checkboxRow}>
@@ -263,9 +266,8 @@ function PurchaseForm({ teacherAccounts = [], materialCatalog = [], onSubmit, pu
           </label>
         </Field>}
 
-        <Field wide label="备注（可选）"><textarea style={styles.textarea} value={form.remark} onChange={(e) => set("remark", e.target.value)} /></Field>
         {isEditing && existingAttachments.length > 0 && <Field wide label="已上传附件（可下载/可删除）"><ExistingAttachmentsViewer attachments={existingAttachments} onDownload={onDownloadAttachment} onDelete={onDeleteAttachment} allowDelete /></Field>}
-        <Field wide label="新增附件（可选）"><PreSubmitAttachmentUploader attachments={pendingAttachments} onChange={setPendingAttachments} helper={`可上传报价单、商品截图等。提交前可下载核对或删除；提交后只支持下载，撤回/需修改后可替换。支持格式：${ALLOWED_ATTACHMENT_LABEL}。`} /></Field>
+        <Field wide label="新增附件（可选）"><PreSubmitAttachmentUploader attachments={pendingAttachments} onChange={setPendingAttachments} helper={`可上传报价单、商品截图等。提交前可下载核对或删除；提交后只支持下载，需修改后可替换。支持格式：${ALLOWED_ATTACHMENT_LABEL}。`} /></Field>
         <div style={styles.formActions}><button style={styles.primaryButton}>{submitLabel}</button></div>
       </form>
     </>}

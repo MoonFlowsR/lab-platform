@@ -33,9 +33,9 @@ export async function checkDashboardCounts(browser, origin, out, base, users) {
     const account = { ...user, session_token: 'dashboard-fixture', profile_required: false };
     const role = account.account_type, team = role === 'admin' || account.default_view_scope === 'all';
     const scale = team ? 2 : 1;
-    const expected = [2 * scale + (role === 'admin' ? 1 : 0), 2 * scale, 2 * scale, scale];
+    const expected = [scale + (role === 'admin' ? 1 : 0), 2 * scale, 2 * scale, scale];
     const total = expected.reduce((a, b) => a + b, 0);
-    const countsFor = type => role === 'teacher' && type === '测试' ? [expected[0] - scale, ...expected.slice(1)] : expected;
+    const countsFor = () => expected;
     const label = account.default_view_scope === 'all' ? 'finance' : role;
     const page = await browser.newPage({ viewport: { width, height: 960 } }), errors = [];
     page.on('pageerror', error => errors.push(error.message));

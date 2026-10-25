@@ -63,7 +63,7 @@ export async function checkFinance(browser,origin,out,snapshot,users){
   const tabName=type=>type==='采购'?(role==='teacher'?'采购审核':role==='student'?'采购/入库':'采购记录'):type+(role==='teacher'?'审核':role==='student'?'':'记录');
   if(role==='finance'){
    assert.equal(await page.locator('.workspace-welcome h1').innerText(),'财务工作台');
-   assert.equal(await page.locator('.workspace-current-account').textContent(),account.display_name);
+   assert.equal(await page.locator('.workspace-current-account > strong').textContent(),account.display_name);
    assert.equal(await page.getByTestId('task-total').innerText(),'8');
    assert.equal(await page.locator('.platform-nav').getByRole('button',{name:'账号管理',exact:true}).count(),0);
    assert.equal(await page.getByRole('checkbox').count(),0);

@@ -22,7 +22,7 @@ function WorkRequestsPage({ task, onReimbursementChange, workHistory = [], teach
   const [editingRow, setEditingRow] = useState(null);
   useEffect(() => { if (editingRow && !rows.some(row => row._id === editingRow._id)) setEditingRow(null); }, [rows, editingRow]);
   const { pending, reviewed, completed, modified } = splitReviewedWorkSections(rows);
-  const studentCanEdit = (row) => canSubmit && row.applicant_username === currentUser?.username && ["已撤回", "需修改", "已驳回"].includes(row.status);
+  const studentCanEdit = (row) => canSubmit && row.applicant_username === currentUser?.username && ["需修改", "已驳回"].includes(row.status);
   const studentCanClose = row => canSubmit && row.applicant_username === currentUser?.username && ["已驳回", "需修改"].includes(row.status);
   const studentCanWithdraw = (row) => currentUser?.account_type === "student" && row.applicant_username === currentUser.username && row.status === "待教师审核";
 
@@ -158,14 +158,16 @@ function WorkRequestForm({ workHistory = [], teacherAccounts = [], fixedType, on
           <input required type="number" min="0" step="0.01" style={styles.input} value={form[workFeeKey(fixedType)]} onChange={(e) => set(workFeeKey(fixedType), e.target.value)} />
         </Field>
         <ReviewTeacherField teachers={teacherAccounts} value={form.review_teacher_username} onChange={value => set("review_teacher_username", value)} />
-        {!isRepair && <Field wide label="安全事项（可选）">
+        <div className="platform-form-notes">
+        {!isRepair && <Field label="安全事项（可选）">
           <textarea style={styles.textarea} value={form.safety_notes} onChange={(e) => set("safety_notes", e.target.value)} placeholder="如有特殊安全要求请填写" />
         </Field>}
-        <Field wide label="备注（可选）">
+        <Field label="备注（可选）">
           <textarea style={styles.textarea} value={form.remark} onChange={(e) => set("remark", e.target.value)} />
         </Field>
+        </div>
         {isEditing && existingAttachments.length > 0 && <Field wide label="已上传附件（可下载/可删除）"><ExistingAttachmentsViewer attachments={existingAttachments} onDownload={onDownloadAttachment} onDelete={onDeleteAttachment} allowDelete /></Field>}
-        <Field wide label="新增附件（可选）"><PreSubmitAttachmentUploader attachments={pendingAttachments} onChange={setPendingAttachments} helper={`提交前可下载核对或删除；提交后只支持下载，撤回/需修改后可删除错误附件并重新上传。支持格式：${ALLOWED_ATTACHMENT_LABEL}。`} /></Field>
+        <Field wide label="新增附件（可选）"><PreSubmitAttachmentUploader attachments={pendingAttachments} onChange={setPendingAttachments} helper={`提交前可下载核对或删除；提交后只支持下载，需修改后可替换。支持格式：${ALLOWED_ATTACHMENT_LABEL}。`} /></Field>
         <div style={styles.formActions}><button disabled={busy} style={styles.primaryButton}>{busy ? "正在保存申请和附件..." : submitLabel}</button></div>
       </form>
     </>}

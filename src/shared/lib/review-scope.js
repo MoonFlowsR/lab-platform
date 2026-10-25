@@ -10,5 +10,5 @@ export const workScopeMatches = (row, account, scope = "mine") => account?.accou
 export const defaultViewScope = account => (account?.account_type === "finance" || account?.account_type === "teacher" && account.default_view_scope === "all") ? "all" : "mine";
 export const usesTeamOverview = account => account?.account_type === "admin" || defaultViewScope(account) === "all";
 
-// Withdrawn tests leave the teacher queue until the applicant resubmits.
-export const workRecordVisible = (row, account) => !(account?.account_type === "teacher" && row.request_type === "测试" && row.status === "已撤回");
+// A withdrawn request stays in storage and audit history, outside daily records.
+export const requestRecordVisible = row => row.status !== "已撤回";
