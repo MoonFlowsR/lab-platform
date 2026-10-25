@@ -8,6 +8,7 @@ import { Badge, DataTable, Empty, Field, Info, SearchableSelect } from "./ui.jsx
 import RecentRecords from "./RecentRecords.jsx";
 import { completionChangesText, isCompletedWork, workFee } from "../../features/work/work-values.js";
 import { formatPublicNumber } from "../lib/public-number.js";
+import './request-scope.css';
 
 function ClosureInfo({ row }) {
   return <p style={styles.meta}>关闭人：<strong className="platform-identity"><PersonName value={row.closed_by_name || row.closed_by_username || "未记录"} /></strong> · 关闭时间：{formatDate(row.closed_at)} · <strong>不计完成费用或入库金额</strong></p>;
@@ -43,10 +44,10 @@ function RequestHistorySection({ title, rows, renderCard, emptyText, className =
 function ReviewTeacherField({ teachers, value, onChange }) {
   return <Field required label="审核教师"><SearchableSelect required value={value || ""} onChange={onChange} options={teachers.map(teacher => ({ value: teacher.username, label: teacher.display_name && teacher.display_name !== teacher.username ? `${teacher.display_name}（${teacher.username}）` : teacher.display_name || teacher.username }))} placeholder="搜索或选择审核教师" />{teachers.length === 0 && <small style={{ ...styles.muted, color: "#b91c1c" }}>暂无可选教师，请联系管理员启用教师账号。</small>}</Field>;
 }
-function RequestViewScope({ scope, onChange, label, moduleName }) {
-  return <section aria-label={label} className="platform-purchase-scope" style={styles.card}>
+function RequestViewScope({ scope, onChange, label, moduleName, recordLabel = "进度" }) {
+  return <section aria-label={label} className="platform-request-scope">
     <Field label="查看范围"><SearchableSelect value={scope} onChange={onChange} clearOnInput={false} options={[{ value: "mine", label: "本人" }, { value: "all", label: "全部" }]} placeholder="搜索或选择查看范围" /></Field>
-    <small style={styles.muted}>调整查看范围可查看团队内其它{moduleName}进度</small>
+    <small>调整查看范围可查看团队内其它{moduleName}{recordLabel}</small>
   </section>;
 }
 function ReviewHistory({ row, logs = [] }) {

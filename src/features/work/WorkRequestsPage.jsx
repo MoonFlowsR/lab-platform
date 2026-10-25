@@ -76,9 +76,8 @@ function WorkRequestsPage({ task, onReimbursementChange, workHistory = [], teach
       units={units}
     />}
 
-    {!task && ["teacher", "student"].includes(currentUser?.account_type) && <RequestViewScope key={fixedType} scope={reviewScope} onChange={onReviewScopeChange} label={`${fixedType}${canReview ? "审核" : ""}查看范围`} moduleName={fixedType} />}
     {task ? <RequestHistorySection showTitle={false} className={"platform-section-" + (task.section || "pending")} title={task.title} rows={rows} renderCard={renderCard} defaultExpanded emptyText={task.count ? "没有符合搜索的记录。" : "当前没有此类待办。"} /> : <>
-    <DashboardMetrics showReimbursement={currentUser?.account_type === "finance"} workRequests={rows} types={[fixedType]} mode={canSubmit ? "student" : canReview ? "review" : "team"} money={money} />
+    <DashboardMetrics showReimbursement={currentUser?.account_type === "finance"} workRequests={rows} types={[fixedType]} mode={canSubmit ? "student" : canReview ? "review" : "team"} money={money} viewScope={["teacher", "student"].includes(currentUser?.account_type) && <RequestViewScope key={fixedType} scope={reviewScope} onChange={onReviewScopeChange} label={`${fixedType}${canReview ? "审核" : ""}查看范围`} moduleName={fixedType} />} />
     <RequestHistorySection className="platform-section-pending" title={`待审批${fixedType}工单`} rows={pending} renderCard={renderCard} emptyText="暂无待审批工单。" />
     <RequestHistorySection className="platform-section-approved" title={`已审批${fixedType}工单`} rows={reviewed} renderCard={renderCard} emptyText="暂无已审批未完成工单。" />
     <RequestHistorySection className="platform-section-reviewed" title={`已完成${fixedType}工单`} rows={completed} renderCard={renderCard} emptyText="暂无已完成工单。" />

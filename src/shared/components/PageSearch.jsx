@@ -35,7 +35,7 @@ export default function PageSearch({ value, onChange }) {
           }
         }}
       />
-      {value ? (
+      {value && (
         <button
           type="button"
           aria-label="清空搜索"
@@ -46,8 +46,6 @@ export default function PageSearch({ value, onChange }) {
         >
           <Icon name="close" size={16} />
         </button>
-      ) : (
-        <kbd aria-hidden="true">Ctrl K</kbd>
       )}
     </div>
   );

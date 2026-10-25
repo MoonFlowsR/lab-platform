@@ -22,14 +22,6 @@
 .platform-page-search input::-webkit-search-cancel-button {
   -webkit-appearance: none;
 }
-.platform-page-search kbd {
-  border: 1px solid var(--line);
-  border-radius: 5px;
-  padding: 2px 5px;
-  color: #8391a4;
-  font: 10px var(--font-ui);
-  white-space: nowrap;
-}
 .platform-page-search button {
   display: grid;
   place-items: center;
@@ -180,7 +172,14 @@
   font-variant-numeric: tabular-nums;
 }
 .platform-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   border: 1px solid #eef2f7;
+}
+.platform-info .platform-reimbursement-state {
+  display: flex;
+  align-items: center;
 }
 .platform-badge {
   display: inline-flex !important;
@@ -203,7 +202,17 @@
   font-size: var(--text-caption);
 }
 .platform-record-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.5;
   font-weight: 600 !important;
+}
+.platform-dialog-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.5;
 }
 .platform-data-table {
   font-variant-numeric: tabular-nums;
@@ -454,7 +463,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 20px 0;
+  padding: 6px 0;
   font-size: var(--text-body);
 }
 .platform-task-empty > span {
@@ -727,9 +736,6 @@
 @media (max-width: 640px) {
   .platform-page-search {
     min-height: 40px;
-  }
-  .platform-page-search kbd {
-    display: none;
   }
   .platform-page-search input {
     font-size: var(--text-body) !important;
