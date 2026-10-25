@@ -6,7 +6,7 @@ import { showModuleRecords } from './module-records.mjs';
 export async function checkWrapping(browser, origin, snapshot, users) {
   const [admin, teacher, student] = users;
   const finance = { ...teacher, account_type: 'finance', username: 'qa-wrapping-finance', display_name: '示例财务' };
-  const cases = [[320, student], [360, teacher], [390, admin], [430, finance], [768, finance], [1024, admin], [1366, teacher], [1920, student]];
+  const cases = [[320, student], [320, teacher], [320, finance], [320, admin], [360, teacher], [390, admin], [430, finance], [768, finance], [1024, admin], [1366, teacher], [1920, student]];
   const results = [];
   for (const [width, user] of cases) {
     const account = { ...user, profile_required: false, session_token: 'isolated-wrapping' };
