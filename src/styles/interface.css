@@ -54,18 +54,48 @@
 }
 .platform-module-filters > .platform-field { flex: 0 1 220px; }
 .platform-module-filters > .platform-date-filter { flex: 1 1 220px; }
+.platform-query-tools.is-student {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.platform-query-tools.is-student > .platform-filter-bar {
+  flex: 1 1 260px;
+  min-width: min(100%, 220px);
+  align-content: center;
+}
+.platform-query-tools.is-student > .platform-module-filters {
+  flex: 0 1 240px;
+  max-width: 100%;
+}
+.platform-query-tools.is-student > .platform-module-filters:has(> .platform-field) { flex-basis: 512px; }
+.platform-query-tools.is-student > .platform-module-filters:has(.platform-date-control) { flex-basis: 100%; }
+.platform-workspace .platform-query-tools.is-student > section { margin-bottom: 0 !important; }
 .platform-page-heading {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 12px !important;
   padding: 3px 0 0 !important;
   margin: 5px 0 18px !important;
 }
 .platform-page-heading h2 {
+  grid-column: 1;
+  grid-row: 1;
   font-size: var(--text-page) !important;
   font-weight: 720;
   letter-spacing: -0.4px;
 }
 .platform-page-heading p {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin: 0 !important;
   font-size: var(--text-label) !important;
 }
+.platform-page-heading > div { display: contents; }
+.platform-page-heading > button { grid-column: 2; grid-row: 1; justify-self: end; }
 .platform-export-button {
   display: inline-flex;
   align-items: center;
@@ -422,6 +452,10 @@
   padding: 20px;
 }
 .platform-task-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px 16px;
   border-bottom: 1px solid #edf1f7;
   padding-bottom: 14px;
   margin-bottom: 14px;
@@ -437,8 +471,14 @@
   vertical-align: baseline;
 }
 .platform-task-heading p {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin-top: 0;
   font-size: var(--text-caption);
 }
+.platform-task-heading > div { display: contents; }
+.platform-task-heading h2 { grid-column: 1; grid-row: 1; }
+.platform-task-heading > button { grid-column: 2; grid-row: 1; justify-self: end; }
 .platform-task-report-link {
   font-size: var(--text-caption);
   background: var(--accent-soft);
@@ -830,8 +870,13 @@
   }
   .platform-module-filters > .platform-field,
   .platform-module-filters > .platform-date-filter { flex-basis: 100%; }
+  .platform-query-tools.is-student { gap: 10px; margin-bottom: 12px; }
+  .platform-query-tools.is-student > .platform-filter-bar { flex-basis: 100%; }
+  .platform-query-tools.is-student > .platform-module-filters { flex-grow: 1; }
+  .platform-query-tools.is-student > .platform-module-filters,
+  .platform-query-tools.is-student > .platform-module-filters:has(> .platform-field) { flex-basis: 100%; }
   .platform-page-heading {
-    gap: 8px !important;
+    gap: 4px 8px !important;
     margin-bottom: 14px !important;
   }
   .platform-page-heading h2 {
@@ -852,20 +897,11 @@
   .platform-task-heading {
     padding-bottom: 13px;
     margin-bottom: 13px;
-    gap: 8px;
+    gap: 6px 8px;
   }
   .platform-task-heading h2 {
     font-size: 18px;
   }
-  .platform-task-heading {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 6px 8px;
-  }
-  .platform-task-heading > div { display: contents; }
-  .platform-task-heading h2 { grid-column: 1; grid-row: 1; }
-  .platform-task-heading p { grid-column: 1 / -1; grid-row: 2; margin-top: 0; }
-  .platform-task-heading > button { grid-column: 2; grid-row: 1; justify-self: end; }
   .platform-task-heading h2 span {
     font-size: 26px;
     margin-left: 5px;

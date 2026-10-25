@@ -22,7 +22,6 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
 .platform-date-input::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;opacity:0;cursor:pointer}
 .platform-date-control:focus-within .platform-date-display{outline:3px solid #93c5fd;outline-offset:2px}
 .platform-table-scroll{max-width:100%}
-.platform-data-table td{vertical-align:top}
 .platform-record-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;width:100%;margin-top:12px}
 .platform-record-actions.is-compact{margin-top:0}
 @media(min-width:641px){
@@ -261,6 +260,7 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
 .platform-reimbursement-heading{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px 16px;margin-bottom:12px}
 .platform-reimbursement-heading h2{margin:0;font-size: var(--text-heading);color:#0f172a}
 .platform-reimbursement-heading details{max-width:100%;font-size: var(--text-caption);color:#64748b}
+.platform-reimbursement-heading details:not([open]){align-self:center}
 .platform-reimbursement-heading summary{cursor:pointer;color:#475569;text-align:right}
 .platform-reimbursement-heading details p{max-width:560px;margin:8px 0 0;line-height:1.6}
 .platform-reimbursement-figures{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0}
