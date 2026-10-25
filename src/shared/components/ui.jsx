@@ -174,7 +174,7 @@ function SearchableSelect({ value, onChange, options = [], placeholder = "搜索
         style={{ ...styles.searchSelectOption, ...((item.value === String(value ?? "") || index === activeIndex) ? styles.searchSelectOptionActive : {}) }}
         onMouseDown={(e) => e.preventDefault()}
         onClick={event => { event.preventDefault(); event.stopPropagation(); choose(item); }}
-      ><span>{item.label}</span>{matchingTerm(item) && <small style={{ display: "block", fontSize: 12, fontWeight: 400, color: "#64748b", marginTop: 3, lineHeight: 1.5, overflowWrap: "anywhere" }}>匹配：{matchingTerm(item)}</small>}</button>)}
+      ><span>{item.label}</span>{matchingTerm(item) && <small style={{ display: "block", fontSize: "var(--text-caption)", fontWeight: 400, color: "#64748b", marginTop: 3, lineHeight: 1.5, overflowWrap: "anywhere" }}>匹配：{matchingTerm(item)}</small>}</button>)}
     </div>}
   </div>;
 }

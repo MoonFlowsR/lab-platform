@@ -1,5 +1,6 @@
 import { checkWorkspace } from './workspace.mjs';
 import { checkReadability } from './readability.mjs';
+import { checkTypography } from './typography.mjs';
 import { openNavigation } from './navigation.mjs';
 import { showModuleRecords } from './module-records.mjs';
 import { checkHelp } from './help.mjs';
@@ -95,7 +96,8 @@ async function checkOperations() {
  ];
 }
 try {
- if (process.env.UI_SUITE === 'operations') { results.push(...await checkOperations()); }
+ if (process.env.UI_SUITE === 'typography') { results.push(...await checkTypography(browser,origin,snapshot,[admin,teachers[0],studentA])); }
+ else if (process.env.UI_SUITE === 'operations') { results.push(...await checkOperations()); }
  else if (process.env.UI_SUITE === 'workspace') { results.push(...await checkWorkspace(browser,origin,out,snapshot,[admin,teachers[0],studentA])); } else {
  if (process.env.UI_SUITE !== 'tasks') {
  for (const width of [1440,390,320]) for(const user of [admin,teachers[0],studentA]) {
@@ -190,6 +192,7 @@ try {
  if (process.env.UI_SUITE !== 'tasks') {
  results.push(...await checkWorkspace(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkReadability(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
+ results.push(...await checkTypography(browser,origin,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkRecordVisibility(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkHelp(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkHelpPolling(browser,origin,[admin,teachers[0],studentA]));

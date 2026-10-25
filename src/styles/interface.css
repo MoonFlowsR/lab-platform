@@ -12,7 +12,7 @@
   min-width: 0;
   outline: none;
   border: 0;
-  font-size: 14px;
+  font-size: var(--text-body);
   padding: 9px 0;
   background: transparent;
 }
@@ -56,12 +56,12 @@
   margin: 5px 0 18px !important;
 }
 .platform-page-heading h2 {
-  font-size: 23px !important;
+  font-size: var(--text-page) !important;
   font-weight: 720;
   letter-spacing: -0.4px;
 }
 .platform-page-heading p {
-  font-size: 13px !important;
+  font-size: var(--text-label) !important;
 }
 .platform-export-button {
   display: inline-flex;
@@ -70,7 +70,7 @@
   gap: 7px;
   border: 1px solid var(--line-strong) !important;
   color: #35506e !important;
-  font-size: 13px;
+  font-size: var(--text-label);
   min-height: 38px !important;
   background: var(--surface) !important;
 }
@@ -89,17 +89,17 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 650;
 }
 .platform-filter-panel-heading h2 svg {
   color: #6b809d;
 }
 .platform-filter-reset {
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 .platform-filter-summary {
-  font-size: 11px;
+  font-size: var(--text-caption);
   margin-bottom: 10px;
 }
 .platform-field {
@@ -150,7 +150,7 @@
   outline-offset: 4px;
 }
 .platform-workspace section[class*="platform-section-"] h2 {
-  font-size: 17px !important;
+  font-size: var(--text-heading) !important;
   font-weight: 680;
 }
 .platform-request-record {
@@ -186,7 +186,7 @@
   align-items: center;
   border-radius: 6px !important;
   padding: 4px 8px !important;
-  font-size: 11px !important;
+  font-size: var(--text-caption) !important;
   line-height: 1.5;
 }
 .platform-record-actions {
@@ -198,7 +198,7 @@
   border-top: 0;
 }
 .platform-danger-actions button {
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 .platform-record-actions button {
   font-weight: 600 !important;
@@ -207,7 +207,7 @@
   font-variant-numeric: tabular-nums;
 }
 .platform-data-table th {
-  font-size: 12px;
+  font-size: var(--text-caption);
   font-weight: 650;
   padding-block: 12px !important;
 }
@@ -218,27 +218,27 @@
   background: #f5f8fe;
 }
 .platform-table-details summary {
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 .platform-record-limit {
   border-radius: 8px;
   background: var(--surface-muted);
   padding: 9px 12px;
   color: #5b6b81;
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 .platform-record-limit strong {
-  font-size: 15px;
+  font-size: var(--text-body);
 }
 .platform-record-limit button {
   min-height: 44px;
   padding: 9px 12px;
-  font-size: 12px;
+  font-size: var(--text-caption);
   border-radius: 7px;
 }
 .platform-record-more button {
   min-height: 38px;
-  font-size: 12px;
+  font-size: var(--text-caption);
   border-radius: 8px;
 }
 .platform-empty-state {
@@ -249,7 +249,7 @@
   background: #f8fafc;
   border-radius: 8px !important;
   padding: 18px !important;
-  font-size: 13px;
+  font-size: var(--text-label);
 }
 .platform-empty-state svg {
   color: #8c9eb4;
@@ -268,7 +268,7 @@
   font-weight: 720;
 }
 .platform-business-statuses dt {
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 .platform-status-jump {
   display: inline-flex;
@@ -282,7 +282,7 @@
   cursor: pointer;
 }
 .platform-status-jump span {
-  font-size: 12px;
+  font-size: var(--text-caption);
   color: #8b9db6;
 }
 .platform-status-jump:hover {
@@ -302,12 +302,12 @@
 }
 .platform-task-center {
   border-top: 1px solid var(--line);
-  padding: 24px;
+  padding: 20px;
 }
 .platform-task-heading {
   border-bottom: 1px solid #edf1f7;
-  padding-bottom: 19px;
-  margin-bottom: 18px;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
 }
 .platform-task-heading h2 {
   font-size: 19px;
@@ -320,10 +320,10 @@
   vertical-align: baseline;
 }
 .platform-task-heading p {
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 .platform-task-report-link {
-  font-size: 12px;
+  font-size: var(--text-caption);
   background: var(--accent-soft);
   color: var(--accent);
   border: 0;
@@ -337,8 +337,8 @@
   background: #f8faff;
   border: 1px solid #dfe8f7;
   border-radius: 10px;
-  padding: 18px;
-  gap: 13px 16px;
+  padding: 16px;
+  gap: 10px 16px;
 }
 .platform-task-link:hover {
   background: #f0f5ff;
@@ -349,7 +349,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 600;
 }
 .platform-task-name .platform-icon {
@@ -360,17 +360,17 @@
   font-weight: 700;
 }
 .platform-task-action {
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 .platform-task-amount {
-  font-size: 13px;
+  font-size: var(--text-label);
 }
 .platform-task-empty {
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 20px 0;
-  font-size: 14px;
+  font-size: var(--text-body);
 }
 .platform-task-empty > span {
   display: grid;
@@ -389,12 +389,12 @@
   padding: 22px;
 }
 .platform-overview-section h2 {
-  font-size: 16px;
+  font-size: var(--text-body);
   font-weight: 680;
   margin-bottom: 18px;
 }
 .platform-overview-section h2 small {
-  font-size: 11px;
+  font-size: var(--text-caption);
 }
 .platform-overview-warnings .platform-task-link {
   background: #fff;
@@ -409,7 +409,7 @@
   gap: 8px;
 }
 .platform-overview-shortcuts button {
-  font-size: 12px;
+  font-size: var(--text-caption);
   background: #f7f9fd;
   border: 0;
   min-height: 36px;
@@ -425,11 +425,11 @@
   border-radius: 10px;
 }
 .platform-task-filter h2 {
-  font-size: 17px;
+  font-size: var(--text-heading);
   font-weight: 650;
 }
 .platform-task-filter button {
-  font-size: 12px;
+  font-size: var(--text-caption);
   background: #fff;
   min-height: 38px;
 }
@@ -449,7 +449,7 @@
   align-content: center;
 }
 .platform-loading strong {
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 500;
 }
 .platform-loading-mark {
@@ -516,7 +516,7 @@
   align-items: center;
   gap: 12px;
   color: #a0bce7;
-  font-size: 12px;
+  font-size: var(--text-caption);
   letter-spacing: 1px;
   margin-bottom: 34px;
 }
@@ -527,7 +527,7 @@
   letter-spacing: -0.5px;
 }
 .platform-login-lead {
-  font-size: 13px;
+  font-size: var(--text-label);
   line-height: 1.9;
   color: #adbfda;
   margin-top: 12px;
@@ -547,11 +547,11 @@
   margin-top: 3px;
 }
 .platform-login-roles strong {
-  font-size: 13px;
+  font-size: var(--text-label);
   font-weight: 600;
 }
 .platform-login-roles p {
-  font-size: 12px;
+  font-size: var(--text-caption);
   color: #adbfda;
   line-height: 1.75;
   margin-top: 3px;
@@ -561,7 +561,7 @@
   padding-top: 20px;
   border-top: 1px solid #ffffff15;
   color: #9fb3d0;
-  font-size: 11px;
+  font-size: var(--text-caption);
   line-height: 1.7;
 }
 .platform-login-form {
@@ -575,7 +575,7 @@
 }
 .platform-login-form-heading p {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-caption);
   margin-top: 7px;
 }
 .platform-login-form > div:nth-child(2) {
@@ -588,7 +588,7 @@
 .platform-login-form > div:nth-child(2) button {
   flex: 1;
   border-radius: 6px !important;
-  font-size: 13px;
+  font-size: var(--text-label);
   padding: 9px 10px !important;
   background: transparent !important;
   color: var(--muted) !important;
@@ -617,7 +617,7 @@
   top: 3px;
   bottom: 3px;
   padding: 5px 10px;
-  font-size: 12px;
+  font-size: var(--text-caption);
   color: var(--muted);
   cursor: pointer;
 }
@@ -627,11 +627,11 @@
   padding: 0 !important;
   margin-top: 24px !important;
   color: var(--muted) !important;
-  font-size: 11px !important;
+  font-size: var(--text-caption) !important;
   align-items: center !important;
 }
 .platform-login-help {
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 @media (min-width: 1100px) {
   .platform-overview-columns {
@@ -647,7 +647,7 @@
     display: none;
   }
   .platform-page-search input {
-    font-size: 16px !important;
+    font-size: var(--text-body) !important;
   }
   .platform-workspace .platform-filter-bar {
     padding: 5px 12px !important;
@@ -661,11 +661,11 @@
     font-size: 21px !important;
   }
   .platform-page-heading p {
-    font-size: 12px !important;
+    font-size: var(--text-caption) !important;
   }
   .platform-export-button {
     padding: 8px 10px !important;
-    font-size: 12px;
+    font-size: var(--text-caption);
   }
   .platform-task-center,
   .platform-overview-section {
@@ -685,20 +685,20 @@
     margin-left: 5px;
   }
   .platform-task-heading p {
-    font-size: 12px;
+    font-size: var(--text-caption);
   }
   .platform-task-link {
     padding: 13px;
   }
   .platform-task-name {
-    font-size: 13px;
+    font-size: var(--text-label);
     gap: 7px;
   }
   .platform-task-grid {
     grid-template-columns: minmax(0, 1fr);
   }
   .platform-task-link.is-compact .platform-task-name {
-    font-size: 12px;
+    font-size: var(--text-caption);
   }
   .platform-task-link.is-compact .platform-task-name svg {
     width: 15px;
@@ -711,14 +711,14 @@
     gap: 0;
   }
   .platform-task-action {
-    font-size: 12px;
+    font-size: var(--text-caption);
   }
   .platform-task-report-link {
     padding: 8px;
     min-width: 92px;
   }
   .platform-task-empty {
-    font-size: 13px;
+    font-size: var(--text-label);
     padding: 13px 0;
   }
   .platform-business-metrics.is-single .platform-business-statuses {
@@ -726,7 +726,7 @@
     gap: 7px;
   }
   .platform-business-metrics.is-single .platform-business-statuses dt {
-    font-size: 11px;
+    font-size: var(--text-caption);
   }
   .platform-status-jump {
     font-size: 21px;
@@ -734,13 +734,13 @@
   }
   .platform-business-footer {
     gap: 5px 12px;
-    font-size: 11px;
+    font-size: var(--text-caption);
   }
   .platform-info {
     padding: 8px 10px !important;
   }
   .platform-info.is-amount > div:last-child {
-    font-size: 17px !important;
+    font-size: var(--text-heading) !important;
   }
   .platform-detail-grid > .platform-info.is-long-amount { grid-column: 1 / -1; }
   .platform-request-record > div:first-child {
@@ -767,10 +767,10 @@
   }
   .platform-empty-state {
     padding: 13px !important;
-    font-size: 12px;
+    font-size: var(--text-caption);
   }
   .platform-filter-panel-heading h2 {
-    font-size: 13px;
+    font-size: var(--text-label);
   }
   .platform-filter-summary {
     margin-bottom: 0;
@@ -792,13 +792,13 @@
   }
   .platform-login-brand {
     margin-bottom: 12px;
-    font-size: 10px;
+    font-size: var(--text-caption);
   }
   .platform-login-intro h1 {
     font-size: 23px;
   }
   .platform-login-lead {
-    font-size: 12px;
+    font-size: var(--text-caption);
     margin-top: 7px;
   }
   .platform-login-roles {
@@ -822,7 +822,7 @@
   }
 }
 .platform-task-grid {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
 }
 .platform-task-grid.is-grouped {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
@@ -838,7 +838,7 @@
   display: flex;
   gap: 8px;
   align-items: center;
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 650;
   margin: 0 0 8px;
 }
@@ -859,7 +859,7 @@
   border-top: 1px solid #e4ebf7;
 }
 .platform-task-module .platform-task-name {
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 .platform-task-module .platform-task-name svg {
   display: none;
@@ -869,11 +869,11 @@
 }
 .platform-task-module .platform-task-action {
   grid-column: auto;
-  font-size: 11px;
+  font-size: var(--text-caption);
 }
 .platform-request-identity {
   margin-top: 8px;
-  font-size: 12px;
+  font-size: var(--text-caption);
   color: var(--muted);
 }
 .platform-request-reference {
@@ -885,11 +885,11 @@
 }
 .platform-request-reference > span {
   color: #506783;
-  font-size: 11px;
+  font-size: var(--text-caption);
   letter-spacing: 0.2px;
 }
 .platform-request-reference time {
-  font-size: 11px;
+  font-size: var(--text-caption);
 }
 .platform-request-people {
   display: flex;
@@ -911,11 +911,11 @@
 .platform-page-heading h2, .platform-request-record h3, .platform-stock-request h3 { text-wrap: pretty; }
 .platform-request-people small {
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--text-caption);
   flex-shrink: 0;
 }
 .platform-request-people .platform-identity {
-  font-size: 13px;
+  font-size: var(--text-body);
   font-weight: 650 !important;
 }
 .platform-page-error {
@@ -937,7 +937,7 @@
 }
 .platform-page-error p {
   color: var(--muted);
-  font-size: 14px;
+  font-size: var(--text-body);
 }
 .platform-page-error button {
   padding: 10px 18px;
@@ -981,7 +981,7 @@
     gap: 3px 10px;
   }
   .platform-request-people .platform-identity {
-    font-size: 13px !important;
+    font-size: var(--text-body) !important;
   }
 }
 .platform-login-mobile-roles {
@@ -1006,7 +1006,7 @@
 }
 .help-navigation-guide {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--text-label);
   line-height: 1.7;
   padding: 0 1px;
   margin: -4px 0 18px;
@@ -1021,7 +1021,7 @@
   .platform-login-mobile-roles {
     display: block;
     margin-top: 20px;
-    font-size: 12px;
+    font-size: var(--text-caption);
     color: var(--muted);
   }
   .platform-login-mobile-roles summary {
@@ -1037,7 +1037,7 @@
     color: var(--ink);
   }
   .help-navigation-guide {
-    font-size: 12px;
+    font-size: var(--text-caption);
     margin: 0 0 14px;
   }
 }
@@ -1050,4 +1050,28 @@
 
 .platform-login > section.platform-login-layout {
   padding: 0 !important;
+}
+
+/* Keep related facts close even when the viewport is much wider than a laptop. */
+@media (min-width: 1100px) {
+  .platform-shell .platform-filter-bar.has-inventory-category:has(.platform-date-filter) {
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 220px) minmax(180px, 220px) !important;
+  }
+  .platform-shell .platform-filter-bar.has-inventory-category:has(.platform-date-filter label:nth-child(2)) {
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 220px) !important;
+  }
+  .platform-filter-bar.has-inventory-category .platform-date-filter:has(label:nth-child(2)) {
+    grid-column: 1 / -1;
+  }
+  .platform-filter-bar.has-inventory-category .platform-date-filter label:only-child { flex: 1; }
+}
+@media (min-width: 1800px) {
+  .platform-request-record .platform-detail-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+  .platform-task-link:not(:has(.platform-task-amount)):not(.is-compact) {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    min-height: 80px;
+  }
+  .platform-task-link:not(:has(.platform-task-amount)):not(.is-compact) .platform-task-action { grid-column: auto; }
 }

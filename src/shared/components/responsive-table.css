@@ -18,7 +18,7 @@
     padding: 13px;
     background: var(--surface);
     min-width: 0;
-    font-size: 14px;
+    font-size: var(--text-body);
   }
   .platform-mobile-record dl {
     display: grid;
@@ -34,7 +34,7 @@
   }
   .platform-mobile-record dt {
     color: var(--muted);
-    font-size: 12px;
+    font-size: var(--text-caption);
     margin-bottom: 3px;
   }
   .platform-mobile-record dd {
@@ -51,7 +51,7 @@
   .platform-mobile-record summary {
     cursor: pointer;
     color: var(--accent);
-    font-size: 13px;
+    font-size: var(--text-label);
     padding-block: 5px;
   }
   .platform-mobile-record details dl {
