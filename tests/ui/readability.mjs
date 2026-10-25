@@ -3,7 +3,7 @@ import path from 'node:path';
 import { openNavigation } from './navigation.mjs';
 import { showModuleRecords } from './module-records.mjs';
 
-async function assertSingleLine(node, message) {
+export async function assertSingleLine(node, message) {
   const geometry = await node.evaluate(element => {
     const range = document.createRange();
     range.selectNodeContents(element);

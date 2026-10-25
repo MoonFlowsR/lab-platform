@@ -30,14 +30,16 @@ export async function checkHelpPolling(browser, origin, users) {
     await page.clock.runFor(20000);
     assert.equal(requests, 1, 'A pending request must not be duplicated');
     hold = false;
+    const initialResponse = page.waitForResponse(response => new URL(response.url()).pathname === '/api/help-comments');
     await pending.shift().fulfill({ json: { ok: true, comments: [] } });
+    await (await initialResponse).finished();
     await page.getByText('读取讨论超时，请稍后重试。', { exact: true }).waitFor({ state: 'hidden' });
     await page.evaluate(() => { window.fixtureHidden = true; document.dispatchEvent(new Event('visibilitychange')); });
     await page.clock.runFor(35000);
     assert.equal(requests, 1, 'Background tabs must not poll');
-    const resumed = page.waitForRequest(request => new URL(request.url()).pathname === '/api/help-comments');
+    const resumed = page.waitForResponse(response => new URL(response.url()).pathname === '/api/help-comments');
     await page.evaluate(() => { window.fixtureHidden = false; document.dispatchEvent(new Event('visibilitychange')); });
-    await resumed;
+    await (await resumed).finished();
     assert.equal(requests, 2, 'Returning to the tab refreshes immediately');
     assert.deepEqual(errors, []);
     return [{ helpPolling: true, slowRequestDeduplicated: true, hiddenTabPaused: true, visibilityRefresh: true, errors }];
