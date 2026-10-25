@@ -1103,6 +1103,10 @@
 }
 /* Keep short status labels intact; give narrow task cards separate action rows. */
 @media (max-width: 420px) {
+  .platform-filter-panel .platform-student-filter-grid > label:has(.platform-date-control),
+  .platform-date-filter > label:has(.platform-date-control) {
+    grid-column: 1 / -1 !important;
+  }
   .platform-business-metrics.is-single .platform-business-statuses {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
