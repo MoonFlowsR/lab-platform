@@ -67,7 +67,10 @@ export async function checkTypography(browser, origin, snapshot, users) {
       assert.equal(columns, 4, 'Tablet/laptop cards use available horizontal room');
     }
     if (account.account_type === 'student' && width >= 1100) {
-      const filter = page.locator('.platform-filter-bar');
+      const search = page.locator('.platform-filter-bar');
+      const filter = page.locator('.platform-module-filters');
+      assert.equal(await search.getByRole('combobox').count(), 0, 'Search has its own row');
+      assert((await filter.boundingBox()).y >= (await search.boundingBox()).y + (await search.boundingBox()).height, 'Filters appear below search');
       const category = await filter.getByPlaceholder('搜索或选择材料类别').boundingBox();
       const date = await filter.getByPlaceholder('搜索或选择时间范围').boundingBox();
       assert(Math.abs(category.y - date.y) <= 2, 'Default inventory filters share one row');
