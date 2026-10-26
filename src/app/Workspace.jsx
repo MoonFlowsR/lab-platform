@@ -157,6 +157,7 @@ export default function Workspace({
       </aside>
       <div className="workspace-body" inert={menuOpen || undefined}>
         <header className="workspace-topbar">
+          <div className="workspace-topbar-primary">
           <div className="workspace-context">
             <button
               ref={menuButton}
@@ -173,6 +174,8 @@ export default function Workspace({
               <Icon name={activeTab} />
             </span>
             <span>{currentTitle}</span>
+          </div>
+          <WorkspaceSync className="is-in-topbar" />
           </div>
           <div className="workspace-topbar-actions">
             <button
@@ -235,7 +238,6 @@ export default function Workspace({
                     }).format(new Date())}
                   </time>
                 </div>
-                <WorkspaceSync className="is-in-page-toolbar" />
               </div>
             )}
           </div>

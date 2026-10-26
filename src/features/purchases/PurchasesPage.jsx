@@ -13,6 +13,7 @@ import { ClosureInfo, RequestHistorySection, RequestViewScope, ReviewHistory, Re
 import { AttachmentPanel, ExistingAttachmentsViewer, FilePicker, PreSubmitAttachmentUploader } from "../../shared/components/attachments.jsx";
 import RecordActions from "../../shared/components/RecordActions.jsx";
 import DashboardMetrics from "../dashboard/DashboardMetrics.jsx";
+import ExportButton from "../../shared/components/ExportButton.jsx";
 import { purchaseItems, purchaseSuppliers, purchaseUnits, suppliers } from "../../app/config.js";
 import { summarizeMaterials } from "../inventory/material-summary.js";
 import { canonicalMaterialName } from "../../shared/lib/dropdown-normalize.js";
@@ -91,7 +92,8 @@ function PurchasesPage({ task, onReimbursementChange, registeredTeacherAccounts 
     <Toolbar
       title={(isAdmin || currentUser?.account_type === "finance") ? "采购记录" : canReview ? "采购审核" : "采购/入库"}
       description={(isAdmin || currentUser?.account_type === "finance") ? "查看团队采购和入库进度，管理记录。" : canReview ? "审核采购申请；到货后由申请人完成入库。" : "提交采购申请，跟进审核和入库。"}
-      onExport={onExport}
+      onExport={task ? onExport : undefined}
+      scope={!task && (currentUser?.account_type === "teacher" ? <RequestViewScope scope={reviewScope} onChange={onReviewScopeChange} label="采购审核查看范围" moduleName="采购/入库" /> : currentUser?.account_type === "student" ? <RequestViewScope scope={viewScope} onChange={onViewScopeChange} label="采购查看范围" moduleName="采购/入库" /> : null)}
     />
     {canSubmit && !task && !editingRow && <PurchaseForm registeredTeacherAccounts={registeredTeacherAccounts} teacherAccounts={teacherAccounts} materialCatalog={materialCatalog} onSubmit={onAdd} purchaseHistory={purchaseHistory} purchaseCatalog={purchaseCatalog} batches={batches} fundSummary={fundSummary} currentUser={currentUser} units={units} />}
     {canSubmit && editingRow && <PurchaseForm registeredTeacherAccounts={registeredTeacherAccounts} teacherAccounts={teacherAccounts} materialCatalog={materialCatalog}
@@ -115,7 +117,7 @@ function PurchasesPage({ task, onReimbursementChange, registeredTeacherAccounts 
     />}
 
     {task ? <RequestHistorySection showTitle={false} className={"platform-section-" + (task.section || "pending")} title={task.title} rows={rows} renderCard={renderCard} defaultExpanded emptyText={task.count ? "没有符合搜索的记录。" : "当前没有此类待办。"} /> : <>
-    <DashboardMetrics showReimbursement={currentUser?.account_type === "finance"} purchases={rows} types={["采购"]} mode={canSubmit ? "student" : canReview ? "review" : "team"} money={money} viewScope={currentUser?.account_type === "teacher" ? <RequestViewScope scope={reviewScope} onChange={onReviewScopeChange} label="采购审核查看范围" moduleName="采购/入库" /> : currentUser?.account_type === "student" ? <RequestViewScope scope={viewScope} onChange={onViewScopeChange} label="采购查看范围" moduleName="采购/入库" /> : null} />
+    <DashboardMetrics showReimbursement={currentUser?.account_type === "finance"} purchases={rows} types={["采购"]} mode={canSubmit ? "student" : canReview ? "review" : "team"} money={money} actions={<ExportButton onExport={onExport} />} />
     <RequestHistorySection className="platform-section-pending" title="待审批采购工单" rows={pending} renderCard={renderCard} emptyText="暂无待审批工单。" />
     <RequestHistorySection className="platform-section-approved" title="已审批采购工单" rows={reviewed} renderCard={renderCard} emptyText="暂无已审批未完成工单。" />
     <RequestHistorySection className="platform-section-reviewed" title="已完成采购工单" rows={completed} renderCard={renderCard} emptyText="暂无已完成工单。" />

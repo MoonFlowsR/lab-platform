@@ -7,7 +7,7 @@
 | 文件 | 维护内容 |
 | --- | --- |
 | `src/app/Workspace.jsx`、`workspace.css` | 电脑侧栏、手机导航抽屉、顶部操作和工作区布局 |
-| `src/app/WorkspaceSync.jsx` | 共享同步状态、手动同步与顶部工具栏挂载节点 |
+| `src/app/WorkspaceSync.jsx` | 顶栏左侧的同步状态、手动同步及共享工具栏上下文 |
 | `src/styles/tokens.css` | 字体、颜色、间距基础、圆角、焦点与动效约定 |
 | `src/app/styles.js` | 现有组件共用的样式对象，引用设计变量 |
 | `src/styles/interface.css` | 表单、工单、统计、登录页的统一外观和小屏调整 |
@@ -25,7 +25,9 @@
 
 姓名展示使用 `PersonName`，头像从 `splitPersonName` 返回的本人姓名取末两字。姓名原值、搜索和导出保持完整。手机中的长物品名、存放位置占整行；较长金额扩展到整行，避免数字拆断。新增表格复用 `DataTable` 的容器宽度适配，勿单独固定桌面表宽。
 
-公共 `Toolbar` 通过 Portal 挂载到工作区内容首部，标题、同步和导出位于搜索筛选之前，布局由 `interface.css` 维护；总览标题、日期和同步由 `workspace.css` 维护。“查看范围”位于业务统计框右上角，其布局在 `request-scope.css`。筛选列数按容器实际宽度调整，标题、范围和重置共用 `FilterPanel`，手机默认折叠。库存等宽表在容器不超过1050px时使用卡片。下拉菜单仅展开时监听外部点击，`pointerdown` 同时处理鼠标和触屏。
+同步按钮、状态和整句加粗提示统一放在顶栏左侧，由 `WorkspaceSync` 和 `workspace.css` 维护。公共 `Toolbar` 通过 Portal 挂载到内容首部，标题与“查看范围”位于搜索筛选之前，布局在 `interface.css`、`request-scope.css`。测试、加工、维修、采购及库存流水的导出放在统计框右上角；待办视图及库存、报表、账号的导出保留在 `Toolbar`。总览标题与日期由 `workspace.css` 维护。
+
+筛选列数按容器实际宽度调整，标题、范围和重置共用 `FilterPanel`，手机默认折叠。库存等宽表在容器不超过1050px时使用卡片。下拉菜单仅展开时监听外部点击，`pointerdown` 同时处理鼠标和触屏。
 
 帮助讨论只在页面可见且上一请求完成时刷新；恢复可见立即刷新，离开页面取消请求，超时后允许重试。对应实现为 `HelpPage.jsx`，慢请求与后台标签页行为由 `tests/ui/help-polling.mjs` 检查。
 

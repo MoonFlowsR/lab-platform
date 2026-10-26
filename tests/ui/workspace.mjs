@@ -59,9 +59,12 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     assert(!(await page.locator(".platform-workspace").textContent()).includes("账号账号"));
     assert.equal(await page.locator(".workspace-welcome .platform-person-name").count(), 0);
     assert.equal(await page.locator(".platform-sync-status").count(), 1);
-    assert.equal(await page.locator(".workspace-topbar .platform-sync-status").count(), 0);
-    assert.equal(await page.locator('.workspace-toolbar-host .platform-sync-status').count(), 1);
-    assert(await page.locator('.workspace-toolbar-host').evaluate(node => node === node.parentElement.firstElementChild), 'Common controls are first in the content');
+    assert.equal(await page.locator(".workspace-topbar-primary > .platform-sync-status.is-in-topbar").count(), 1);
+    assert.equal(await page.locator('.workspace-toolbar-host .platform-sync-status').count(), 0);
+    assert(await page.locator('.workspace-toolbar-host').evaluate(node => node === node.parentElement.firstElementChild), 'Module controls are first in the content');
+    assert(await page.locator('.workspace-topbar-primary').evaluate(node => node === node.parentElement.firstElementChild), 'Synchronization stays in the left side of the topbar');
+    assert.equal(await page.locator('.platform-sync-guidance').innerText(), '请等待同步完成后操作');
+    assert(await page.locator('.platform-sync-guidance').evaluate(node => node.tagName === 'STRONG' && parseFloat(getComputedStyle(node).fontWeight) >= 700), 'The full synchronization guidance is bold');
     assert.equal(await page.locator(".workspace-current-account").isVisible(), true);
     assert.equal(await page.locator(".workspace-current-account > strong").isVisible(), width > 640);
     assert.equal(await page.locator(".workspace-current-account").evaluate(node => node.nextElementSibling?.getAttribute("aria-label")), "账户设置");
@@ -110,10 +113,12 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
       .click();
     await showModuleRecords(page);
     const moduleToolbar = page.locator('.workspace-toolbar-host > .platform-page-heading');
-    assert.equal(await moduleToolbar.locator('.platform-sync-status').count(), 1, 'Module sync belongs beside export');
-    assert.equal(await page.locator('.workspace-topbar .platform-sync-status').count(), 0, 'No duplicate sync in the header');
+    assert.equal(await moduleToolbar.locator('.platform-sync-status').count(), 0, 'Module toolbar does not duplicate synchronization');
+    assert.equal(await page.locator('.workspace-topbar-primary > .platform-sync-status.is-in-topbar').count(), 1, 'Synchronization remains in the header');
     assert.equal(await page.locator('.platform-sync-status').count(), 1);
-    assert.equal(await moduleToolbar.locator('.platform-export-buttons > button').count(), 1);
+    assert.equal(await moduleToolbar.locator('.platform-toolbar-actions .platform-request-scope').count(), 1, 'View scope belongs in the module toolbar');
+    assert.equal(await moduleToolbar.locator('.platform-export-buttons > button').count(), 0);
+    assert.equal(await page.locator('.platform-business-card .platform-statistics-actions').getByRole('button', { name: /导出.*Excel/ }).count(), 1, 'Business export belongs in the statistics card');
     const statusSizes = await page.locator('.workspace-sync-state,.platform-sync-guidance,.workspace-logout').evaluateAll(nodes => nodes.map(node => parseFloat(getComputedStyle(node).fontSize)));
     assert(statusSizes.every(size => size === statusSizes[0]), 'Synchronization and topbar actions share one font size');
     await page.getByRole("button", { name: /^查看已完成工单/ }).click();
@@ -125,7 +130,7 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     );
     assert(
       (await page.locator("main > .platform-section-reviewed").boundingBox())
-        .y >= 60,
+        .y >= (await page.locator('.workspace-topbar').boundingBox()).height,
       "State heading remains below the sticky toolbar",
     );
     await page.keyboard.press("Control+k");
@@ -150,7 +155,8 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     await page
       .getByRole("heading", { name: "材料批次库存", exact: true })
       .waitFor();
-    assert.equal(await page.locator('.workspace-toolbar-host > .platform-page-heading .platform-export-buttons > button').count(), 2, 'Both inventory exports share the sync toolbar');
+    assert.equal(await page.locator('.workspace-toolbar-host > .platform-page-heading .platform-export-buttons > button').count(), 2, 'Both inventory exports stay in the module toolbar');
+    assert.equal(await page.locator('.workspace-toolbar-host .platform-sync-status').count(), 0, 'Inventory toolbar does not duplicate synchronization');
     const table = page.locator("main .platform-table-responsive").first();
     assert.equal(
       await table.locator(".platform-mobile-records").isVisible(),
