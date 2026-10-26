@@ -4,6 +4,7 @@ import PlatformTitle from "../shared/components/PlatformTitle.jsx";
 import PersonName from "../shared/components/PersonName.jsx";
 import { splitPersonName } from "../shared/lib/person-name.js";
 import { accountTypeLabels, PLATFORM_TITLE } from "./config.js";
+import WorkspaceSync, { WorkspaceSyncContext } from "./WorkspaceSync.jsx";
 import "./workspace.css";
 
 const roleHeadings = {
@@ -85,28 +86,8 @@ export default function Workspace({
     setMenuOpen(false);
     window.scrollTo({ top: 0 });
   }
-  const status = (
-    <div className={`workspace-statusbar platform-sync-status${desktop ? " is-in-toolbar" : ""}`}>
-      <button
-        type="button"
-        className="workspace-sync-control"
-        disabled={syncing}
-        onClick={onSync}
-        title="手动同步"
-        aria-label={syncing ? "同步中…" : "手动同步"}
-      >
-        <Icon name="refresh" className={syncing ? "is-spinning" : ""} />
-      </button>
-      <span className="workspace-sync-state" title={`同步状态：${syncStatus}`}>
-        <span className={`workspace-sync-dot${syncing ? " is-busy" : syncStatus === "同步完成" || syncStatus === "同步完成。" ? "" : " is-warning"}`} />
-        <span>同步状态：{syncStatus}</span>
-      </span>
-      <strong className="platform-sync-guidance">
-        请在状态为“同步完成”后操作
-      </strong>
-    </div>
-  );
   return (
+    <WorkspaceSyncContext.Provider value={{ syncing, syncStatus, onSync }}>
     <div className="platform-shell platform-workspace">
       <a className="platform-skip-link" href="#platform-content">
         跳转到页面内容
@@ -199,7 +180,7 @@ export default function Workspace({
             </span>
             <span>{currentTitle}</span>
           </div>
-          {desktop && status}
+          {activeTab === "dashboard" && desktop && <WorkspaceSync className="is-in-toolbar" />}
           <div className="workspace-topbar-actions">
             <button
               type="button"
@@ -246,7 +227,7 @@ export default function Workspace({
             </button>
           </div>
         </header>
-        {!desktop && status}
+        {activeTab === "dashboard" && !desktop && <WorkspaceSync />}
         <div id="platform-content" className="workspace-content" tabIndex={-1}>
           {activeTab === "dashboard" && (
             <div className="workspace-welcome">
@@ -273,5 +254,6 @@ export default function Workspace({
         </div>
       </div>
     </div>
+    </WorkspaceSyncContext.Provider>
   );
 }

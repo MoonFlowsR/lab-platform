@@ -165,6 +165,7 @@
   color: var(--muted);
 }
 .workspace-topbar-actions {
+  grid-column: 3;
   display: flex;
   flex-shrink: 0;
   align-items: center;
@@ -249,7 +250,7 @@
   gap: 6px 10px;
   margin: 0;
   padding: 10px var(--workspace-gutter) 0;
-  font-size: var(--text-body);
+  font-size: var(--text-label);
   line-height: 1.5;
   color: var(--muted);
 }
@@ -295,10 +296,10 @@
   background: #c83d44;
 }
 .workspace-statusbar .platform-sync-guidance {
-  font-size: var(--text-body);
+  font-size: inherit;
   color: #b91c1c;
   font-weight: 750;
-  line-height: 1.5;
+  line-height: inherit;
   margin-left: 4px;
 }
 .workspace-statusbar.is-in-toolbar {

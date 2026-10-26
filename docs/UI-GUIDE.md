@@ -6,7 +6,8 @@
 
 | 文件 | 维护内容 |
 | --- | --- |
-| `src/app/Workspace.jsx`、`workspace.css` | 电脑侧栏、手机导航抽屉、顶部操作、同步状态和工作区布局 |
+| `src/app/Workspace.jsx`、`workspace.css` | 电脑侧栏、手机导航抽屉、顶部操作和工作区布局 |
+| `src/app/WorkspaceSync.jsx` | 共享同步状态与手动同步；业务模块随导出操作显示，总览保留在顶部 |
 | `src/styles/tokens.css` | 字体、颜色、间距基础、圆角、焦点与动效约定 |
 | `src/app/styles.js` | 现有组件共用的样式对象，引用设计变量 |
 | `src/styles/interface.css` | 表单、工单、统计、登录页的统一外观和小屏调整 |
@@ -24,7 +25,7 @@
 
 姓名展示使用 `PersonName`，头像从 `splitPersonName` 返回的本人姓名取末两字。姓名原值、搜索和导出保持完整。手机中的长物品名、存放位置占整行；较长金额扩展到整行，避免数字拆断。新增表格复用 `DataTable` 的容器宽度适配，勿单独固定桌面表宽。
 
-同步状态的字号、间距和手机换行统一在 `workspace.css` 维护。库存等宽表在容器不超过1050px时使用卡片，避免平板横屏仍需左右对照。下拉菜单仅展开时监听外部点击，使用 `pointerdown` 同时处理鼠标和触屏。
+公共 `Toolbar` 将同步和导出放在同一操作区，布局由 `interface.css` 维护；总览同步布局由 `workspace.css` 维护。筛选列数按容器实际宽度调整，标题、范围和重置共用 `FilterPanel`，手机默认折叠。库存等宽表在容器不超过1050px时使用卡片。下拉菜单仅展开时监听外部点击，`pointerdown` 同时处理鼠标和触屏。
 
 帮助讨论只在页面可见且上一请求完成时刷新；恢复可见立即刷新，离开页面取消请求，超时后允许重试。对应实现为 `HelpPage.jsx`，慢请求与后台标签页行为由 `tests/ui/help-polling.mjs` 检查。
 

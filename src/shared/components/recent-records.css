@@ -13,4 +13,3 @@
 .platform-record-more button:hover{background:#eff6ff;border-color:#60a5fa}
 @media(max-width:640px){.platform-record-limit{align-items:stretch;gap:8px}.platform-record-limit>span{width:100%}.platform-record-limit button{width:100%}.platform-record-more button{padding-inline:10px}}
 
-@media(min-width:900px){.platform-student-filter-grid.has-extra{grid-template-columns:repeat(3,minmax(0,1fr))!important}.platform-student-filter-grid.has-teacher.has-extra{grid-template-columns:repeat(4,minmax(0,1fr))!important}}

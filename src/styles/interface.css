@@ -76,7 +76,7 @@
 .platform-workspace .platform-query-tools.is-student > section { margin-bottom: 0 !important; }
 .platform-page-heading {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 4px 12px !important;
   padding: 3px 0 0 !important;
@@ -95,8 +95,34 @@
   margin: 0 !important;
   font-size: var(--text-label) !important;
 }
-.platform-page-heading > div { display: contents; }
-.platform-page-heading > button { grid-column: 2; grid-row: 1; justify-self: end; }
+.platform-page-heading > div:first-child { display: contents; }
+.platform-page-heading > .platform-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+.platform-export-buttons { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.platform-toolbar-actions .platform-export-button { min-height: 44px !important; }
+.platform-page-heading .workspace-statusbar.is-in-page-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  padding: 0;
+  font-size: var(--text-label);
+  line-height: 1.5;
+}
+.platform-page-heading .workspace-statusbar > .workspace-sync-control { min-width: 44px; min-height: 44px; }
+.platform-page-heading .workspace-statusbar .platform-sync-guidance { margin-left: 0; white-space: nowrap; }
+@media (max-width: 1200px) {
+  .platform-page-heading:has(.platform-export-buttons > button:nth-child(2)) > .platform-toolbar-actions { grid-column: 1 / -1; grid-row: 2; }
+  .platform-page-heading:has(.platform-export-buttons > button:nth-child(2)) p { grid-row: 3; }
+}
 .platform-export-button {
   display: inline-flex;
   align-items: center;
@@ -116,8 +142,16 @@
 .platform-filter-panel {
   border-color: var(--line);
   border-radius: var(--radius);
-  padding: 15px 18px;
+  padding: 12px 16px;
   box-shadow: var(--shadow);
+  container-type: inline-size;
+}
+.platform-filter-panel-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px 14px;
+  align-items: center;
+  margin-bottom: 10px;
 }
 .platform-filter-panel-heading h2 {
   display: inline-flex;
@@ -125,16 +159,50 @@
   gap: 8px;
   font-size: var(--text-body);
   font-weight: 650;
+  grid-column: 1;
+  grid-row: 1;
+  white-space: nowrap;
 }
 .platform-filter-panel-heading h2 svg {
   color: #6b809d;
 }
 .platform-filter-reset {
   font-size: var(--text-caption);
+  grid-column: 3;
+  grid-row: 1;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .platform-filter-summary {
   font-size: var(--text-caption);
-  margin-bottom: 10px;
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  margin: 0;
+}
+.platform-filter-panel .platform-student-filter-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  align-items: end;
+  gap: 10px 12px !important;
+}
+.platform-filter-panel .platform-student-filter-grid > label { grid-column: auto !important; }
+.platform-filter-panel .platform-student-filter-grid > label:where(:last-child:nth-child(odd)) { grid-column: 1 / -1 !important; }
+@container (min-width: 720px) {
+  .platform-filter-panel .platform-student-filter-grid { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
+  .platform-filter-panel .platform-student-filter-grid > label { grid-column: span 2 !important; }
+  .platform-filter-panel .platform-student-filter-grid:where(:has(> label:nth-child(2):last-child), :has(> label:nth-child(4):last-child)) > label { grid-column: span 3 !important; }
+  .platform-filter-panel .platform-student-filter-grid:where(:has(> label:nth-child(5):last-child)) > label:where(:nth-last-child(-n+2)) { grid-column: span 3 !important; }
+}
+@container (min-width: 960px) {
+  .platform-filter-panel .platform-student-filter-grid:where(:has(> label:nth-child(4):last-child)) { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+  .platform-filter-panel .platform-student-filter-grid:where(:has(> label:nth-child(4):last-child)) > label { grid-column: auto !important; }
+}
+@container (min-width: 1240px) {
+  .platform-filter-panel .platform-student-filter-grid:where(:has(> label:nth-child(5):last-child)) { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+  .platform-filter-panel .platform-student-filter-grid:where(:has(> label:nth-child(6):last-child)) { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
+  .platform-filter-panel .platform-student-filter-grid:where(:has(> label:nth-child(5):last-child), :has(> label:nth-child(6):last-child)) > label { grid-column: auto !important; }
 }
 .platform-field {
   display: block;
@@ -175,8 +243,8 @@
   border-left-color: #346bd2 !important;
 }
 .platform-workspace .platform-section-pending {
-  border-color: #e4c16c !important;
-  border-left-color: #b88624 !important;
+  border-color: #f97316 !important;
+  border-left-color: #ea580c !important;
 }
 .platform-workspace .platform-section-approved {
   border-color: #95b2d8 !important;
@@ -883,6 +951,23 @@
   .platform-page-heading h2 {
     font-size: 21px !important;
   }
+  .platform-page-heading > .platform-toolbar-actions { display: contents; }
+  .platform-page-heading .platform-export-buttons { grid-column: 2; grid-row: 1; }
+  .platform-page-heading .workspace-statusbar.is-in-page-toolbar {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    grid-column: 1 / -1;
+    grid-row: 2;
+    gap: 2px 8px;
+    justify-self: start;
+  }
+  .platform-page-heading .workspace-statusbar > .workspace-sync-control { grid-column: 1; grid-row: 1 / span 2; }
+  .platform-page-heading .workspace-sync-state { grid-column: 2; grid-row: 1; }
+  .platform-page-heading .platform-sync-guidance { grid-column: 2; grid-row: 2; }
+  .platform-page-heading p { grid-row: 3; }
+  .platform-page-heading:has(.platform-export-buttons > button:nth-child(2)) .platform-export-buttons { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; }
+  .platform-page-heading:has(.platform-export-buttons > button:nth-child(2)) .workspace-statusbar { grid-row: 3; }
+  .platform-page-heading:has(.platform-export-buttons > button:nth-child(2)) p { grid-row: 4; }
   .platform-page-heading p {
     font-size: var(--text-caption) !important;
   }
@@ -1006,8 +1091,27 @@
   .platform-filter-panel-heading h2 {
     font-size: var(--text-label);
   }
-  .platform-filter-summary {
+  .platform-filter-panel { padding: 10px 12px; }
+  .platform-filter-panel-heading {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 0 10px;
     margin-bottom: 0;
+  }
+  .platform-filter-toggle {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .platform-filter-toggle,
+  .platform-filter-reset {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+  }
+  .platform-filter-summary {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin: 0;
   }
   .platform-login {
     padding: 20px 12px !important;
@@ -1298,6 +1402,8 @@
 }
 /* Keep short status labels intact; give narrow task cards separate action rows. */
 @media (max-width: 420px) {
+  .platform-page-heading:has(.platform-export-buttons > button:nth-child(2)) .platform-export-button .platform-icon { display: none; }
+  .platform-filter-panel .platform-student-filter-grid:has(> label:nth-child(5):last-child) > label:nth-child(3) { grid-column: 1 / -1 !important; }
   .platform-filter-panel .platform-student-filter-grid > label:has(.platform-date-control),
   .platform-date-filter > label:has(.platform-date-control) {
     grid-column: 1 / -1 !important;

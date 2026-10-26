@@ -10,9 +10,9 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
 .platform-shell :where(p,h1,h2,h3,a){overflow-wrap:anywhere}
 .platform-filter-bar{align-items:center}
 .platform-date-filter{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
-.platform-date-filter label{display:grid;gap:4px;font-size: var(--text-label);line-height:1.5;color:#475569;flex:0 1 175px;min-width:0}
+.platform-date-filter label{display:grid;gap:6px;font-size: var(--text-label);line-height:1.5;color:#475569;flex:0 1 175px;min-width:0}
 .platform-date-filter :is(select,input){width:100%;min-height:40px;border:1px solid #cbd5e1;border-radius:10px;padding:7px 10px;background:white;color:#0f172a;font:inherit;font-size: var(--text-body)}
-.platform-date-filter>button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;border:1px solid #cbd5e1;border-radius:10px;padding:7px 12px;background:#f8fafc;font-size: var(--text-label);cursor:pointer}
+.platform-date-filter>button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid #cbd5e1;border-radius:10px;padding:7px 12px;background:#f8fafc;font-size: var(--text-label);cursor:pointer}
 .platform-date-filter p{flex-basis:100%;margin:0;font-size: var(--text-caption);color:#64748b}
 .platform-date-filter p[role=alert]{color:#b91c1c}
 .platform-date-control{position:relative;min-width:0}
@@ -63,7 +63,7 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
  .platform-shell input[type=checkbox]{width:auto}
  .platform-date-filter{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
  .platform-date-filter label:first-child,.platform-date-filter p{grid-column:1/-1}
- .platform-date-filter>button{grid-column:1/-1;justify-self:start;min-height:36px}
+ .platform-date-filter>button{grid-column:1/-1;justify-self:start}
  .platform-table-scroll{border:0!important;background:transparent}
  .platform-data-table{display:block;min-width:0!important;width:100%!important;font-size: var(--text-label)!important}
  .platform-data-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
@@ -96,11 +96,10 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
 @media(max-width:640px){.platform-material-batch-codes{display:none}}
 
 .platform-section-create{border:3px solid #60a5fa!important}
-.platform-section-pending{border:3px solid #d4a72c!important}
+.platform-section-pending{border:3px solid #f97316!important}
 .platform-section-approved{border:3px solid #6095cd!important}
 .platform-same-work-history>summary{cursor:pointer;font-weight:650;padding:4px 0}
 .platform-section-reviewed{border:3px solid #4d9d73!important}
-@media(max-width:640px){.platform-student-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}.platform-student-filter-grid>label:nth-child(-n+2){grid-column:1/-1}}
 
 .platform-initialization-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;align-items:start}
 .platform-initialization-cell{display:grid;gap:10px;min-width:0}
@@ -147,7 +146,7 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
 .platform-inventory-metrics dd.is-warning{color:#b45309}
 .platform-report-filter-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .platform-report-filter-heading h2{margin:0!important}
-.platform-report-basis{font-size: var(--text-caption);color:#64748b;line-height:1.7}
+.platform-report-basis{font-size: var(--text-caption);color:#64748b;line-height:1.7;margin-top:8px}
 .platform-report-basis summary{cursor:pointer;color:#475569;padding:3px 0}
 .platform-report-basis p{margin:6px 0}
 .platform-report-operations{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:16px}
@@ -194,12 +193,9 @@ html,body,#root{min-width:0;width:100%;margin:0;background:#f8fafc}
 .platform-warning-tags{display:flex;gap:5px;flex-wrap:wrap}.platform-warning-tags strong{border-radius:6px;padding:3px 7px;font-size: var(--text-caption);white-space:nowrap;font-weight:700}.platform-warning-tags .is-danger{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}.platform-warning-tags .is-warning{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
 @media(max-width:640px){.platform-business-metrics.is-single .platform-business-card{display:block;padding:12px 14px}.platform-business-metrics.is-single .platform-business-headline{margin:6px 0 10px}.platform-inventory-metrics[aria-label="库存流水统计"] dl{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.platform-warning-heading h2{font-size: var(--text-body)}}
 
-.platform-student-filter-grid.has-teacher{grid-template-columns:repeat(3,minmax(0,1fr))!important}
-@media(max-width:640px){.platform-student-filter-grid.has-teacher{grid-template-columns:repeat(2,minmax(0,1fr))!important}.platform-student-filter-grid.has-teacher>label:nth-child(-n+3){grid-column:1/-1}}
 
 .platform-stock-group-note{margin:0 0 12px;font-size: var(--text-label);color:#64748b;line-height:1.6}
 .platform-material-model-match{display:block;grid-column:1/-1;min-width:0;margin:4px 0;font-size: var(--text-caption);line-height:1.6;color:#64748b;overflow-wrap:anywhere}
-.platform-stock-export-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;max-width:100%}
 .platform-stock-groups{display:grid;gap:10px}
 .platform-stock-group{border:1px solid #e2e8f0;border-radius:12px;min-width:0;overflow:hidden;background:#fff}
 .platform-stock-group>summary{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(0,1fr) minmax(0,.65fr) minmax(0,1fr) auto;gap:10px 20px;align-items:center;list-style:none;padding:14px 16px;cursor:pointer;color:#334155;font-size: var(--text-body);line-height:1.5}
