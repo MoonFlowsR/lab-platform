@@ -298,10 +298,11 @@
 .workspace-statusbar .platform-sync-guidance {
   font-size: inherit;
   color: #b91c1c;
-  font-weight: 750;
+  font-weight: 500;
   line-height: inherit;
   margin-left: 4px;
 }
+.workspace-statusbar .platform-sync-guidance strong { font-weight: 750; }
 .workspace-statusbar.is-in-toolbar {
   display: flex;
   align-items: center;
@@ -315,7 +316,7 @@
   margin-left: 0;
   white-space: nowrap;
 }
-.workspace-statusbar.is-in-toolbar > span:not(.workspace-sync-dot) {
+.workspace-statusbar.is-in-toolbar > .workspace-sync-state {
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
