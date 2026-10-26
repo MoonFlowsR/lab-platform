@@ -119,7 +119,7 @@ export async function checkRecordVisibility(browser, origin, out, snapshot, user
       assert.equal(await page.locator('main').getByText('已撤回', { exact: true }).count(), 0);
       if (type !== '出库') assert.equal(await page.locator('.platform-business-headline strong').innerText(), '1');
       const exporting = page.waitForEvent('download');
-      await (type === '出库' ? list : page.locator('.workspace-toolbar-host')).getByRole('button', { name: /导出.*Excel/ }).first().click();
+      await (type === '出库' ? list : page.locator('.platform-business-card .platform-statistics-actions')).getByRole('button', { name: /导出.*Excel/ }).first().click();
       const output = await readWorkbookText(await (await exporting).path());
       assert(output.includes('保留' + type + '核对'));
       assert(!output.includes('撤回' + type + '核对'));

@@ -16,6 +16,7 @@ import { workOptions } from "./work-options.js";
 import { showAlert } from "../../shared/components/platform-dialog.jsx";
 import CustomOptionFields from "../../shared/components/CustomOptionFields.jsx";
 import { ALLOWED_ATTACHMENT_LABEL } from "../../app/attachment-validation.js";
+import ExportButton from "../../shared/components/ExportButton.jsx";
 
 function WorkRequestsPage({ task, onReimbursementChange, workHistory = [], teacherAccounts = [], reviewScope = "mine", onReviewScopeChange, fixedType, rows, logs, attachments = [], currentUser, units = [], canSubmit, canReview, isAdmin = false, onAdd, onResubmit, onWithdraw, onReview, onComplete, onCloseRejected, onDeleteRecord, onHideRecord, onUploadAttachment, onDownloadAttachment, onDeleteAttachment, onExport }) {
   const historyIndex = useMemo(() => canReview ? indexWorkHistory(workHistory) : new Map(), [canReview, workHistory]);
@@ -55,7 +56,7 @@ function WorkRequestsPage({ task, onReimbursementChange, workHistory = [], teach
       : `提交和跟进${fixedType}申请，查看团队进度。`;
 
   return <main>
-    <Toolbar title={title} description={description} onExport={onExport} />
+    <Toolbar title={title} description={description} onExport={task ? onExport : undefined} scope={!task && ["teacher", "student"].includes(currentUser?.account_type) && <RequestViewScope key={fixedType} scope={reviewScope} onChange={onReviewScopeChange} label={`${fixedType}${canReview ? "审核" : ""}查看范围`} moduleName={fixedType} />} />
     {canSubmit && !task && !editingRow && <WorkRequestForm workHistory={workHistory} teacherAccounts={teacherAccounts} fixedType={fixedType} onSubmit={onAdd} currentUser={currentUser} units={units} />}
     {canSubmit && editingRow && <WorkRequestForm
       workHistory={workHistory}
@@ -77,7 +78,7 @@ function WorkRequestsPage({ task, onReimbursementChange, workHistory = [], teach
     />}
 
     {task ? <RequestHistorySection showTitle={false} className={"platform-section-" + (task.section || "pending")} title={task.title} rows={rows} renderCard={renderCard} defaultExpanded emptyText={task.count ? "没有符合搜索的记录。" : "当前没有此类待办。"} /> : <>
-    <DashboardMetrics showReimbursement={currentUser?.account_type === "finance"} workRequests={rows} types={[fixedType]} mode={canSubmit ? "student" : canReview ? "review" : "team"} money={money} viewScope={["teacher", "student"].includes(currentUser?.account_type) && <RequestViewScope key={fixedType} scope={reviewScope} onChange={onReviewScopeChange} label={`${fixedType}${canReview ? "审核" : ""}查看范围`} moduleName={fixedType} />} />
+    <DashboardMetrics showReimbursement={currentUser?.account_type === "finance"} workRequests={rows} types={[fixedType]} mode={canSubmit ? "student" : canReview ? "review" : "team"} money={money} actions={<ExportButton onExport={onExport} />} />
     <RequestHistorySection className="platform-section-pending" title={`待审批${fixedType}工单`} rows={pending} renderCard={renderCard} emptyText="暂无待审批工单。" />
     <RequestHistorySection className="platform-section-approved" title={`已审批${fixedType}工单`} rows={reviewed} renderCard={renderCard} emptyText="暂无已审批未完成工单。" />
     <RequestHistorySection className="platform-section-reviewed" title={`已完成${fixedType}工单`} rows={completed} renderCard={renderCard} emptyText="暂无已完成工单。" />

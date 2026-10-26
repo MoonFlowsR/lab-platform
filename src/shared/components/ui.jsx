@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { groupDropdownOptions } from "../lib/dropdown-order.js";
 import { formatPublicNumbers } from "../lib/public-number.js";
 import ExportButton from './ExportButton.jsx';
-import WorkspaceSync, { WorkspaceSyncContext } from '../../app/WorkspaceSync.jsx';
+import { WorkspaceSyncContext } from '../../app/WorkspaceSync.jsx';
 import Icon from './Icon.jsx';
 import PersonName from './PersonName.jsx';
 import { isPersonLabel } from '../lib/person-name.js';
@@ -46,9 +46,9 @@ function DateInput({ value, onChange, required = false, min = "2000-01-01", max 
     />
   </div>;
 }
-function Toolbar({ title, description, onExport, actions }) {
+function Toolbar({ title, description, onExport, actions, scope }) {
   const context = useContext(WorkspaceSyncContext);
-  const toolbar = <section className="platform-page-heading" style={styles.toolbar}><div><h2 style={styles.h2}>{title}</h2>{description && <p style={styles.muted}>{description}</p>}</div><div className="platform-toolbar-actions"><WorkspaceSync className="is-in-page-toolbar" /><div className="platform-export-buttons">{actions || (onExport && <ExportButton onExport={onExport} />)}</div></div></section>;
+  const toolbar = <section className="platform-page-heading" style={styles.toolbar}><div><h2 style={styles.h2}>{title}</h2>{description && <p style={styles.muted}>{description}</p>}</div><div className="platform-toolbar-actions">{scope}{(actions || onExport) && <div className="platform-export-buttons">{actions || <ExportButton onExport={onExport} />}</div>}</div></section>;
   return context?.toolbarTarget ? createPortal(toolbar, context.toolbarTarget) : toolbar;
 }
 function StatCard({ title, value, tone = "gray" }) {
