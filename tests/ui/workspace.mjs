@@ -107,6 +107,13 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
       .getByRole("button", { name: "测试审核", exact: true })
       .click();
     await showModuleRecords(page);
+    const moduleToolbar = page.locator('main > .platform-page-heading');
+    assert.equal(await moduleToolbar.locator('.platform-sync-status').count(), 1, 'Module sync belongs beside export');
+    assert.equal(await page.locator('.workspace-topbar .platform-sync-status').count(), 0, 'No duplicate sync in the header');
+    assert.equal(await page.locator('.platform-sync-status').count(), 1);
+    assert.equal(await moduleToolbar.locator('.platform-export-buttons > button').count(), 1);
+    const statusSizes = await page.locator('.workspace-sync-state,.platform-sync-guidance,.workspace-logout').evaluateAll(nodes => nodes.map(node => parseFloat(getComputedStyle(node).fontSize)));
+    assert(statusSizes.every(size => size === statusSizes[0]), 'Synchronization and topbar actions share one font size');
     await page.getByRole("button", { name: /^查看已完成工单/ }).click();
     assert.equal(
       await page
@@ -141,6 +148,7 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     await page
       .getByRole("heading", { name: "材料批次库存", exact: true })
       .waitFor();
+    assert.equal(await page.locator('main > .platform-page-heading .platform-export-buttons > button').count(), 2, 'Both inventory exports share the sync toolbar');
     const table = page.locator("main .platform-table-responsive").first();
     assert.equal(
       await table.locator(".platform-mobile-records").isVisible(),

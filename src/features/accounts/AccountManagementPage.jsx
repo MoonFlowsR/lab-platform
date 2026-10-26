@@ -41,7 +41,7 @@ function AccountManagementPage({ task, accounts = [], allAccounts = [], teachers
   const adminCount = accounts.filter((a) => a.account_type === "admin").length;
 
   return <main>
-    <Toolbar title="账号管理" />
+    <Toolbar title="账号管理" actions={<ExportButton subject="账号" onExport={onExportAccounts} />} />
     {editing && <AccountSettingsDialog adminEdit account={editing} teachers={teachers} onClose={()=>setEditing(null)} onSaveProfile={async values=>{await callLabOps("adminUpdateStudentProfile",{id:editing.id || editing._id,...values},auditProps.account);setEditing(null);await onReload();}} />}
     <div style={styles.statsGrid}>
       <StatCard title="全部账号" value={accounts.length} tone="blue" />
@@ -51,7 +51,7 @@ function AccountManagementPage({ task, accounts = [], allAccounts = [], teachers
       <StatCard title="管理员账号" value={adminCount} tone="purple" />
     </div>
     <section style={styles.card}>
-      <div style={styles.cardHeader}><h2 style={styles.h2}>账号列表</h2><div style={styles.buttonRowCompact}><ExportButton subject="账号" onExport={onExportAccounts} /></div></div>
+      <div style={styles.cardHeader}><h2 style={styles.h2}>账号列表</h2></div>
       <RecordVisibility total={accounts.length} expanded={showAllAccounts} onToggle={() => setShowAllAccounts(value => !value)} controlsId="account-list-rows" />
       <div id="account-list-rows">
       {accounts.length === 0 ? <Empty text="暂无账号数据。" /> : <DataTable columns={["姓名", "身份", "状态", "个人资料", "创建时间", "操作"]} mobileColumns={["姓名", "身份", "状态", "个人资料", "创建时间"]} rows={shownAccounts.map(a => [

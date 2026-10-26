@@ -10,7 +10,6 @@
 @media(max-width:640px){
  .platform-filter-bar{padding:10px!important;margin-bottom:10px!important;gap:8px!important}
  .platform-filter-panel{padding:10px 12px;margin-bottom:12px;border-radius:12px}.platform-filter-panel-heading h2{font-size: var(--text-body)}.platform-filter-toggle{display:block;margin-left:auto;border:0;background:transparent;color:#334155;padding:6px 0;font-size: var(--text-label);cursor:pointer}.platform-filter-reset{margin-left:0}.platform-filter-summary{margin:2px 0 0}.platform-filter-panel-body{display:none;padding-top:10px}.platform-filter-panel-body.is-open{display:block}
- .platform-filter-panel .platform-student-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.platform-filter-panel .platform-student-filter-grid>label{grid-column:auto!important}
  .platform-action-notice{bottom:10px;padding:10px 12px;font-size: var(--text-label)}
 }
 
@@ -26,9 +25,6 @@
 .platform-supplier-change p { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 5px 0; }
 .platform-supplier-change time, .platform-supplier-sync-note { color: #5b6878; font-size: var(--text-label); }
 
-@media(max-width:640px){.platform-filter-panel .platform-student-filter-grid[data-module="purchases"].has-extra>label:nth-child(3){grid-column:1/-1!important}}
-
-@media(max-width:640px){.platform-filter-panel .platform-student-filter-grid.has-teacher.has-extra:is([data-module="test"],[data-module="processing"],[data-module="repair"],[data-module="purchases"])>label:nth-child(n+3):nth-child(-n+4){grid-column:1/-1!important}}
 
 
 .platform-export-button { white-space: nowrap; max-width: 100%; }
