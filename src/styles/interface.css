@@ -76,41 +76,49 @@
 .platform-workspace .platform-query-tools.is-student > section { margin-bottom: 0 !important; }
 .platform-page-heading {
   display: grid !important;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 4px 12px !important;
+  gap: 8px 16px !important;
   padding: 3px 0 0 !important;
   margin: 5px 0 18px !important;
 }
+.platform-page-heading:has(.platform-request-scope) {
+  grid-template-columns: minmax(0, 1fr) minmax(180px, min(360px, 58%));
+}
+.platform-page-heading > div:first-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
 .platform-page-heading h2 {
-  grid-column: 1;
-  grid-row: 1;
   font-size: var(--text-page) !important;
   font-weight: 720;
   letter-spacing: -0.4px;
 }
 .platform-page-heading p {
-  grid-column: 1 / -1;
-  grid-row: 2;
   margin: 0 !important;
   font-size: var(--text-label) !important;
 }
-.platform-page-heading > div:first-child { display: contents; }
 .platform-page-heading > .platform-toolbar-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 8px 14px;
-  grid-column: 2;
-  grid-row: 1;
   min-width: 0;
 }
+.platform-page-heading .platform-request-scope { width: 100%; }
 .platform-export-buttons { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
 .platform-toolbar-actions .platform-export-button { min-height: 44px !important; }
-@media (max-width: 1200px) {
-  .platform-page-heading:has(.platform-export-buttons > button:nth-child(2)) > .platform-toolbar-actions { grid-column: 1 / -1; grid-row: 2; }
-  .platform-page-heading:has(.platform-export-buttons > button:nth-child(2)) p { grid-row: 3; }
+.platform-inventory-section-header {
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+}
+.platform-inventory-section-header h2 { min-width: 0; }
+.platform-inventory-section-header .platform-export-button {
+  flex: 0 0 auto;
+  min-height: 44px !important;
+  white-space: nowrap;
 }
 .platform-export-button {
   display: inline-flex;
@@ -941,8 +949,6 @@
     font-size: 21px !important;
   }
   .platform-page-heading > .platform-toolbar-actions { gap: 4px 8px; }
-  .platform-page-heading:has(.platform-request-scope) { align-items: center; }
-  .platform-page-heading:has(.platform-export-buttons > button:nth-child(2)) .platform-export-buttons { justify-content: flex-start; }
   .platform-page-heading p {
     font-size: var(--text-caption) !important;
   }
@@ -1374,7 +1380,6 @@
 }
 /* Keep short status labels intact; give narrow task cards separate action rows. */
 @media (max-width: 420px) {
-  .platform-page-heading:has(.platform-export-buttons > button:nth-child(2)) .platform-export-button .platform-icon { display: none; }
   .platform-filter-panel .platform-student-filter-grid:has(> label:nth-child(5):last-child) > label:nth-child(3) { grid-column: 1 / -1 !important; }
   .platform-filter-panel .platform-student-filter-grid > label:has(.platform-date-control),
   .platform-date-filter > label:has(.platform-date-control) {

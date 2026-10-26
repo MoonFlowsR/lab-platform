@@ -155,7 +155,14 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     await page
       .getByRole("heading", { name: "材料批次库存", exact: true })
       .waitFor();
-    assert.equal(await page.locator('.workspace-toolbar-host > .platform-page-heading .platform-export-buttons > button').count(), 2, 'Both inventory exports stay in the module toolbar');
+    assert.equal(await page.locator('.workspace-toolbar-host > .platform-page-heading .platform-export-buttons > button').count(), 0, 'Inventory exports belong to their own sections');
+    for (const title of ['材料汇总', '材料批次库存']) {
+      const header = page.locator('.platform-inventory-section-header').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+      assert.equal(await header.getByRole('button', { name: '导出Excel', exact: true }).count(), 1);
+      const headingBox = await header.getByRole('heading').boundingBox(), buttonBox = await header.getByRole('button').boundingBox(), headerBox = await header.boundingBox();
+      assert(Math.abs(headingBox.y + headingBox.height / 2 - buttonBox.y - buttonBox.height / 2) <= 1, 'Inventory title and export align vertically');
+      assert(Math.abs(buttonBox.x + buttonBox.width - headerBox.x - headerBox.width) <= 1, 'Inventory export stays at the upper right');
+    }
     assert.equal(await page.locator('.workspace-toolbar-host .platform-sync-status').count(), 0, 'Inventory toolbar does not duplicate synchronization');
     const table = page.locator("main .platform-table-responsive").first();
     assert.equal(

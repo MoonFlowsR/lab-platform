@@ -25,7 +25,7 @@
 
 姓名展示使用 `PersonName`，头像从 `splitPersonName` 返回的本人姓名取末两字。姓名原值、搜索和导出保持完整。手机中的长物品名、存放位置占整行；较长金额扩展到整行，避免数字拆断。新增表格复用 `DataTable` 的容器宽度适配，勿单独固定桌面表宽。
 
-同步按钮、状态和整句加粗提示统一放在顶栏左侧，由 `WorkspaceSync` 和 `workspace.css` 维护。公共 `Toolbar` 通过 Portal 挂载到内容首部，标题与“查看范围”位于搜索筛选之前，布局在 `interface.css`、`request-scope.css`。测试、加工、维修、采购及库存流水的导出放在统计框右上角；待办视图及库存、报表、账号的导出保留在 `Toolbar`。总览标题与日期由 `workspace.css` 维护。
+同步按钮、状态和整句加粗提示统一放在顶栏左侧，由 `WorkspaceSync` 和 `workspace.css` 维护。公共 `Toolbar` 通过 Portal 挂载到内容首部，左侧标题及说明与右侧“查看范围”整体对齐，布局在 `interface.css`、`request-scope.css`。测试、加工、维修、采购及库存流水的导出放在统计框右上角；库存的两个导出分别放在材料汇总、材料批次库存右上角；待办视图、报表、账号的导出保留在 `Toolbar`。总览标题与日期由 `workspace.css` 维护。
 
 筛选列数按容器实际宽度调整，标题、范围和重置共用 `FilterPanel`，手机默认折叠。库存等宽表在容器不超过1050px时使用卡片。下拉菜单仅展开时监听外部点击，`pointerdown` 同时处理鼠标和触屏。
 
