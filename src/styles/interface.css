@@ -70,6 +70,7 @@
   flex: 0 1 240px;
   max-width: 100%;
 }
+.platform-query-tools.is-student > .platform-module-filters > .platform-date-filter > label { flex-grow: 1; }
 .platform-query-tools.is-student > .platform-module-filters:has(> .platform-field) { flex-basis: 512px; }
 .platform-query-tools.is-student > .platform-module-filters:has(.platform-date-control) { flex-basis: 100%; }
 .platform-workspace .platform-query-tools.is-student > section { margin-bottom: 0 !important; }
