@@ -23,9 +23,9 @@ export default function WorkspaceSync({ className = "" }) {
         <span className={`workspace-sync-dot${syncing ? " is-busy" : syncStatus === "同步完成" || syncStatus === "同步完成。" ? "" : " is-warning"}`} />
         <span>同步状态：{syncStatus}</span>
       </span>
-      <span className="platform-sync-guidance">
-        请等待<strong>同步完成后操作</strong>
-      </span>
+      <strong className="platform-sync-guidance">
+        请等待同步完成后操作
+      </strong>
     </div>
   );
 }

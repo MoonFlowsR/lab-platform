@@ -1,10 +1,11 @@
 import { toDateInputValue } from "../../app/formatters.js";
 import { styles } from "../../app/styles.js";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { groupDropdownOptions } from "../lib/dropdown-order.js";
 import { formatPublicNumbers } from "../lib/public-number.js";
 import ExportButton from './ExportButton.jsx';
-import WorkspaceSync from '../../app/WorkspaceSync.jsx';
+import WorkspaceSync, { WorkspaceSyncContext } from '../../app/WorkspaceSync.jsx';
 import Icon from './Icon.jsx';
 import PersonName from './PersonName.jsx';
 import { isPersonLabel } from '../lib/person-name.js';
@@ -46,7 +47,9 @@ function DateInput({ value, onChange, required = false, min = "2000-01-01", max 
   </div>;
 }
 function Toolbar({ title, description, onExport, actions }) {
-  return <section className="platform-page-heading" style={styles.toolbar}><div><h2 style={styles.h2}>{title}</h2>{description && <p style={styles.muted}>{description}</p>}</div><div className="platform-toolbar-actions"><WorkspaceSync className="is-in-page-toolbar" /><div className="platform-export-buttons">{actions || (onExport && <ExportButton onExport={onExport} />)}</div></div></section>;
+  const context = useContext(WorkspaceSyncContext);
+  const toolbar = <section className="platform-page-heading" style={styles.toolbar}><div><h2 style={styles.h2}>{title}</h2>{description && <p style={styles.muted}>{description}</p>}</div><div className="platform-toolbar-actions"><WorkspaceSync className="is-in-page-toolbar" /><div className="platform-export-buttons">{actions || (onExport && <ExportButton onExport={onExport} />)}</div></div></section>;
+  return context?.toolbarTarget ? createPortal(toolbar, context.toolbarTarget) : toolbar;
 }
 function StatCard({ title, value, tone = "gray" }) {
   const toneStyle = { gray: { background: "#f8fafc", color: "#0f172a" }, blue: { background: "#eff6ff", color: "#1d4ed8" }, green: { background: "#ecfdf5", color: "#047857" }, orange: { background: "#fff7ed", color: "#c2410c" }, red: { background: "#fef2f2", color: "#b91c1c" }, purple: { background: "#f5f3ff", color: "#6d28d9" } }[tone];
