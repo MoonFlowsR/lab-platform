@@ -24,7 +24,7 @@ export default function WorkspaceSync({ className = "" }) {
         <span>同步状态：{syncStatus}</span>
       </span>
       <strong className="platform-sync-guidance">
-        请在状态为“同步完成”后操作
+        请等待同步完成后操作
       </strong>
     </div>
   );

@@ -30,7 +30,7 @@ export default function Workspace({
   children,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [desktop, setDesktop] = useState(() => window.matchMedia("(min-width: 1100px)").matches);
+  const [toolbarTarget, setToolbarTarget] = useState(null);
   const navRef = useRef(null);
   const menuButton = useRef(null);
   const currentTitle = tabs.find(([key]) => key === activeTab)?.[1] || "总览";
@@ -39,12 +39,6 @@ export default function Workspace({
   const avatarName = account.account_type === "student"
     ? splitPersonName(user).name
     : user.trim();
-  useEffect(() => {
-    const query = window.matchMedia("(min-width: 1100px)");
-    const update = () => setDesktop(query.matches);
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
-  }, []);
   useEffect(() => {
     if (!menuOpen) return;
     const previousOverflow = document.body.style.overflow,
@@ -87,7 +81,7 @@ export default function Workspace({
     window.scrollTo({ top: 0 });
   }
   return (
-    <WorkspaceSyncContext.Provider value={{ syncing, syncStatus, onSync }}>
+    <WorkspaceSyncContext.Provider value={{ syncing, syncStatus, onSync, toolbarTarget }}>
     <div className="platform-shell platform-workspace">
       <a className="platform-skip-link" href="#platform-content">
         跳转到页面内容
@@ -180,7 +174,6 @@ export default function Workspace({
             </span>
             <span>{currentTitle}</span>
           </div>
-          {activeTab === "dashboard" && desktop && <WorkspaceSync className="is-in-toolbar" />}
           <div className="workspace-topbar-actions">
             <button
               type="button"
@@ -227,23 +220,25 @@ export default function Workspace({
             </button>
           </div>
         </header>
-        {activeTab === "dashboard" && !desktop && <WorkspaceSync />}
         <div id="platform-content" className="workspace-content" tabIndex={-1}>
-          {activeTab === "dashboard" && (
-            <div className="workspace-welcome">
-              <div>
-                <h1>{roleHeadings[account.account_type] || "工作台"}</h1>
+          <div className="workspace-toolbar-host" ref={setToolbarTarget}>
+            {activeTab === "dashboard" && (
+              <div className="workspace-welcome">
+                <div>
+                  <h1>{roleHeadings[account.account_type] || "工作台"}</h1>
+                  <time>
+                    {new Intl.DateTimeFormat("zh-CN", {
+                      month: "long",
+                      day: "numeric",
+                      weekday: "long",
+                      timeZone: "Asia/Shanghai",
+                    }).format(new Date())}
+                  </time>
+                </div>
+                <WorkspaceSync className="is-in-page-toolbar" />
               </div>
-              <time>
-                {new Intl.DateTimeFormat("zh-CN", {
-                  month: "long",
-                  day: "numeric",
-                  weekday: "long",
-                  timeZone: "Asia/Shanghai",
-                }).format(new Date())}
-              </time>
-            </div>
-          )}
+            )}
+          </div>
           {children}
           <footer className="workspace-footer">
             <span>{PLATFORM_TITLE}</span>

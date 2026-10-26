@@ -59,7 +59,9 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     assert(!(await page.locator(".platform-workspace").textContent()).includes("账号账号"));
     assert.equal(await page.locator(".workspace-welcome .platform-person-name").count(), 0);
     assert.equal(await page.locator(".platform-sync-status").count(), 1);
-    assert.equal(await page.locator(".workspace-topbar .platform-sync-status").count(), Number(width >= 1100));
+    assert.equal(await page.locator(".workspace-topbar .platform-sync-status").count(), 0);
+    assert.equal(await page.locator('.workspace-toolbar-host .platform-sync-status').count(), 1);
+    assert(await page.locator('.workspace-toolbar-host').evaluate(node => node === node.parentElement.firstElementChild), 'Common controls are first in the content');
     assert.equal(await page.locator(".workspace-current-account").isVisible(), true);
     assert.equal(await page.locator(".workspace-current-account > strong").isVisible(), width > 640);
     assert.equal(await page.locator(".workspace-current-account").evaluate(node => node.nextElementSibling?.getAttribute("aria-label")), "账户设置");
@@ -107,7 +109,7 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
       .getByRole("button", { name: "测试审核", exact: true })
       .click();
     await showModuleRecords(page);
-    const moduleToolbar = page.locator('main > .platform-page-heading');
+    const moduleToolbar = page.locator('.workspace-toolbar-host > .platform-page-heading');
     assert.equal(await moduleToolbar.locator('.platform-sync-status').count(), 1, 'Module sync belongs beside export');
     assert.equal(await page.locator('.workspace-topbar .platform-sync-status').count(), 0, 'No duplicate sync in the header');
     assert.equal(await page.locator('.platform-sync-status').count(), 1);
@@ -148,7 +150,7 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     await page
       .getByRole("heading", { name: "材料批次库存", exact: true })
       .waitFor();
-    assert.equal(await page.locator('main > .platform-page-heading .platform-export-buttons > button').count(), 2, 'Both inventory exports share the sync toolbar');
+    assert.equal(await page.locator('.workspace-toolbar-host > .platform-page-heading .platform-export-buttons > button').count(), 2, 'Both inventory exports share the sync toolbar');
     const table = page.locator("main .platform-table-responsive").first();
     assert.equal(
       await table.locator(".platform-mobile-records").isVisible(),
