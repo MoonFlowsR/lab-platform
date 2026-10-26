@@ -239,6 +239,10 @@
   border-color: #8aade9 !important;
   border-left-color: #346bd2 !important;
 }
+/* A collapsed form contains only its header; reserve the gap for expanded content. */
+.platform-workspace .platform-section-create > div:only-child {
+  margin-bottom: 0 !important;
+}
 .platform-workspace .platform-section-pending {
   border-color: #f97316 !important;
   border-left-color: #ea580c !important;
