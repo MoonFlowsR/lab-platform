@@ -19,6 +19,36 @@ function fixture(clock='2026-10-18T00:00:00.000Z') {
 const response=db=>({json(value){assert.equal(db.inTransaction,false);return value;}});
 const request={headers:{},ip:'test'};
 
+test('approval handover accepts only active students and leaves ownership and pending requests intact on refusal',()=>{
+ const f=fixture();try{
+  const c=f.context,owner=f.accounts['示例学生甲'],admin=f.accounts['示例管理员'];
+  const batch=c.insertRecord('lab_material_batches',{material_name:'示例材料',purchase_purpose:'私用/项目用（出库需采购人审批）',purchaser_username:owner.username,current_qty:5});
+  const pending=c.insertRecord('lab_stock_out_requests',{batch_id:batch._id,status:'待采购人审批',purchaser_username:owner.username});
+  const handler=require('../../server/features/stock/approval-handover.cjs')(c);
+  const preview=handler(request,response(c.db),{id:owner.id,preview:true},admin);
+  for(const role of ['teacher','finance','admin']){
+   const name='示例接收'+role;
+   c.db.prepare('INSERT INTO accounts(username,display_name,account_type,status,password_hash,created_at,updated_at) VALUES(?,?,?,?,?,?,?)').run(name,name,role,'active','unused','fixture-time','fixture-time');
+   assert.throws(()=>handler(request,response(c.db),{id:owner.id,username:name,revision:preview.revision},admin),/启用中的学生/);
+   assert.deepEqual(c.getRecord('lab_material_batches',batch._id),batch);
+   assert.deepEqual(c.getRecord('lab_stock_out_requests',pending._id),pending);
+  }
+ }finally{f.close();}
+});
+
+test('stock requests are read-only for administrators while inventory deletion retains its original cascade',()=>{
+ const f=fixture();try{
+  const c=f.context;
+  const batch=c.insertRecord('lab_material_batches',{material_name:'示例材料',batch_code:'BATCH-example',current_qty:5});
+  const pending=c.insertRecord('lab_stock_out_requests',{batch_id:batch._id,status:'待采购人审批'});
+  assert.throws(()=>c.deletionService.preview('lab_stock_out_requests',pending._id),/不支持永久删除/);
+  assert.throws(()=>c.deletionService.execute(request,f.accounts['示例管理员'],{collection:'lab_stock_out_requests',id:pending._id}),/不支持永久删除/);
+  const preview=c.deletionService.preview('lab_material_batches',batch._id);
+  assert.equal(preview.counts['项目物品出库申请'],1);
+  assert.deepEqual(c.getRecord('lab_stock_out_requests',pending._id),pending);
+ }finally{f.close();}
+});
+
 test('batch identity corrections update inbound rows atomically while preserving historical quantities, times and evidence',()=>{
  const f=fixture();try{
   const c=f.context,material=c.insertRecord('lab_materials',{name_cn:'示例旧名称'});

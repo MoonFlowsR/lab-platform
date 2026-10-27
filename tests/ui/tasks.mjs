@@ -1,5 +1,7 @@
 import { openNavigation } from './navigation.mjs';
+import { showModuleRecords } from './module-records.mjs';
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import { readWorkbookText } from './workbook.mjs';
 
@@ -20,6 +22,16 @@ export async function checkTasks(browser, origin, out, base, users) {
     const stockRequests=[{_id:2001,public_id:'QA-STOCK-1',status:'待采购人审批',purchaser_username:student.username,applicant_username:'another',material_name:'待审批出库物品'},
       {_id:2002,public_id:'QA-STOCK-2',status:'已同意待出库',applicant_username:student.username,purchaser_username:'another',material_name:'待登记出库物品'},
       {_id:2003,public_id:'QA-STOCK-3',status:'待采购人审批',purchaser_username:teacher.username,applicant_username:student.username,material_name:'待教师批准出库物品'}];
+    if (role !== 'student') stockRequests.push(
+      {_id:2004,public_id:'QA-STOCK-4',status:'待采购人审批',purchaser_username:account.username,applicant_username:'another',material_name:'历史采购人关联物品'},
+      {_id:2005,public_id:'QA-STOCK-5',status:'已同意待出库',purchaser_username:'another',applicant_username:account.username,material_name:'历史申请人关联物品'},
+      {_id:2006,public_id:'QA-STOCK-6',status:'已驳回',purchaser_username:'another',applicant_username:account.username,material_name:'历史驳回关联物品'},
+    );
+    const photoBody = Buffer.from('isolated-stock-photo');
+    const stockPhotos = stockRequests.map(row => {
+      row.photo_attachment_id = 5000 + row._id;
+      return {_id:row.photo_attachment_id,target_collection:'lab_stock_out_requests',target_id:row._id,original_name:'示例物品特写.jpg',size_bytes:photoBody.length};
+    });
     const page=await browser.newPage({viewport:{width,height:960},acceptDownloads:true}),errors=[];let revision=0,failNext=false;
     page.on('pageerror',error=>errors.push(error.message));
     await page.addInitScript(value=>sessionStorage.setItem('surface_lab_account',JSON.stringify(value)),account);
@@ -27,7 +39,11 @@ export async function checkTasks(browser, origin, out, base, users) {
       const url=new URL(route.request().url());if(url.origin!==origin)return route.abort();if(!url.pathname.startsWith('/api/'))return route.continue();
       if(url.pathname==='/api/auth/me')return route.fulfill({json:{ok:true,account,teachers:[teacher]}});
       if(url.pathname==='/api/events')return route.fulfill({contentType:'text/event-stream',body:': fixture\n\n'});
-      if(url.pathname==='/api/ops/listAll')return route.fulfill({json:{ok:true,revision:'tasks-'+(++revision),data:{...base,current_account:account,accounts:[...base.accounts,...pendingAccounts],lab_work_requests:records.filter(row=>row.request_type),lab_purchase_requests:records.filter(row=>!row.request_type),lab_stock_out_requests:stockRequests,lab_user_hidden_records:[{target_collection:'lab_work_requests',target_id:901}],lab_material_batches:[{...base.lab_material_batches[0],_id:701,expiry_date:'2020-01-01',current_qty:2},{...base.lab_material_batches[0],_id:702,current_qty:0,expiry_date:'长期'}]}}});
+      if(url.pathname==='/api/ops/listAll')return route.fulfill({json:{ok:true,revision:'tasks-'+(++revision),data:{...base,current_account:account,accounts:[...base.accounts,...pendingAccounts],lab_work_requests:records.filter(row=>row.request_type),lab_purchase_requests:records.filter(row=>!row.request_type),lab_stock_out_requests:stockRequests,lab_attachments:[...(base.lab_attachments || []),...stockPhotos],lab_user_hidden_records:[{target_collection:'lab_work_requests',target_id:901}],lab_material_batches:[{...base.lab_material_batches[0],_id:701,expiry_date:'2020-01-01',current_qty:2},{...base.lab_material_batches[0],_id:702,current_qty:0,expiry_date:'长期'}]}}});
+      if(url.pathname.startsWith('/api/attachments/download/')) {
+        assert(stockPhotos.some(photo => String(photo._id) === url.pathname.split('/').at(-1)));
+        return route.fulfill({contentType:'image/jpeg',body:photoBody});
+      }
       const action=url.pathname.split('/').at(-1),payload=route.request().postDataJSON();
       if(['reviewWorkRequest','completeWorkRequest','setReimbursementStatus','adminSetAccountStatus'].includes(action)){
         if(failNext){failNext=false;return route.fulfill({status:400,json:{ok:false,message:'示例失败：请重试。'}});}
@@ -41,7 +57,7 @@ export async function checkTasks(browser, origin, out, base, users) {
       return route.fulfill({json:{ok:true,rows:[],total:0,comments:[]}});
     });
     await page.goto(origin);await page.waitForFunction(()=>document.querySelector('.platform-sync-status')?.textContent.includes('同步状态：同步完成'));
-    const expected={student:10,teacher:6,finance:4,admin:2}[role],header=page.locator('.platform-task-entry');
+    const expected={student:10,teacher:5,finance:4,admin:2}[role],header=page.locator('.platform-task-entry');
     assert.equal(await page.getByTestId('task-total').innerText(),String(expected));assert.equal(await header.locator('b').innerText(),String(expected));
     assert.equal(await page.locator('.platform-business-metrics').count(),0);
     assert.equal(await page.getByRole('button',{name:'同意',exact:true}).count(),0);
@@ -64,6 +80,11 @@ export async function checkTasks(browser, origin, out, base, users) {
         assert.equal(await page.getByRole('button',{name:'确认完成',exact:true}).count(),1);
         assert.equal(await page.getByRole('button',{name:'修改/重新提交',exact:true}).count(),1);
         assert.equal(await page.getByRole('button',{name:'关闭工单',exact:true}).count(),1);
+      }
+      if(role==='student'&&module.label==='出/退库') {
+        for (const name of ['同意出库','驳回出库','完成出库登记','撤回出库申请']) {
+          assert.equal(await page.getByRole('button',{name,exact:true}).count(),1,'Students retain their purchaser and applicant operations');
+        }
       }
       assert.equal(await page.locator('main > .platform-section-create').count(),0);
       if(module===modules[0])await page.screenshot({path:path.join(out,`tasks-nav-${role}-${width}.png`),fullPage:true});
@@ -100,10 +121,29 @@ export async function checkTasks(browser, origin, out, base, users) {
     await page.getByRole('button',{name:'查看本模块全部记录',exact:true}).click();assert.equal(await page.locator('.platform-task-filter').count(),0);
     if(role==='student'||role==='teacher'){assert.equal(await page.getByPlaceholder('搜索或选择查看范围').inputValue(),'全部');}
     await header.click();
-    if(role==='student'||role==='teacher'){
+    if(role==='student'){
       await page.locator('[data-task="stock-review"]').click();assert.equal(await page.locator('.platform-stock-request').count(),1);
+      assert.equal(await page.getByRole('button',{name:'同意出库',exact:true}).count(),1);
+      assert.equal(await page.getByRole('button',{name:'驳回出库',exact:true}).count(),1);
       const download=page.waitForEvent('download');await page.getByRole('button',{name:/导出.*Excel/}).first().click();
-      const workbook=await readWorkbookText(await(await download).path());assert(workbook.includes(role==='student'?'待审批出库物品':'待教师批准出库物品'));assert(!workbook.includes('待登记出库物品'));
+      const workbook=await readWorkbookText(await(await download).path());assert(workbook.includes('待审批出库物品'));assert(!workbook.includes('待登记出库物品'));
+      await header.click();
+    } else {
+      assert.equal(await page.locator('[data-task="stock-review"]').count(),0,'Non-students never receive a private-stock approval task');
+      await openNavigation(page);await page.locator('.platform-nav').getByRole('button',{name:'出入退库',exact:true}).click();await showModuleRecords(page);
+      const pending = page.locator('main > .platform-section-pending');
+      await pending.getByRole('button',{name:'展开其余 4 条',exact:true}).click();
+      assert.equal(await page.locator('.platform-stock-request').count(),stockRequests.length,'All team requests remain readable, including unrelated and historical own records');
+      for (const row of stockRequests) assert.equal(await page.getByRole('heading',{name:row.material_name,exact:true}).count(),1);
+      assert.equal(await page.locator('.platform-stock-request').getByRole('button',{name:/^(同意出库|驳回出库|完成出库登记|撤回出库申请|永久删除申请)$/}).count(),0);
+      assert.equal(await page.getByRole('button',{name:'新增记录',exact:true}).count(),0);
+      const photoDownload=page.waitForEvent('download');await page.locator('.platform-stock-request').getByRole('button',{name:'物品特写',exact:true}).first().click();
+      assert.deepEqual(await fs.readFile(await(await photoDownload).path()),photoBody,'Read-only roles can still download request evidence');
+      const exportDownload=page.waitForEvent('download');await pending.getByRole('button',{name:/导出.*Excel/}).click();
+      const workbook=await readWorkbookText(await(await exportDownload).path());
+      for (const row of stockRequests) assert(workbook.includes(row.material_name),'Export retains every team request');
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+      await page.screenshot({path:path.join(out,`stock-readonly-${role}-${width}.png`),fullPage:true});
       await header.click();
     }
     if(role==='admin'){

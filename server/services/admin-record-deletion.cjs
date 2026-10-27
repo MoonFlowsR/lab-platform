@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { createHash, randomUUID } = require('node:crypto');
 const names = { lab_work_requests:'测试/加工/维修申请', lab_purchase_requests:'采购申请', lab_materials:'材料', lab_material_batches:'库存批次', lab_stock_transactions:'出入退库记录', lab_stock_out_requests:'项目物品出库申请', lab_review_logs:'审批记录', lab_attachments:'附件', lab_expense_records:'费用记录', lab_test_processing_units:'外协单位' };
-const allowed = ['lab_work_requests','lab_purchase_requests','lab_materials','lab_material_batches','lab_stock_transactions','lab_stock_out_requests','lab_expense_records','lab_test_processing_units'];
+const allowed = ['lab_work_requests','lab_purchase_requests','lab_materials','lab_material_batches','lab_stock_transactions','lab_expense_records','lab_test_processing_units'];
 module.exports = function createDeletionService({ db, uploadDir, nowISO, addAudit }) {
   const root = path.resolve(uploadDir);
   const key = row => `${row.collection}:${row.id}`;
@@ -76,7 +76,6 @@ module.exports = function createDeletionService({ db, uploadDir, nowISO, addAudi
     let note = '同时删除关联审批、个人隐藏记录及专属附件。';
     if (collection === 'lab_purchase_requests') note = '保留已有库存、出入退库记录及入库凭证；采购申请、审批及专属采购附件永久删除。';
     if (collection === 'lab_materials' || collection === 'lab_material_batches') note = '同时永久删除其库存批次、关联出入退库记录及专属附件；采购申请保留。';
-    if (collection === 'lab_stock_out_requests') note = '删除出库申请、审批及专属照片；已有出库流水和当前库存保留。';
     if (collection === 'lab_stock_transactions') note = '只删除这条流水及专属附件，不自动增减当前库存；需要修正数量时请使用“修改库存”。';
     return {target,deleted,updates,files,summary:{token,title:names[collection],public_id:target.public_id || String(id),name:target.data.work_content || target.data.material_name || target.data.name_cn || target.data.name || target.data.batch_code || '',counts,note}};
   }

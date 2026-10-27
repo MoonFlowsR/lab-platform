@@ -53,7 +53,7 @@ export function buildTaskCenter({ account, workRequests = [], purchases = [], st
       add(module + '-team-complete', module, purchase ? '采购待到货入库' : type + '待学生确认完成', active.filter(ready), { kind: 'tracking', action: '查看进度', section: 'approved' });
     }
   }
-  if (role !== 'finance') add('stock-review', 'stock', '出库申请待你审批', visibleStockRequests.filter(row => row.status === '待采购人审批' && row.purchaser_username === username && row.applicant_username !== username), { action: '去审批', section: 'pending' });
+  if (role === 'student') add('stock-review', 'stock', '出库申请待你审批', visibleStockRequests.filter(row => row.status === '待采购人审批' && row.purchaser_username === username && row.applicant_username !== username), { action: '去审批', section: 'pending' });
   if (role === 'student') {
     add('stock-complete', 'stock', '待完成出库登记', visibleStockRequests.filter(row => canCompleteStockRequest(row, account, batches, purchases)), { action: '去登记', section: 'approved' });
     add('stock-waiting', 'stock', '出库等待采购人审批', visibleStockRequests.filter(row => row.status === '待采购人审批' && row.applicant_username === username && !canCompleteStockRequest(row, account, batches, purchases)), { kind: 'tracking', action: '查看进度', section: 'pending' });

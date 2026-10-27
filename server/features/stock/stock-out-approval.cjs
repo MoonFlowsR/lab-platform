@@ -6,8 +6,9 @@ module.exports = function createStockOutService(context) {
   function purchaser(batch) {
     const source = getRecord('lab_purchase_requests', batch.related_purchase_record_id) || listRecords('lab_purchase_requests', row => row.public_id === batch.related_purchase_id)[0];
     const username = batch.approval_delegate_username || batch.purchaser_username || source?.applicant_username || batch.created_by_username;
-    const account = username && db.prepare('SELECT username,display_name,status FROM accounts WHERE username=?').get(username);
+    const account = username && db.prepare('SELECT username,display_name,status,account_type FROM accounts WHERE username=?').get(username);
     if (!account || account.status !== 'active') throw new Error('出库审批人账号未启用，请联系管理员移交出库审批。');
+    if (account.account_type !== 'student') throw new Error('出库审批人须为学生，请联系管理员移交出库审批。');
     return account;
   }
   function signature(batch, owner) {
@@ -71,6 +72,7 @@ module.exports = function createStockOutService(context) {
       const before=getRecord('lab_stock_out_requests',payload.id);
       if (!before) throw new Error('未找到项目物品出库申请。');
       if (action==='reviewStockOutRequest') {
+        if (account.account_type !== 'student') throw new Error('出库申请由学生采购人审批。');
         if (before.purchaser_username!==account.username) throw new Error('只有该批次采购人可以审批出库申请。');
         if (before.status!=='待采购人审批') throw new Error('该出库申请已处理，请刷新页面。');
         unchangedBatch(before);

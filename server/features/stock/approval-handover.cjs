@@ -13,8 +13,8 @@ module.exports = function createApprovalHandover({ db, listRecords, updateRecord
       const batches = related();
       return res.json({ ok: true, count: batches.length, revision: fingerprint(batches) });
     }
-    const target = db.prepare("SELECT * FROM accounts WHERE username=? AND status='active' AND account_type IN ('student','teacher')").get(String(payload.username || ''));
-    if (!target || target.username === from.username) throw new Error('请选择其他启用中的学生或教师。');
+    const target = db.prepare("SELECT * FROM accounts WHERE username=? AND status='active' AND account_type='student'").get(String(payload.username || ''));
+    if (!target || target.username === from.username) throw new Error('请选择其他启用中的学生。');
     const result = db.transaction(() => {
       const batches = related();
       if (payload.revision !== fingerprint(batches)) throw new Error('库存已变化，请重新确认移交范围。');

@@ -227,6 +227,33 @@ test('purchaser resolution follows server batch/purchase records, never the subm
   } finally { f.db.close(); }
 });
 
+test('only student purchasers can review requests, including legacy records linked to another role', () => {
+  const f = fixture();
+  try {
+    f.updateRecord('lab_material_batches', f.batch._id, { purchaser_username: peer.username });
+    const { request } = f.submit();
+    for (const account_type of ['teacher', 'finance', 'admin']) {
+      const before = f.snapshot();
+      assert.throws(() => f.act('reviewStockOutRequest', request, { ...peer, account_type }, { decision: '同意' }), /学生采购人/);
+      assert.deepEqual(f.snapshot(), before);
+    }
+    assert.equal(f.act('reviewStockOutRequest', request, peer, { decision: '同意' }).request.status, '已同意待出库');
+  } finally { f.db.close(); }
+});
+
+test('private outbound requests cannot be assigned to a non-student purchaser', () => {
+  for (const role of ['teacher', 'finance', 'admin']) {
+    const f = fixture();
+    try {
+      f.db.prepare('UPDATE accounts SET account_type = ? WHERE username = ?').run(role, peer.username);
+      f.updateRecord('lab_material_batches', f.batch._id, { purchaser_username: peer.username });
+      const before = f.snapshot();
+      assert.throws(() => f.submit(), /出库审批人须为学生/);
+      assert.deepEqual(f.snapshot(), before);
+    } finally { f.db.close(); }
+  }
+});
+
 test('successful direct purchaser submission retries are idempotent even after its evidence has been bound', () => {
   const f = fixture();
   try {

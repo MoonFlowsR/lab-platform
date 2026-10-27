@@ -6,16 +6,16 @@ import RecordActions from '../../shared/components/RecordActions.jsx';
 import { canCompleteStockRequest, stockApprovalExemptionText, stockRequestIsPurchaserSelf } from './stock-out-policy.js';
 import { formatPublicNumber } from '../../shared/lib/public-number.js';
 import './stock-out-requests.css';
-export default function StockOutRequests({ defaultExpanded = false, rows = [], currentUser, batches = [], purchaseRequests = [], attachments = [], onReview, onComplete, onWithdraw, onDelete, onDownload, onExport, styles, formatDate, Badge }) {
+export default function StockOutRequests({ defaultExpanded = false, rows = [], currentUser, batches = [], purchaseRequests = [], attachments = [], onReview, onComplete, onWithdraw, onDownload, onExport, styles, formatDate, Badge }) {
   const [busy,setBusy] = useState('');
+  const student = currentUser?.account_type === 'student';
   const ongoing = rows.filter(row => ['待采购人审批','已同意待出库'].includes(row.status));
   const history = rows.filter(row => !['待采购人审批','已同意待出库'].includes(row.status));
   const operate = async (row,callback) => { if (busy) return; setBusy(row._id); try { await callback?.(); } finally { setBusy(''); } };
   const card = row => {
-    const finance = currentUser?.account_type === 'finance';
-    const mine = !finance && row.applicant_username === currentUser?.username, reviewer = !finance && row.purchaser_username === currentUser?.username, photo = attachments.find(file => String(file._id) === String(row.photo_attachment_id));
+    const mine = student && row.applicant_username === currentUser?.username, reviewer = student && row.purchaser_username === currentUser?.username, photo = attachments.find(file => String(file._id) === String(row.photo_attachment_id));
     const selfPurchase = stockRequestIsPurchaserSelf(row, batches, purchaseRequests);
-    const canComplete = !finance && canCompleteStockRequest(row, currentUser, batches, purchaseRequests);
+    const canComplete = canCompleteStockRequest(row, currentUser, batches, purchaseRequests);
     const statusLabel = selfPurchase && row.status === '待采购人审批' ? '待出库登记' : row.status;
     const canWithdraw = mine && ['待采购人审批','已同意待出库','已驳回'].includes(row.status);
     return <article key={row._id} className="platform-stock-request" aria-label={`出库申请 ${formatPublicNumber(row.public_id)}`}>
@@ -28,7 +28,7 @@ export default function StockOutRequests({ defaultExpanded = false, rows = [], c
       {(stockApprovalExemptionText(row) || (selfPurchase && ['待采购人审批','已同意待出库'].includes(row.status))) && <p className="platform-stock-request-note">{stockApprovalExemptionText(row) || (row.approval_delegated ? '受托审批人本人，无需审批' : '采购人本人，无需审批')}。</p>}
       {row.completed_at && <p style={styles.meta}>出库完成：{formatDate(row.completed_at)} · {formatPublicNumber(row.transaction_public_id)}</p>}
       {mine && canComplete && <p className="platform-stock-request-note">{!selfPurchase && '采购人已同意。'}完成出库登记后才扣减库存。</p>}
-      <RecordActions dangerous={(canWithdraw || currentUser?.account_type === 'admin') && <>{canWithdraw && <button type="button" disabled={Boolean(busy)} style={styles.warningButton} onClick={()=>operate(row,()=>onWithdraw(row))}>撤回出库申请</button>}{currentUser?.account_type === 'admin' && <button type="button" disabled={Boolean(busy)} style={styles.dangerButton} onClick={()=>onDelete?.('lab_stock_out_requests',row)}>永久删除申请</button>}</>}>
+      <RecordActions dangerous={canWithdraw && <button type="button" disabled={Boolean(busy)} style={styles.warningButton} onClick={()=>operate(row,()=>onWithdraw(row))}>撤回出库申请</button>}>
         {photo && <button type="button" style={styles.lightButton} onClick={()=>onDownload?.(photo)}>物品特写</button>}
         {reviewer && row.applicant_username !== row.purchaser_username && row.status === '待采购人审批' && <><button type="button" disabled={Boolean(busy)} style={styles.successButton} onClick={()=>operate(row,()=>onReview(row,'同意'))}>同意出库</button><button type="button" disabled={Boolean(busy)} style={styles.dangerButton} onClick={()=>operate(row,()=>onReview(row,'驳回'))}>驳回出库</button></>}
         {canComplete && <button type="button" disabled={Boolean(busy)} style={styles.successButton} onClick={()=>operate(row,()=>onComplete(row))}>{busy===row._id ? '处理中…' : '完成出库登记'}</button>}
@@ -36,7 +36,7 @@ export default function StockOutRequests({ defaultExpanded = false, rows = [], c
     </article>;
   };
   return <>
-    <section className="platform-section-pending" style={styles.card}><div style={styles.cardHeader}><h2 style={styles.h2}>私用/项目用物品出库申请（{ongoing.length}）</h2><ExportButton subject="出库申请" onExport={()=>onExport?.(rows)} /></div><p style={styles.muted}>采购人本人可直接登记；其他人经采购人审批后完成出库。完成登记时扣减库存。</p>{ongoing.length ? <RecentRecords rows={ongoing} defaultExpanded={defaultExpanded}>{shown => shown.map(card)}</RecentRecords> : <p style={styles.muted}>当前范围暂无待处理出库申请。</p>}</section>
+    <section className="platform-section-pending" style={styles.card}><div style={styles.cardHeader}><h2 style={styles.h2}>私用/项目用物品出库申请（{ongoing.length}）</h2><ExportButton subject="出库申请" onExport={()=>onExport?.(rows)} /></div><p style={styles.muted}>{student ? '采购人本人可直接登记；其他人经采购人审批后完成出库。完成登记时扣减库存。' : '查看全部出库申请及处理进度。'}</p>{ongoing.length ? <RecentRecords rows={ongoing} defaultExpanded={defaultExpanded}>{shown => shown.map(card)}</RecentRecords> : <p style={styles.muted}>{student ? '当前范围暂无待处理出库申请。' : '暂无待处理出库申请。'}</p>}</section>
     {history.length>0 && <section style={styles.card}><div style={styles.cardHeader}><h2 style={styles.h2}>出库申请历史（{history.length}）</h2></div><RecentRecords rows={history}>{shown => shown.map(card)}</RecentRecords></section>}
   </>;
 }
