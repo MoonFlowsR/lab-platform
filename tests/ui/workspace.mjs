@@ -1,8 +1,32 @@
 import assert from "node:assert/strict";
 import path from "node:path";
+import fs from "node:fs/promises";
 import { openNavigation } from "./navigation.mjs";
 import { showModuleRecords } from "./module-records.mjs";
 import packageInfo from "../../package.json" with { type: "json" };
+import releaseHistory from "../../src/config/release-history.json" with { type: "json" };
+
+const expectedUpdates = releaseHistory.historicalUpdates + releaseHistory.releases.length;
+async function checkVersion(locator) {
+  assert.equal(await locator.count(), 1);
+  const value = (await locator.textContent()).replace(/\s+/g, " ");
+  assert(value.includes(`版本 v${packageInfo.version}`));
+  assert(value.includes(`累计更新 ${expectedUpdates} 次`));
+}
+
+async function checkSidebarFocusLoop(page, sidebar) {
+  const history = sidebar.locator('a.workspace-version[href="/updates"]');
+  const close = sidebar.getByRole('button', { name: '关闭导航', exact: true });
+  await sidebar.locator('.platform-nav button').last().focus();
+  await page.keyboard.press('Tab');
+  assert.equal(await history.evaluate(node => node === document.activeElement), true, 'The update log follows the last navigation module in keyboard order');
+  await page.keyboard.press('Tab');
+  assert.equal(await close.evaluate(node => node === document.activeElement), true, 'The drawer wraps from its last link to the close button');
+  await page.keyboard.press('Shift+Tab');
+  assert.equal(await history.evaluate(node => node === document.activeElement), true, 'Reverse tabbing from close returns to the update log');
+  await page.keyboard.press('Tab');
+  assert.equal(await close.evaluate(node => node === document.activeElement), true);
+}
 
 export async function checkWorkspace(browser, origin, out, snapshot, users) {
   const results = [];
@@ -58,8 +82,7 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     await page.goto(origin);
     await page.getByTestId("task-total").waitFor();
     assert.equal(await page.locator('.workspace-brand-name > small').count(), 0, 'The brand has no redundant subtitle');
-    assert.equal(await page.locator('.workspace-version').count(), 1);
-    assert.equal(await page.locator('.workspace-version').textContent(), `版本 v${packageInfo.version}`);
+    await checkVersion(page.locator('.workspace-version'));
     assert(!(await page.locator(".platform-workspace").textContent()).includes("账号账号"));
     assert.equal(await page.locator(".workspace-welcome .platform-person-name").count(), 0);
     assert.equal(await page.locator(".platform-sync-status").count(), 1);
@@ -75,7 +98,13 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     assert.equal(await page.locator(".workspace-sidebar-footer .platform-person-suffix").textContent(), "（教师账号）");
     const syncButton = await page.getByRole("button", { name: "手动同步", exact: true }).boundingBox();
     const syncText = await page.locator(".workspace-sync-state").boundingBox();
-    assert(syncButton.x + syncButton.width <= syncText.x + 1, "Manual sync stays to the left of synchronization status");
+    if (width <= 640) {
+      assert.equal(await page.locator('.workspace-context > .workspace-sync-slot > .workspace-sync-control').count(), 1, 'The only manual sync control follows mobile navigation');
+      const menuBox = await page.locator('.workspace-menu-button').boundingBox();
+      assert(syncButton.x >= menuBox.x + menuBox.width && syncButton.x - menuBox.x - menuBox.width <= 8, 'Mobile manual sync is immediately right of navigation');
+      assert(Math.abs(syncButton.y + syncButton.height / 2 - menuBox.y - menuBox.height / 2) <= 1, 'Navigation and manual sync share a vertical center');
+      assert(syncButton.y + syncButton.height <= syncText.y + 1, 'Mobile synchronization status stays beneath the action row');
+    } else assert(syncButton.x + syncButton.width <= syncText.x + 1, "Desktop manual sync stays to the left of synchronization status");
     const menu = page.getByRole("button", {
       name: "打开模块导航",
       exact: true,
@@ -88,14 +117,7 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
         await page.locator(".workspace-body").getAttribute("inert"),
         "",
       );
-      await drawer.getByRole("button").last().focus();
-      await page.keyboard.press("Tab");
-      assert.equal(
-        await drawer
-          .getByRole("button", { name: "关闭导航" })
-          .evaluate((node) => node === document.activeElement),
-        true,
-      );
+      await checkSidebarFocusLoop(page, drawer);
       if (width === 390)
         await page.screenshot({
           path: path.join(out, "workspace-mobile-navigation.png"),
@@ -235,11 +257,9 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     await sidebar.locator('.platform-nav').evaluate(node => { node.scrollTop = node.scrollHeight; });
     const afterScroll = await sidebar.locator('.workspace-sidebar-footer').boundingBox();
     assert(Math.abs(afterScroll.y - geometry.footerTop) <= 1, 'Only the navigation list scrolls');
-    assert.equal(await sidebar.locator('.workspace-version').innerText(), `版本 v${packageInfo.version}`);
+    await checkVersion(sidebar.locator('.workspace-version'));
     if (width < 1100) {
-      await sidebar.locator('.platform-nav button').last().focus();
-      await page.keyboard.press('Tab');
-      assert.equal(await sidebar.getByRole('button', { name: '关闭导航', exact: true }).evaluate(node => node === document.activeElement), true);
+      await checkSidebarFocusLoop(page, sidebar);
       await sidebar.getByRole('button', { name: '关闭导航', exact: true }).click();
       assert.equal(await sidebar.isVisible(), false);
       await openNavigation(page);
@@ -282,6 +302,86 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
       ),
     });
     await page.close();
+  }
+  // The mobile sync control moves without duplicates; API behavior remains unchanged.
+  for (const width of [320, 390]) for (const theme of ['light', 'dark', 'mixed']) for (const textScale of [100, 125]) {
+    const page = await createPage(width, users[2]), errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.addInitScript(value => localStorage.setItem('platform:theme', value), theme);
+    await page.goto(origin);
+    await page.waitForFunction(() => document.querySelector('.workspace-sync-state')?.textContent.includes('同步完成'));
+    if (textScale === 125) await page.addStyleTag({ content: 'html{font-size:20px!important}' });
+    async function inspectStatus(label) {
+      const geometry = await page.locator('.workspace-statusbar').evaluate(node => {
+        const state = node.querySelector('.workspace-sync-state'), guidance = node.querySelector('.platform-sync-guidance'),
+          box = node.getBoundingClientRect(), a = state.getBoundingClientRect(), b = guidance.getBoundingClientRect(), style = getComputedStyle(guidance);
+        return { viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth, x: box.x, right: box.right, height: box.height,
+          stateX: a.x, stateRight: a.right, stateCenter: a.y + a.height / 2, guidanceCenter: b.y + b.height / 2,
+          guidanceX: b.x, guidanceRight: b.right, guidanceHeight: b.height, fontSize: parseFloat(style.fontSize), guidanceText: guidance.textContent.trim(), bold: Number(style.fontWeight),
+          prefixVisible: getComputedStyle(node.querySelector('.workspace-sync-prefix')).display !== 'none' };
+      });
+      const diagnostic = JSON.stringify({ width, theme, textScale, label, geometry });
+      assert(geometry.scrollWidth <= width && geometry.x >= 0 && geometry.right <= width, `Mobile sync line fits the viewport: ${diagnostic}`);
+      assert(Math.abs(geometry.stateCenter - geometry.guidanceCenter) <= 1, `Status and full guidance share one aligned line: ${diagnostic}`);
+      assert(geometry.stateRight <= geometry.guidanceX && geometry.guidanceRight <= width, `Status has its own truncation slot: ${diagnostic}`);
+      assert(geometry.guidanceHeight <= geometry.fontSize * 1.7, `The guidance never wraps: ${diagnostic}`);
+      assert.equal(geometry.guidanceText, '请等待同步完成后操作');
+      assert(geometry.bold >= 700);
+      assert.equal(geometry.prefixVisible, false, 'The mobile line avoids repeating the redundant status label');
+      return geometry;
+    }
+    const complete = await inspectStatus('complete');
+    let releaseSync;
+    const pending = new Promise(resolve => { releaseSync = resolve; });
+    let requests = 0;
+    await page.route('**/api/ops/listAll', async route => {
+      requests++;
+      await pending;
+      await route.fulfill({ json: { ok: true, data: { ...snapshot, current_account: { ...users[2], profile_required: false } }, revision: 'manual-sync-fixture' } });
+    });
+    try {
+      const control = page.getByRole('button', { name: '手动同步', exact: true });
+      assert.equal(await page.locator('.workspace-sync-control').count(), 1);
+      assert.equal(await page.locator('.workspace-context > .workspace-sync-slot > .workspace-sync-control').count(), 1);
+      const box = await control.boundingBox();
+      assert(box.width >= 44 && box.height >= 44);
+      const menuBox = await page.locator('.workspace-menu-button').boundingBox();
+      assert(box.x >= menuBox.x + menuBox.width && box.x - menuBox.x - menuBox.width <= 8, 'Mobile manual sync stays immediately right of the three-line navigation button');
+      assert(Math.abs(box.y + box.height / 2 - menuBox.y - menuBox.height / 2) <= 1, 'Navigation and synchronization are vertically aligned');
+      assert(await page.locator('.workspace-menu-button').evaluate(node => node.nextElementSibling?.classList.contains('workspace-sync-slot')), 'DOM and visual button order agree');
+      assert(await control.evaluate(node => { const r = node.getBoundingClientRect(), hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return node === hit || node.contains(hit); }), 'The mobile sync button receives a real center click');
+      await control.click();
+      await page.getByRole('button', { name: '同步中…', exact: true }).waitFor();
+      assert.equal(await page.getByRole('button', { name: '同步中…', exact: true }).isDisabled(), true);
+      assert.equal(await page.locator('.workspace-sync-control').count(), 1);
+      const busy = await inspectStatus('busy');
+      // Long network diagnostics use the same status slot without hiding the instruction.
+      await page.locator('.workspace-sync-state > span:last-child').evaluate(node => { node.lastChild.textContent = '同步失败，请检查当前网络连接后重新尝试同步平台数据'; });
+      const long = await inspectStatus('long-network-status');
+      releaseSync();
+      await page.getByRole('button', { name: '手动同步', exact: true }).waitFor();
+      await page.waitForFunction(() => document.querySelector('.workspace-sync-state')?.textContent.includes('同步完成'));
+      assert.equal(requests, 1, 'One manual click performs one read-only sync request');
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.waitForFunction(() => document.querySelectorAll('.workspace-statusbar > .workspace-sync-control').length === 1);
+      assert.equal(await page.locator('.workspace-sync-control').count(), 1, 'Resizing to desktop moves the same single control back to the status row');
+      await page.setViewportSize({ width, height: 900 });
+      await page.waitForFunction(() => document.querySelectorAll('.workspace-context > .workspace-sync-slot > .workspace-sync-control').length === 1);
+      assert.equal(await page.locator('.workspace-sync-control').count(), 1, 'Resizing back to phone never duplicates controls');
+      await inspectStatus('resized');
+      await page.screenshot({ path: path.join(out, `workspace-mobile-sync-${width}-${theme}-${textScale}.png`) });
+      assert.deepEqual(errors, []);
+      results.push({ workspaceMobileSync: true, width, theme, textScale, requests, complete, busy, long, errors });
+    } catch (failure) {
+      const name = `workspace-mobile-sync-failure-${width}-${theme}-${textScale}`;
+      await page.screenshot({ path: path.join(out, `${name}.png`) }).catch(() => {});
+      const diagnostic = await page.evaluate(() => ({ status: document.querySelector('.workspace-sync-state')?.textContent,
+        controls: [...document.querySelectorAll('.workspace-sync-control')].map(node => ({ disabled: node.disabled, label: node.getAttribute('aria-label'), connected: node.isConnected })),
+        body: document.body.innerText.slice(-1800) })).catch(() => null);
+      const detail = { width, theme, textScale, requests, errors, diagnostic, message: failure.message };
+      await fs.writeFile(path.join(out, `${name}.json`), JSON.stringify(detail, null, 2));
+      throw new Error(`${failure.message}\n${JSON.stringify(detail)}`, { cause: failure });
+    } finally { releaseSync(); await page.close(); }
   }
   const failed = await createPage(390, users[1], true);
   await failed.goto(origin);

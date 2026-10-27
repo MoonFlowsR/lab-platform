@@ -7,6 +7,7 @@ import { splitPersonName } from "../shared/lib/person-name.js";
 import { accountTypeLabels, PLATFORM_TITLE } from "./config.js";
 import WorkspaceSync, { WorkspaceSyncContext } from "./WorkspaceSync.jsx";
 import packageInfo from "../../package.json" with { type: "json" };
+import releaseHistory from "../config/release-history.json" with { type: "json" };
 import "./workspace.css";
 
 const roleHeadings = {
@@ -33,6 +34,7 @@ export default function Workspace({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [toolbarTarget, setToolbarTarget] = useState(null);
+  const [syncControlTarget, setSyncControlTarget] = useState(null);
   const navRef = useRef(null);
   const menuButton = useRef(null);
   const currentTitle = tabs.find(([key]) => key === activeTab)?.[1] || "总览";
@@ -83,7 +85,7 @@ export default function Workspace({
     window.scrollTo({ top: 0 });
   }
   return (
-    <WorkspaceSyncContext.Provider value={{ syncing, syncStatus, onSync, toolbarTarget }}>
+    <WorkspaceSyncContext.Provider value={{ syncing, syncStatus, onSync, toolbarTarget, syncControlTarget }}>
     <div className="platform-shell platform-workspace">
       <a className="platform-skip-link" href="#platform-content">
         跳转到页面内容
@@ -149,7 +151,10 @@ export default function Workspace({
             <strong><PersonName value={user} stacked mentorLabel={account.account_type === "student"} suffix={role} /></strong>
           </div>
         </div>
-        <small className="workspace-version" aria-label={`平台版本 ${packageInfo.version}`}>版本 v{packageInfo.version}</small>
+        <a href="/updates" title="查看更新日志" className="workspace-version" aria-label={`查看更新日志：平台版本 ${packageInfo.version}，累计更新 ${releaseHistory.historicalUpdates + releaseHistory.releases.length} 次`}>
+          <span>版本 v{packageInfo.version}</span>
+          <span>累计更新 {releaseHistory.historicalUpdates + releaseHistory.releases.length} 次</span>
+        </a>
         </div>
       </aside>
       <div className="workspace-body" inert={menuOpen || undefined}>
@@ -167,6 +172,7 @@ export default function Workspace({
             >
               <Icon name="menu" />
             </button>
+            <div className="workspace-sync-slot" ref={setSyncControlTarget} />
             <span className="workspace-context-icon">
               <Icon name={activeTab} />
             </span>

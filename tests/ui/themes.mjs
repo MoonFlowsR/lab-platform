@@ -279,7 +279,7 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
       await stress.page.evaluate(() => { document.querySelector('.workspace-context > span:last-child').textContent = '私用/项目用物品出库申请记录与处理进度'; });
       const geometry = await checkGeometry(stress.page, `header-task-stress/${width}/${taskCount}/${font}`);
       const hitTargets = await stress.page.evaluate(() => {
-        const nodes = [...document.querySelectorAll('.workspace-menu-button,.workspace-topbar-actions>button,.workspace-topbar-actions>a,.workspace-topbar-actions>.workspace-current-account,.workspace-topbar-actions .platform-theme-trigger')]
+        const nodes = [...document.querySelectorAll('.workspace-menu-button,.workspace-context .workspace-sync-control,.workspace-topbar-actions>button,.workspace-topbar-actions>a,.workspace-topbar-actions>.workspace-current-account,.workspace-topbar-actions .platform-theme-trigger')]
           .filter(node => node.getClientRects().length && getComputedStyle(node).visibility !== 'hidden');
         return nodes.map(node => {
           const rect = node.getBoundingClientRect(), hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
@@ -298,6 +298,17 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
         const current = hitTargets[index], overlapX = Math.min(current.x + current.width, other.x + other.width) - Math.max(current.x, other.x),
           overlapY = Math.min(current.y + current.height, other.y + other.height) - Math.max(current.y, other.y);
         assert(!(overlapX > 1 && overlapY > 1), `Header controls never overlap: ${JSON.stringify({ width, taskCount, current, other })}`);
+      }
+      assert.equal(await stress.page.locator('.workspace-sync-control').count(), 1, 'Header has one manual synchronization button at every width');
+      if (width <= 640) {
+        assert.equal(await stress.page.locator('.workspace-context > .workspace-sync-slot > .workspace-sync-control').count(), 1, 'Mobile manual synchronization follows navigation');
+        const navigation = hitTargets.find(target => target.navigation), manual = hitTargets.find(target => target.label === '手动同步');
+        assert(manual.x >= navigation.x + navigation.width && manual.x - navigation.x - navigation.width <= 8, `Mobile sync stays next to navigation under task/font stress: ${JSON.stringify({ width, taskCount, font, navigation, manual })}`);
+        const syncLine = await stress.page.locator('.workspace-statusbar').evaluate(node => {
+          const boxes = [...node.querySelectorAll('.workspace-sync-state,.platform-sync-guidance')].map(item => item.getBoundingClientRect());
+          return { centers: boxes.map(box => box.y + box.height / 2), right: Math.max(...boxes.map(box => box.right)), height: node.getBoundingClientRect().height, viewport: innerWidth };
+        });
+        assert(Math.abs(syncLine.centers[0] - syncLine.centers[1]) <= 1 && syncLine.right <= width, `Mobile synchronization stays on one aligned line under task/font stress: ${JSON.stringify({ width, taskCount, font, syncLine })}`);
       }
       const centers = hitTargets.filter(target => target.clickable).map(target => target.y + target.height / 2);
       assert(Math.max(...centers) - Math.min(...centers) <= 1, `Header controls stay in one aligned row: ${JSON.stringify({ width, taskCount, font, centers, hitTargets })}`);
@@ -323,7 +334,7 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
       const diagnostic = await stress.page.evaluate(() => ({
         viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth,
         theme: document.documentElement.dataset.theme,
-        controls: [...document.querySelectorAll('.workspace-menu-button,.workspace-topbar-actions>button,.workspace-topbar-actions>a,.platform-theme-trigger')]
+        controls: [...document.querySelectorAll('.workspace-menu-button,.workspace-context .workspace-sync-control,.workspace-topbar-actions>button,.workspace-topbar-actions>a,.platform-theme-trigger')]
           .filter(node => node.getClientRects().length && getComputedStyle(node).visibility !== 'hidden')
           .map(node => { const rect = node.getBoundingClientRect(), style = getComputedStyle(node), hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
             return { label: node.getAttribute('aria-label'), x: rect.x, y: rect.y, width: rect.width, height: rect.height, centerY: rect.y + rect.height / 2, font: style.fontFamily, fontSize: style.fontSize, hit: node === hit || node.contains(hit) }; }),
