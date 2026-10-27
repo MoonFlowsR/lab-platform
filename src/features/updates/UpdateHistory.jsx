@@ -56,7 +56,7 @@ export default function UpdateHistory() {
       {latest && terms.length === 0 && <section className="updates-latest" aria-label="最新更新"><div className="updates-latest-meta"><span>最新更新</span><strong>v{latest.version}</strong><time dateTime={latest.date || undefined}>{dateLabel(latest.date)}</time></div><h3><PhraseText>{latest.summary}</PhraseText></h3></section>}
       <div className="updates-controls">
         <div role="search" className="updates-search"><Icon name="search" size={19} /><input type="search" aria-label="搜索更新" placeholder="搜索内容或版本号" value={query} onChange={event => setQuery(event.target.value)} />{query && <button type="button" aria-label="清空搜索" onClick={() => setQuery('')}><Icon name="close" size={17} /></button>}</div>
-        <label className="updates-sort"><span>排序</span><select aria-label="排序" value={sort} onChange={event => setSort(event.target.value)}><option value="newest">最新在前</option><option value="oldest">最早在前</option></select><Icon name="chevron" size={16} /></label>
+        <label className="updates-sort"><span>排序</span><select aria-label="排序" value={sort} onChange={event => setSort(event.target.value)}><option value="newest">最新在前</option><option value="oldest">最早在前</option></select><Icon name="chevron" size={22} className="platform-select-chevron" strokeWidth={2.2} /></label>
       </div>
       {history.historyNote && <p className="updates-note"><PhraseText>{history.historyNote}</PhraseText></p>}
       <div className="updates-search-status" role="status" aria-live="polite">{terms.length > 0 ? `找到 ${filtered.length} 条更新` : ''}</div>

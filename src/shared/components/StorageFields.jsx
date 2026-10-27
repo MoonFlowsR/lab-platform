@@ -1,8 +1,10 @@
 import { platformSettings } from '../lib/platform-settings.js';
-import { useState } from 'react';
+import { SavedOptionsContext } from '../lib/saved-options-context.js';
+import { useContext, useState } from 'react';
 
 export default function StorageFields({ form, onChange, Field, SearchableSelect, styles, compactDescription = false, groupRoom = false }) {
-  const [custom, setCustom] = useState(() => Boolean(form.storage_room && !platformSettings.rooms.includes(form.storage_room)));
+  const { storageRooms } = useContext(SavedOptionsContext);
+  const [custom, setCustom] = useState(() => Boolean(form.storage_room && !storageRooms.includes(form.storage_room)));
   function set(patch) {
     const next = { ...form, ...patch };
     onChange({ ...patch, storage_location: [next.storage_room, next.storage_detail].filter(Boolean).join(" · ") });
@@ -10,8 +12,9 @@ export default function StorageFields({ form, onChange, Field, SearchableSelect,
   const roomFields = <>
     <Field required label="存放房间"><SearchableSelect searchable={false} required clearOnInput={false}
       fixedOptions={platformSettings.rooms}
+      lastOptions={['__other_room__']}
       value={custom ? '__other_room__' : form.storage_room} placeholder="选择存放房间或“其它”"
-      options={[...platformSettings.rooms, { value: '__other_room__', label: '其它' }]} onChange={value => {
+      options={[...storageRooms, { value: '__other_room__', label: '其它' }]} onChange={value => {
         setCustom(value === '__other_room__'); set({ storage_room: value === '__other_room__' ? '' : value });
       }} /></Field>
     {custom && <Field required label="其它存放房间"><input required maxLength={100} style={styles.input}

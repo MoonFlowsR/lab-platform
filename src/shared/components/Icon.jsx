@@ -7,7 +7,7 @@ const paths = {
   processing: "m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5",
   repair:
     "M14 6a5 5 0 0 0-6 6L3 17a3 3 0 0 0 4 4l5-5a5 5 0 0 0 6-6l-4 4-4-4 4-4Z",
-  purchases: "M3 3h2l3 12h10l3-9H6M9 20h.01M18 20h.01",
+  purchases: "M3 3h2l3 12h10l3-9H6",
   stock: "M4 7h15m-4-4 4 4-4 4M20 17H5m4-4-4 4 4 4",
   materials: "m12 3 9 5v9l-9 5-9-5V8l9-5Zm0 10v9M3 8l9 5 9-5M8 5l9 5",
   reports: "M4 3v18h17M9 17v-5M14 17V7M19 17v-9",
@@ -52,6 +52,7 @@ export default function Icon({ name, size = 20, className = "", ...props }) {
     >
       {name === "admin" && <circle cx="9" cy="7" r="4" />}
       {name === "help" && <circle cx="12" cy="12" r="10" />}
+      {name === "purchases" && <><circle cx="9" cy="20" r="1.8" fill="currentColor" stroke="none" /><circle cx="18" cy="20" r="1.8" fill="currentColor" stroke="none" /></>}
       <path d={paths[name] || paths.dashboard} />
     </svg>
   );

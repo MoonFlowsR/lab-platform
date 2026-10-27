@@ -10,10 +10,10 @@ const filenamePart = value => String(value).replace(/[<>:"/\\|?*\u0000-\u001f]/g
 const timestamp = value => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false }).format(value);
 
 export function buildReportExport(data, filters = {}, now = new Date()) {
-  const { student = '', studentName = student, teacher = '', teacherName = teacher, query = '', startDate = '', endDate = '' } = filters;
+  const { student = '', studentName = student, teacher = '', teacherName = teacher, query = '', startDate = '', endDate = '', settlementStatus = '' } = filters;
   if (startDate && endDate && startDate > endDate) throw new Error('开始日期不能晚于结束日期，请调整后导出。');
   // Use the same selector as the report page, on the already authorized account dataset.
-  const selected = selectReportData(data, { student, teacher, query, startDate, endDate });
+  const selected = selectReportData(data, { student, teacher, query, startDate, endDate, settlementStatus });
   const tests = selected.workRequests.filter(row => row.request_type === '测试');
   const repairs = selected.workRequests.filter(row => row.request_type === '维修');
   const processing = selected.workRequests.filter(row => row.request_type === '加工');
@@ -32,7 +32,7 @@ export function buildReportExport(data, filters = {}, now = new Date()) {
     for (const [label, count] of counts) statuses.push([title, label, count]);
   }
   const files = [
-    { title:'筛选条件', headers:['学生姓名','教师姓名','搜索内容','开始日期','结束日期','库存统计口径','费用统计口径','导出时间'], rows:[[student ? studentName : '全部', teacher ? teacherName : '全部', query.trim() || '不限', startDate || '不限开始', endDate || '不限结束', '相关批次的当前库存', '测试加工维修按已完成最终费用；采购已入库按最终金额，未入库及未确认最终金额的旧记录按预计金额', timestamp(now)]] },
+    { title:'筛选条件', headers:['学生姓名','教师姓名','搜索内容','开始日期','结束日期',...(filters.settlementStatus !== undefined ? ['工单状态（测试/加工/维修/采购）'] : []),'库存统计口径','费用统计口径','导出时间'], rows:[[student ? studentName : '全部', teacher ? teacherName : '全部', query.trim() || '不限', startDate || '不限开始', endDate || '不限结束',...(filters.settlementStatus !== undefined ? [settlementStatus || '全部'] : []), '相关批次的当前库存', '测试加工维修按已完成最终费用；采购已入库按最终金额，未入库及未确认最终金额的旧记录按预计金额', timestamp(now)]] },
     { title:'统计汇总', headers:['统计项目','数值','单位'], rows:summary },
     { title:'状态统计', headers:['统计类别','分类','记录数'], rows:statuses },
     ...details.map(([title, kind, rows]) => ({ ...buildExportTable(kind, rows, context), title })),

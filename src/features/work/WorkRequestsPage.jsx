@@ -17,8 +17,9 @@ import { showAlert } from "../../shared/components/platform-dialog.jsx";
 import CustomOptionFields from "../../shared/components/CustomOptionFields.jsx";
 import { ALLOWED_ATTACHMENT_LABEL } from "../../app/attachment-validation.js";
 import ExportButton from "../../shared/components/ExportButton.jsx";
+import { newWorkDraft } from '../../shared/lib/new-record-defaults.js';
 
-function WorkRequestsPage({ task, onReimbursementChange, workHistory = [], teacherAccounts = [], reviewScope = "mine", onReviewScopeChange, fixedType, rows, logs, attachments = [], currentUser, units = [], canSubmit, canReview, isAdmin = false, onAdd, onResubmit, onWithdraw, onReview, onComplete, onCloseRejected, onDeleteRecord, onHideRecord, onUploadAttachment, onDownloadAttachment, onDeleteAttachment, onExport }) {
+function WorkRequestsPage({ task, onReimbursementChange, workHistory = [], optionHistory = workHistory, teacherAccounts = [], reviewScope = "mine", onReviewScopeChange, fixedType, rows, logs, attachments = [], currentUser, units = [], canSubmit, canReview, isAdmin = false, onAdd, onResubmit, onWithdraw, onReview, onComplete, onCloseRejected, onDeleteRecord, onHideRecord, onUploadAttachment, onDownloadAttachment, onDeleteAttachment, onExport }) {
   const historyIndex = useMemo(() => canReview ? indexWorkHistory(workHistory) : new Map(), [canReview, workHistory]);
   const [editingRow, setEditingRow] = useState(null);
   useEffect(() => { if (editingRow && !rows.some(row => row._id === editingRow._id)) setEditingRow(null); }, [rows, editingRow]);
@@ -57,9 +58,9 @@ function WorkRequestsPage({ task, onReimbursementChange, workHistory = [], teach
 
   return <main>
     <Toolbar title={title} description={description} onExport={task ? onExport : undefined} scope={!task && ["teacher", "student"].includes(currentUser?.account_type) && <RequestViewScope key={fixedType} scope={reviewScope} onChange={onReviewScopeChange} label={`${fixedType}${canReview ? "审核" : ""}查看范围`} moduleName={fixedType} />} />
-    {canSubmit && !task && !editingRow && <WorkRequestForm workHistory={workHistory} teacherAccounts={teacherAccounts} fixedType={fixedType} onSubmit={onAdd} currentUser={currentUser} units={units} />}
+    {canSubmit && !task && !editingRow && <WorkRequestForm workHistory={optionHistory} teacherAccounts={teacherAccounts} fixedType={fixedType} onSubmit={onAdd} currentUser={currentUser} units={units} />}
     {canSubmit && editingRow && <WorkRequestForm
-      workHistory={workHistory}
+      workHistory={optionHistory}
       teacherAccounts={teacherAccounts}
       fixedType={fixedType}
       initialData={editingRow}
@@ -92,18 +93,8 @@ function WorkRequestForm({ workHistory = [], teacherAccounts = [], fixedType, on
   const contentLabel = isRepair ? "维修设备" : fixedType + "名称";
   const choices = workOptions(fixedType, workHistory, units, initialData || {});
   const defaultForm = {
-    request_type: fixedType,
-    review_teacher_username: "",
-    work_content: "",
-    external_unit: "",
-    repair_personnel: "",
-    workload_quantity: 1,
-    workload_unit: fixedType === '维修' ? '次' : '样品',
-    safety_notes: "",
-    cost_test: "",
-    cost_repair: "",
+    ...newWorkDraft(fixedType),
     cost_processing: initialData?.request_type === "加工" ? (initialData.cost_processing ?? (num(initialData.cost_test) + num(initialData.cost_material))) : "",
-    remark: "",
   };
   const [show, setShow] = useState(Boolean(initialData));
   const [form, setForm] = useState({ ...defaultForm, ...(initialData || {}), request_type: fixedType });
@@ -148,7 +139,7 @@ function WorkRequestForm({ workHistory = [], teacherAccounts = [], fixedType, on
         <CustomOptionFields required label={contentLabel} customLabel={"其它" + contentLabel} value={form.work_content} onChange={value => set("work_content", value)} options={choices.names} placeholder={"选择" + contentLabel + "或搜索“其它”"} customPlaceholder={"请填写具体" + contentLabel} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
         {!isRepair && <CustomOptionFields required label={fixedType + "渠道"} customLabel={"其它" + fixedType + "渠道"} value={form.external_unit} onChange={value => set("external_unit", value)} options={choices.channels} placeholder="选择渠道或搜索“其它”" customPlaceholder="请填写具体执行单位或渠道" Field={Field} SearchableSelect={SearchableSelect} styles={styles} />}
         <Field required label="工作量">
-          <input required type="number" min="0" step="any" style={styles.input} value={form.workload_quantity} onChange={(e) => set("workload_quantity", Number(e.target.value))} />
+          <input required type="number" min="0" step="any" style={styles.input} value={form.workload_quantity} onChange={(e) => set("workload_quantity", e.target.value)} />
         </Field>
         <CustomOptionFields required label="计量单位" customLabel="其它计量单位" value={form.workload_unit} onChange={value => set("workload_unit", value)} options={choices.billing} placeholder="选择计量单位或搜索“其它”" customPlaceholder="请填写具体计量单位" maxLength={60} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
         {isRepair && <>

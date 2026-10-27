@@ -3,7 +3,8 @@ import RequestIdentity from '../../shared/components/RequestIdentity.jsx';
 import ReimbursementStatus, { ReimbursementBadge } from '../finance/ReimbursementStatus.jsx';
 import { isReceivedPurchase, purchaseWasModified, purchaseAmount, purchaseAmountLabel, purchaseQuantityText, inboundChangesText } from './purchase-values.js';
 import SupplierChangeHistory from "../../shared/components/SupplierChangeHistory.jsx";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { SavedOptionsContext } from "../../shared/lib/saved-options-context.js";
 import { splitReviewedPurchaseSections } from "../../shared/lib/request-sections.js";
 import { styles } from "../../app/styles.js";
 import { canReviewAssignedRequest } from "../../shared/lib/review-scope.js";
@@ -27,6 +28,7 @@ import { ALLOWED_ATTACHMENT_LABEL, validatePhotoFile } from "../../app/attachmen
 import StorageFields from "../../shared/components/StorageFields.jsx";
 import ExpiryDateField from "../../shared/components/ExpiryDateField.jsx";
 import ItemPhotoFields from "../../shared/components/ItemPhotoFields.jsx";
+import { newPurchaseDraft } from '../../shared/lib/new-record-defaults.js';
 
 function PurchasesPage({ task, onReimbursementChange, registeredTeacherAccounts = [], teacherAccounts = [], reviewScope = "mine", onReviewScopeChange, viewScope = "mine", onViewScopeChange, materialCatalog = [], rows, logs = [], attachments = [], batches = [], purchaseHistory = [], purchaseCatalog = [], fundSummary = {}, currentUser, units = [], canSubmit, canReview, isAdmin = false, onAdd, onResubmit, onWithdraw, onReview, onCompleteInbound, onCloseRejected, onDeleteRecord, onHideRecord, onUploadAttachment, onDownloadAttachment, onDeleteAttachment, onExport }) {
   const [editingRow, setEditingRow] = useState(null);
@@ -126,31 +128,21 @@ function PurchasesPage({ task, onReimbursementChange, registeredTeacherAccounts 
   </main>;
 }
 function PurchaseForm({ teacherAccounts = [], materialCatalog = [], onSubmit, purchaseHistory = [], purchaseCatalog = [], batches = [], currentUser, units = [], initialData = null, existingAttachments = [], onDownloadAttachment, onDeleteAttachment, submitLabel = "提交采购审核", onCancel }) {
+  const sharedOptions = useContext(SavedOptionsContext);
   const isEditing = Boolean(initialData);
   const catalogItems = materialCatalog.length ? materialCatalog : purchaseItems;
   const materialTerms = materialSearchTerms(catalogItems, batches);
   const otherMaterialName = "其它";
   const [customMaterial, setCustomMaterial] = useState(false);
   function initialCategory() {
+    if (!initialData) return "";
     if (["试剂原料", "耗材"].includes(initialData?.purchase_category)) return initialData.purchase_category;
     const matches = catalogItems.filter((item) => normalizeItemName(item.name) === normalizeItemName(initialData?.material_name));
     if (matches.length === 1) return matches[0].category;
     const specMatches = matches.filter((item) => item.specifications.includes(initialData?.specification));
     return specMatches.length === 1 ? specMatches[0].category : "";
   }
-  const defaultForm = {
-    material_name: "",
-    review_teacher_username: "",
-    specification: "无",
-    quantity: 1,
-    unit: "g",
-    preferred_supplier: "",
-    purchase_purpose: "",
-    estimated_price: 0,
-    safety_notes: "",
-    repeat_purchase_confirmed: false,
-    remark: "",
-  };
+  const defaultForm = newPurchaseDraft();
   const [purchaseCategory, setPurchaseCategory] = useState(initialCategory);
   const [show, setShow] = useState(Boolean(initialData));
   const [form, setForm] = useState({ ...defaultForm, ...(initialData || {}) });
@@ -189,6 +181,7 @@ function PurchaseForm({ teacherAccounts = [], materialCatalog = [], onSubmit, pu
   ]);
   const specificationOptions = uniqueNonEmpty(selectedItems.flatMap((item) => item.specifications));
   const supplierNames = uniqueNonEmpty([
+    ...sharedOptions.purchaseSuppliers,
     ...(purchaseCategory ? purchaseSuppliers[purchaseCategory] : suppliers),
     ...catalogItems.flatMap(item => item.suppliers || []),
     ...units.filter((u) => u.unit_type === "采购单位" || u.unit_type === "其他").map((u) => u.unit_name),
@@ -199,7 +192,7 @@ function PurchaseForm({ teacherAccounts = [], materialCatalog = [], onSubmit, pu
     const item = matches.find((entry) => (entry.categories || [entry.category]).includes(purchaseCategory)) || (matches.length === 1 ? matches[0] : null);
     if (item && !(item.categories || [item.category]).includes(purchaseCategory)) setPurchaseCategory(item.category);
     const previous = latestMaterialPurchase(name, purchaseHistory, initialData?._id || "");
-    setForm(prev => prev.material_name === name ? prev : { ...purchaseFormFromHistory({ ...defaultForm, specification: item?.specifications.length === 1 ? item.specifications[0] : "无" }, name, previous), review_teacher_username: prev.review_teacher_username });
+    setForm(prev => prev.material_name === name ? prev : { ...purchaseFormFromHistory(defaultForm, name, previous), review_teacher_username: prev.review_teacher_username });
   }
 
   return <section className="platform-section-create" style={styles.card}>
@@ -241,14 +234,14 @@ function PurchaseForm({ teacherAccounts = [], materialCatalog = [], onSubmit, pu
         <Field required label="采购类别">
           <SearchableSelect searchable={false} required value={purchaseCategory} options={["试剂原料", "耗材"]} placeholder="选择采购类别" onChange={value => {
             setPurchaseCategory(value); setCustomMaterial(false);
-            setForm((prev) => ({ ...prev, material_name: "", specification: "无", preferred_supplier: "", safety_notes: "", repeat_purchase_confirmed: false }));
+            setForm((prev) => ({ ...prev, material_name: "", specification: "", preferred_supplier: "", safety_notes: "", repeat_purchase_confirmed: false }));
           }} />
         </Field>
         <Field required label="采购物品名称"><SearchableSelect required value={customMaterial ? otherMaterialName : canonicalMaterialName(form.material_name)} onChange={name => { setCustomMaterial(name === otherMaterialName); changeMaterial(name === otherMaterialName ? "" : name); }} options={itemNames} searchTerms={materialTerms} placeholder="选择物品或搜索“其它”" /></Field>
         {customMaterial && <Field required label="其它采购物品名称"><input required style={styles.input} value={form.material_name} onChange={e => set("material_name", e.target.value)} placeholder="请填写具体采购物品名称" /></Field>}
         <SpecificationFields key={`${initialData?._id || 'new'}:${purchaseCategory}:${customMaterial ? 'custom' : form.material_name}`} value={form.specification} onChange={value => set("specification", value)} options={specificationOptions} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
-        <Field required label="数量"><input required type="number" min="0" step="any" style={styles.input} value={form.quantity} onChange={(e) => set("quantity", Number(e.target.value))} /></Field>
-        <CustomOptionFields key={`unit:${initialData?._id || 'new'}:${form.material_name}`} required label="单位" customLabel="其它单位" value={form.unit} onChange={value => set("unit", value)} options={uniqueNonEmpty([...purchaseUnits, ...catalogItems.flatMap(item => item.units || []), initialData?.unit])} placeholder="选择单位或搜索“其它”" customPlaceholder="请填写具体计量单位" maxLength={30} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
+        <Field required label="数量"><input required type="number" min="0" step="any" style={styles.input} value={form.quantity} onChange={(e) => set("quantity", e.target.value)} /></Field>
+        <CustomOptionFields key={`unit:${initialData?._id || 'new'}:${form.material_name}`} required label="单位" customLabel="其它单位" value={form.unit} onChange={value => set("unit", value)} options={uniqueNonEmpty([...purchaseUnits, ...sharedOptions.materialUnits, ...catalogItems.flatMap(item => item.units || []), initialData?.unit])} placeholder="选择单位或搜索“其它”" customPlaceholder="请填写具体计量单位" maxLength={30} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
         <CustomOptionFields key={`supplier:${initialData?._id || 'new'}:${form.material_name}`} required label="采购渠道" customLabel="其它采购渠道" value={form.preferred_supplier} onChange={value => set("preferred_supplier", value)} options={supplierNames} placeholder="选择渠道或搜索“其它”" customPlaceholder="请填写具体采购渠道" Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
         <Field required label="使用目的"><SearchableSelect searchable={false} required value={form.purchase_purpose} onChange={value => set("purchase_purpose", value)} options={[{ value: "私用/项目用（出库需采购人审批）", label: "私用/项目用（出库需采购人审批）" }, "公用"]} placeholder="选择使用目的" /></Field>
         <ReviewTeacherField teachers={teacherAccounts} value={form.review_teacher_username} onChange={value => set("review_teacher_username", value)} />

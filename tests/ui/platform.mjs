@@ -24,6 +24,9 @@ import { checkPurchaseChannels } from './purchase-channels.mjs';
 import { checkWorkReview } from './work-review.mjs';
 import { checkThemes } from './themes.mjs';
 import { checkDropdownModes } from './dropdown-modes.mjs';
+import { checkCustomOptions } from './custom-options.mjs';
+import { checkSettlementFilters } from './settlement-filters.mjs';
+import { checkNewRecordDefaults } from './new-record-defaults.mjs';
 import { checkCompactLayout } from './compact-layout.mjs';
 import { checkTitles } from './titles.mjs';
 import { checkUpdates } from './updates.mjs';
@@ -96,6 +99,8 @@ snapshot.lab_material_batches.push({...batch,_id:83,public_id:'BATCH-261016-0000
 async function checkOperations() {
  return [
   ...await checkFinance(browser,origin,out,snapshot,[admin,teachers[0],studentA]),
+  ...await checkSettlementFilters(browser,origin,out,snapshot,[admin,teachers[0],studentA]),
+  ...await checkNewRecordDefaults(browser,origin,out,snapshot,[admin,teachers[0],studentA]),
   ...await checkDashboardCounts(browser,origin,out,snapshot,[admin,teachers[0],studentA]),
   ...await checkPurchaseFilters(browser,origin,out,snapshot,[teachers[0],admin]),
   ...await checkAccountViewScope(browser,origin,out,snapshot,teachers[0]),
@@ -107,6 +112,9 @@ async function checkOperations() {
 try {
  if (process.env.UI_SUITE === 'themes') { results.push(...await checkThemes(browser,origin,out,snapshot,[admin,teachers[0],studentA])); }
  else if (process.env.UI_SUITE === 'dropdowns') { results.push(...await checkDropdownModes(browser,origin,snapshot,[admin,teachers[0],studentA])); }
+ else if (process.env.UI_SUITE === 'custom-options') { results.push(...await checkCustomOptions(browser,origin,out,snapshot,[admin,teachers[0],studentA])); }
+ else if (process.env.UI_SUITE === 'settlement-filters') { results.push(...await checkSettlementFilters(browser,origin,out,snapshot,[admin,teachers[0],studentA])); }
+ else if (process.env.UI_SUITE === 'new-record-defaults') { results.push(...await checkNewRecordDefaults(browser,origin,out,snapshot,[admin,teachers[0],studentA])); }
  else if (process.env.UI_SUITE === 'compact') { results.push(...await checkCompactLayout(browser,origin,out,snapshot,[admin,teachers[0],studentA])); }
  else if (process.env.UI_SUITE === 'titles') { results.push(...await checkTitles(browser,origin,out,snapshot,[admin,teachers[0],studentA])); }
  else if (process.env.UI_SUITE === 'updates') { results.push(...await checkUpdates(browser,origin,out)); }
@@ -227,6 +235,7 @@ try {
  results.push(...await checkAuditClients(browser,origin,out,snapshot,admin));
  results.push(...await checkRegistration(browser,origin,out));
  results.push(...await checkDropdownModes(browser,origin,snapshot,[admin,teachers[0],studentA]));
+ results.push(...await checkCustomOptions(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkCompactLayout(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkTitles(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkUpdates(browser,origin,out));

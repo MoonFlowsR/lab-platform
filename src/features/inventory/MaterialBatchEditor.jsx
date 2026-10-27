@@ -3,7 +3,8 @@ import { formatPublicNumber } from '../../shared/lib/public-number.js';
 import { FilePicker } from '../../shared/components/attachments.jsx';
 import { validatePhotoFile } from '../../app/attachment-validation.js';
 import { styles } from '../../app/styles.js';
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { SavedOptionsContext } from '../../shared/lib/saved-options-context.js';
 import dropdownOptions from '../../config/dropdown-options.json';
 import { canonicalMaterialName, materialKey, uniqueOptions } from '../../shared/lib/dropdown-normalize.js';
 import { materialSearchTerms } from './material-model-search.js';
@@ -14,6 +15,7 @@ import ExpiryDateField from '../../shared/components/ExpiryDateField.jsx';
 import './material-batch-editor.css';
 
 export default function MaterialBatchEditor({ row, materialCatalog = [], materials = [], attachments = [], onDownload, onSave, onClose }) {
+  const sharedOptions = useContext(SavedOptionsContext);
   const material = materials.find(item => String(item._id) === String(row.material_id));
   const [form, setForm] = useState({ material_name: row.material_name || material?.name_cn || '', purchase_category: row.purchase_category || material?.category || '', spec: row.spec || '无', current_qty: row.current_qty ?? 0, min_qty: row.min_qty ?? 0, unit: row.unit || '', supplier: row.supplier || '', purchase_purpose: row.purchase_purpose || '', expiry_date: row.expiry_date || '', storage_room: row.storage_room || '', storage_detail: row.storage_detail || '', safety_notes: row.safety_notes || '', remark: row.remark || '', reason: '' });
   const [photo, setPhoto] = useState(null), [busy, setBusy] = useState(false), [error, setError] = useState('');
@@ -28,8 +30,8 @@ export default function MaterialBatchEditor({ row, materialCatalog = [], materia
   const selected = materialCatalog.filter(item => materialKey(item.name) === materialKey(form.material_name));
   const names = uniqueOptions([...materialCatalog.filter(item => !form.purchase_category || (item.categories || [item.category]).includes(form.purchase_category)).map(item => item.name), row.material_name]);
   const materialTerms = materialSearchTerms(materialCatalog, [row]);
-  const units = uniqueOptions([...dropdownOptions.purchaseUnits, ...materialCatalog.flatMap(item => item.units || []), row.unit]);
-  const suppliers = uniqueOptions([...Object.values(dropdownOptions.purchaseSuppliers).flat(), ...materialCatalog.flatMap(item => item.suppliers || []), row.supplier]);
+  const units = uniqueOptions([...dropdownOptions.purchaseUnits, ...sharedOptions.materialUnits, ...materialCatalog.flatMap(item => item.units || []), row.unit]);
+  const suppliers = uniqueOptions([...Object.values(dropdownOptions.purchaseSuppliers).flat(), ...sharedOptions.purchaseSuppliers, ...materialCatalog.flatMap(item => item.suppliers || []), row.supplier]);
   const existingPhoto = attachments.find(file => String(file._id) === String(row.inbound_photo_attachment_id));
   return <dialog ref={dialog} className="platform-dialog platform-batch-editor" aria-labelledby="batch-editor-title" onCancel={event => { event.preventDefault(); if (!busy) onClose(); }}>
     <form onSubmit={async event => {

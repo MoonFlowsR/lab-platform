@@ -5,7 +5,7 @@
 | 业务 | 页面与前端操作 | 服务端实现 |
 | --- | --- | --- |
 | 账号、学生资料 | `src/features/accounts` | `server/routes/auth.cjs`、`server/features/accounts`、`server/services/operations/admin.cjs` |
-| 财务身份与报销 | `src/features/finance` | `server/services/operations/finance.cjs`、`server/features/accounts/account-role.cjs`、`server/migrations/accounts-finance.cjs` |
+| 财务身份、报销与工单状态筛选 | `src/features/finance` | `server/services/operations/finance.cjs`、`server/features/accounts/account-role.cjs`、`server/migrations/accounts-finance.cjs` |
 | 测试、加工、维修 | `src/features/work` | `server/features/work`、`server/services/operations/work.cjs` |
 | 采购与到货入库 | `src/features/purchases` | `server/services/operations/purchase.cjs` |
 | 材料建库、批次修改 | `src/features/inventory` | `server/features/inventory`、`server/services/operations/inventory.cjs` |
@@ -20,7 +20,7 @@
 
 测试、加工与维修：`request-sections.js`负责四类工单分组，`work-history.js`负责同学生、同项目、同机构的近半年记录及机构匹配，历史折叠栏仅在教师待审核工单中显示。`work-completion.cjs`校验最终信息与工单状态。`settlement_status`保存在工单记录中；已有未登记记录不自动补值。
 
-`src/config/work-types.json`统一定义工单类型、页面、费用字段和编号前缀；维修复用测试加工流程，通过`cost_repair`单独统计费用。维修设备沿用`work_content`，维修人员保存为`repair_personnel`，维修人员单位沿用`external_unit`，计量单位默认“次”，其它单位从已保存维修记录补入菜单；专有字段由`repair-fields.cjs`校验。
+`src/config/work-types.json`统一定义工单类型、页面、费用字段和编号前缀；维修复用测试加工流程，通过`cost_repair`单独统计费用。维修设备沿用`work_content`，维修人员保存为`repair_personnel`，维修人员单位沿用`external_unit`，计量单位提供“次”和已保存的自填项，由用户选择；专有字段由`repair-fields.cjs`校验。
 
 到货确认与最终金额：`server/features/inventory/inbound-confirmation.cjs` 校验入库确认和工单状态；`src/features/purchases/purchase-values.js` 统一金额口径、到货数量及修改明细。
 
@@ -36,7 +36,7 @@
 | `src/shared/lib` | 身份筛选、表格导出、编号等纯函数 |
 | `src/styles`、`src/app/styles.js` | 全局样式和共享外观 |
 | `src/config/platform-settings.json` | 标题、房间、毕业年份范围、登录标识方式 |
-| `src/config/dropdown-options.json` | 基础菜单、材料别名与规格；业务新增选项仍从数据库读取 |
+| `src/config/dropdown-options.json` | 基础菜单、材料别名与规格；`saved-options.js`、`work-options.js`从已同步记录派生新增选项 |
 | `server/runtime.cjs` | 组装数据库、认证、权限及业务依赖 |
 | `server/routes` | 路由与鉴权；`ops.cjs`按明确操作名分发 |
 | `server/db` | 表结构、记录读写与编号 |

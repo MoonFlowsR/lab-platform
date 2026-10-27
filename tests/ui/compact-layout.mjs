@@ -100,7 +100,13 @@ export async function checkCompactLayout(browser, origin, out, snapshot, users) 
           }
         }
         await button.click(); await create.locator('form').waitFor();
-        if (module.label === '出/退库') assert.equal(await create.locator('.platform-create-notice').count(), 1);
+        if (module.label === '出/退库') {
+          const movement = create.getByRole('combobox', { name: /类型/ });
+          assert.equal(await movement.inputValue(), '', 'New movement type requires an explicit choice');
+          assert.equal(await create.locator('.platform-create-notice').count(), 0);
+          await movement.selectOption('出库');
+          assert.equal(await create.locator('.platform-create-notice').count(), 1);
+        }
         const geometry = await page.evaluate(() => ({ viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
         assert(geometry.scrollWidth <= geometry.viewport); assert.deepEqual(writes, []); assert.deepEqual(errors, []);
         await page.evaluate(() => window.scrollTo(0, 0));

@@ -20,6 +20,7 @@ import { batchIsPurchaserSelf, batchPurchaser, privateStockPurpose, stockApprova
 import { formatPublicNumber } from "../../shared/lib/public-number.js";
 import { RequestViewScope } from "../../shared/components/request-records.jsx";
 import ExportButton from "../../shared/components/ExportButton.jsx";
+import { newStockDraft } from '../../shared/lib/new-record-defaults.js';
 
 function StockPage({ task, movementType = "", currentUser, purchaseRequests = [], teacherAccounts = [], requests = [], onReviewRequest, onCompleteRequest, onWithdrawRequest, onExportRequests, viewScope = "mine", onViewScopeChange, materialCatalog = [], rows, batches, attachments = [], isAdmin = false, onDeleteRecord, isManager, canSubmit, onAdd, onDownloadAttachment, onExport }) {
   const movementTypes = ["入库", "出库", "退库"];
@@ -69,7 +70,7 @@ function StockHistorySection({ title, rows, attachments, isAdmin, onDeleteRecord
 }
 function StockForm({ currentUser, purchaseRequests = [], materialCatalog = [], batches, onSubmit }) {
   const [materialName,setMaterialName] = useState(''), [show,setShow] = useState(false), [photo,setPhoto] = useState(null), [busy,setBusy] = useState(false);
-  const defaults = () => ({ entry_key:crypto.randomUUID(),transaction_type:'出库',batch_id:'',quantity:1,unit:'',storage_room:'',storage_detail:'',storage_location:'',usage_reason:'' });
+  const defaults = () => newStockDraft(crypto.randomUUID());
   const [form,setForm] = useState(defaults);
   const selectedBatch = batches.find(batch => String(batch._id) === String(form.batch_id));
   const projectOut = form.transaction_type === '出库' && selectedBatch?.purchase_purpose === privateStockPurpose;
@@ -95,7 +96,7 @@ function StockForm({ currentUser, purchaseRequests = [], materialCatalog = [], b
       <Field required label="材料名称"><SearchableSelect required value={materialName} onChange={name=>{setMaterialName(name);setForm(prev=>({...prev,batch_id:'',unit:'',storage_room:'',storage_detail:'',storage_location:'',entry_key:crypto.randomUUID()}));setPhoto(null);}} options={materialNames} searchTerms={materialTerms} placeholder="搜索或选择采购材料" /></Field>
       <Field required label="材料批次"><SearchableSelect required disabled={!materialName} value={form.batch_id} onChange={value=>{const batch=batches.find(row=>String(row._id)===value);setForm(prev=>({...prev,batch_id:value,unit:batch?.unit || '',storage_room:batch?.storage_room || '',storage_detail:batch?.storage_detail || '',storage_location:batch?.storage_location || '',entry_key:crypto.randomUUID()}));setPhoto(null);}} options={matchingBatches.map(batch=>({value:batch._id,label:`${formatPublicNumber(batch.batch_code)} · ${batch.material_name} · 规格 ${batch.spec || '无'} · ${batch.storage_room || '房间未登记'} · ${batch.purchase_purpose || '未标注'} · 当前 ${batch.current_qty} ${batch.unit}`}))} searchTerms={batchSearchTerms} placeholder={materialName ? '搜索或选择批次' : '请先选择材料'} /></Field>
       {materialName && !matchingBatches.length && <p role="note" style={{...styles.fullWidth,...styles.muted}}>该材料暂无库存批次。采购到货请在采购工单入库；现存材料可先建库。</p>}
-      <Field required label="数量"><input required type="number" min="0" step="any" style={styles.input} value={form.quantity} onChange={event=>set('quantity',Number(event.target.value))} /></Field>
+      <Field required label="数量"><input required type="number" min="0" step="any" style={styles.input} value={form.quantity} onChange={event=>set('quantity',event.target.value)} /></Field>
       <Field required label="单位"><input required style={styles.input} value={form.unit} onChange={event=>set('unit',event.target.value)} placeholder="选择批次后自动带出单位" /></Field>
 
       <StorageFields key={`${form.transaction_type}:${form.batch_id}`} form={form} onChange={patch=>setForm(prev=>({...prev,...patch}))} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />

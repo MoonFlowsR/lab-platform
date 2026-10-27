@@ -81,7 +81,7 @@ export async function checkWorkReview(browser, origin, out, snapshot, users) {
         const section=page.locator('main > .platform-section-create');await section.getByRole('button',{name:'新建维修',exact:true}).click();const form=section.locator('form');
         const text=await form.innerText();assert(!text.includes('安全事项'));assert(!text.includes('维修渠道'));assert(!text.includes('维修名称'));
         for(const label of ['维修设备','工作量','计量单位','维修人员','维修人员单位','预计总维修费','审核教师','备注（可选）','附件（可选）'])assert(text.includes(label));
-        const unit= form.getByPlaceholder('选择计量单位或搜索“其它”');assert.equal(await unit.inputValue(),'次');await unit.fill('其它');await form.getByRole('listbox').getByRole('option',{name:'其它',exact:true}).click();await form.getByPlaceholder('请填写具体计量单位').fill('台');
+        const unit= form.getByPlaceholder('选择计量单位或搜索“其它”');assert.equal(await unit.inputValue(),'');await unit.fill('其它');await form.getByRole('listbox').getByRole('option',{name:'其它',exact:true}).click();await form.getByPlaceholder('请填写具体计量单位').fill('台');
         await form.getByPlaceholder('选择维修设备或搜索“其它”').fill('同项目核对');await form.getByRole('listbox').getByRole('option',{name:'同项目核对',exact:true}).click();
         await form.getByPlaceholder('选择维修人员单位或搜索“其它”').fill('示例机构甲');await form.getByRole('listbox').getByRole('option',{name:'示例机构甲',exact:true}).click();
         await form.locator('input[type=number]').nth(0).fill('2');await form.locator('input[type=number]').nth(1).fill('90');

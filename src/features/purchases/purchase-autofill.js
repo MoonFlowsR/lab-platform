@@ -12,6 +12,5 @@ export function purchaseFormFromHistory(defaults, name, previous) {
   for (const key of ['specification', 'quantity', 'unit', 'preferred_supplier', 'purchase_purpose', 'estimated_price', 'safety_notes', 'remark']) {
     if (previous?.[key] != null) form[key] = previous[key];
   }
-  if (!String(form.specification || '').trim()) form.specification = '无';
   return form;
 }

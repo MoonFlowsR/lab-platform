@@ -144,7 +144,7 @@ function SearchableSelect({ value, onChange, options = [], searchable = true, pl
       {value && !hasSelection && <option value={String(value)}>{String(value)}</option>}
       {orderedOptions.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
     </select>
-    <span aria-hidden="true" style={{ ...styles.searchSelectArrow, pointerEvents: "none" }}>▾</span>
+    <span aria-hidden="true" style={{ ...styles.searchSelectArrow, pointerEvents: "none" }}><Icon name="chevron" size={22} className="platform-select-chevron" strokeWidth={2.2} /></span>
   </div>;
 
   return <div className="platform-search-select" ref={wrapRef} style={styles.searchSelectWrap}>
@@ -185,7 +185,7 @@ function SearchableSelect({ value, onChange, options = [], searchable = true, pl
         }
       }}
     />
-    <button disabled={disabled} type="button" tabIndex={-1} aria-label="展开选项" style={styles.searchSelectArrow} onMouseDown={(e) => e.preventDefault()} onClick={event => { event.preventDefault(); event.stopPropagation(); setOpen((prev) => !prev); setActiveIndex(-1); }}>▾</button>
+    <button disabled={disabled} type="button" tabIndex={-1} aria-label="展开选项" aria-expanded={open} aria-controls={open ? menuId : undefined} style={styles.searchSelectArrow} onMouseDown={(e) => e.preventDefault()} onClick={event => { event.preventDefault(); event.stopPropagation(); setOpen((prev) => !prev); setActiveIndex(-1); }}><Icon name="chevron" size={22} className="platform-select-chevron" strokeWidth={2.2} /></button>
     {open && !disabled && <div id={menuId} role="listbox" style={styles.searchSelectMenu}>
       {displayedOptions.length === 0 ? <div style={styles.searchSelectEmpty}>{keyword ? "无相关内容" : emptyText}</div> : displayedOptions.map((item, index) => <button
         key={item.value}

@@ -3,7 +3,8 @@ import { formatPublicNumber } from '../../shared/lib/public-number.js';
 import { FilePicker } from '../../shared/components/attachments.jsx';
 import { validatePhotoFile } from '../../app/attachment-validation.js';
 import { styles } from '../../app/styles.js';
-import { useRef, useState } from 'react';
+import { useContext, useRef, useState } from 'react';
+import { SavedOptionsContext } from '../../shared/lib/saved-options-context.js';
 import dropdownOptions from '../../config/dropdown-options.json';
 import { canonicalMaterialName, materialKey, uniqueOptions } from '../../shared/lib/dropdown-normalize.js';
 import { materialSearchTerms } from './material-model-search.js';
@@ -12,15 +13,17 @@ import CustomOptionFields from '../../shared/components/CustomOptionFields.jsx';
 import StorageFields from '../../shared/components/StorageFields.jsx';
 import ItemPhotoFields from '../../shared/components/ItemPhotoFields.jsx';
 import ExpiryDateField from '../../shared/components/ExpiryDateField.jsx';
+import { newMaterialDraft } from '../../shared/lib/new-record-defaults.js';
 
 const { purchaseItems, purchaseUnits, purchaseSuppliers } = dropdownOptions;
 const unique = uniqueOptions;
 const normalize = materialKey;
 const otherMaterialName = '其它';
-const emptyForm = () => ({ category: '', name_cn: '', spec: '无', quantity: '', unit: '', supplier: '', purchase_purpose: '', expiry_date: '', storage_room: '', storage_detail: '', storage_location: '', safety_notes: '', remark: '' });
+const emptyForm = newMaterialDraft;
 const entryKey = () => `initial-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 export default function MaterialInitialization({ materialCatalog = [], materials, batches, units, onSave }) {
+  const sharedOptions = useContext(SavedOptionsContext);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [customMaterial, setCustomMaterial] = useState(false);
@@ -41,8 +44,9 @@ export default function MaterialInitialization({ materialCatalog = [], materials
     ...selectedItems.flatMap(item => item.specifications),
     ...batches.filter(batch => normalize(batch.material_name) === normalize(form.name_cn)).map(batch => batch.spec),
   ]);
-  const unitOptions = unique([...purchaseUnits, ...catalogItems.flatMap(item => item.units || []), matchingMaterial?.default_unit]);
+  const unitOptions = unique([...purchaseUnits, ...sharedOptions.materialUnits, ...catalogItems.flatMap(item => item.units || []), matchingMaterial?.default_unit]);
   const supplierOptions = unique([
+    ...sharedOptions.purchaseSuppliers,
     ...catalogItems.flatMap(item => item.suppliers || []),
     ...(form.category ? purchaseSuppliers[form.category] || [] : Object.values(purchaseSuppliers).flat()),
     ...units.filter(unit => ['采购单位', '其他'].includes(unit.unit_type)).map(unit => unit.unit_name),
@@ -50,12 +54,8 @@ export default function MaterialInitialization({ materialCatalog = [], materials
   function changeMaterial(name) {
     const material = materials.find(row => normalize(row.name_cn || row.name) === normalize(name));
     const item = catalogItems.find(item => normalize(item.name) === normalize(name) && (!form.category || (item.categories || [item.category]).includes(form.category)));
-    const specifications = unique([
-      ...(item?.specifications || []),
-      ...batches.filter(batch => normalize(batch.material_name) === normalize(name)).map(batch => batch.spec),
-    ]);
     setForm(prev => prev.name_cn === name ? prev : ({ ...prev, name_cn: name,
-      category: prev.category || item?.category || '', spec: specifications.length === 1 ? specifications[0] : '无', supplier: '', safety_notes: '',
+      category: prev.category || item?.category || '', spec: '', supplier: '', safety_notes: '',
       unit: material?.default_unit || prev.unit,
     }));
     setError('');
@@ -91,7 +91,7 @@ export default function MaterialInitialization({ materialCatalog = [], materials
         <div style={styles.formGrid}>
           <div className="platform-initialization-grid" style={styles.fullWidth}>
           <Field required label="材料类别"><SearchableSelect searchable={false} required value={form.category} options={['试剂原料', '耗材']} placeholder="选择材料类别" onChange={value => {
-            setForm(prev => ({ ...prev, category: value, name_cn: '', spec: '无', supplier: '', safety_notes: '' })); setCustomMaterial(false); setError('');
+            setForm(prev => ({ ...prev, category: value, name_cn: '', spec: '', supplier: '', safety_notes: '' })); setCustomMaterial(false); setError('');
           }} /></Field>
           <div className="platform-initialization-cell"><Field required label="材料名称"><SearchableSelect required value={customMaterial ? otherMaterialName : canonicalMaterialName(form.name_cn)} onChange={name => { setCustomMaterial(name === otherMaterialName); changeMaterial(name === otherMaterialName ? '' : name); }} options={materialNames} searchTerms={materialTerms} lastOptions={[otherMaterialName]} placeholder="选择材料或搜索“其它”" /></Field>
           {customMaterial && <Field required label="其它材料名称"><input required style={styles.input} value={form.name_cn} onChange={e => set('name_cn', e.target.value)} placeholder="请填写具体材料名称" /></Field>}</div>
