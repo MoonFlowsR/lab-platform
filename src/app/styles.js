@@ -47,7 +47,7 @@ const styles = {
   secondaryButton: { background: "var(--accent)", color: "var(--on-accent)", border: "none", borderRadius: "var(--radius-control)", padding: "10px 16px", cursor: "pointer", fontWeight: 600, minHeight: 40 },
   lightButton: { background: "var(--surface-muted)", color: "var(--ink)", border: "none", borderRadius: "var(--radius-control)", padding: "10px 16px", cursor: "pointer", fontWeight: 600, minHeight: 40 },
   successButton: { background: "var(--success)", color: "var(--on-accent)", border: "none", borderRadius: 10, padding: "9px 12px", cursor: "pointer", fontWeight: 700, minHeight: 38 },
-  warningButton: { background: "var(--warning)", color: "var(--on-accent)", border: "none", borderRadius: 10, padding: "9px 12px", cursor: "pointer", fontWeight: 700, minHeight: 38 },
+  warningButton: { background: "var(--warning-soft)", color: "var(--warning-ink)", border: "1px solid var(--warning-border)", borderRadius: 10, padding: "9px 12px", cursor: "pointer", fontWeight: 700, minHeight: 38 },
   dangerButton: { background: "var(--danger)", color: "var(--on-accent)", border: "none", borderRadius: 10, padding: "9px 12px", cursor: "pointer", fontWeight: 700, minHeight: 38 },
   badgeRow: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" },
   badge: { display: "inline-block", padding: "5px 10px", borderRadius: 999, fontSize: "var(--text-caption)", fontWeight: 800, background: "var(--surface-muted)", color: "var(--ink-secondary)" },

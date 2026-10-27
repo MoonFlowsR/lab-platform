@@ -3,16 +3,29 @@ import path from 'node:path';
 import { inflateSync } from 'node:zlib';
 import { openNavigation } from './navigation.mjs';
 import { showModuleRecords } from './module-records.mjs';
+import { checkSemanticColors } from './semantic-colors.mjs';
 
 // Only the isolated UI harness calls this suite. API data is always synthetic.
 export async function checkThemes(browser, origin, out, snapshot, users) {
   const results = [], themes = ['light', 'dark', 'mixed'];
   const finance = { id: 94, _id: 94, username: 'qa-theme-finance', display_name: '示例财务', account_type: 'finance', status: 'active' };
   const roles = [...users, finance];
-  async function makePage({ width = 390, user = null, theme = null, colorScheme = 'light', blockedStorage = false, context } = {}) {
+  async function makePage({ width = 390, user = null, theme = null, colorScheme = 'light', blockedStorage = false, context, taskCount } = {}) {
     const page = context ? await context.newPage() : await browser.newPage({ viewport: { width, height: 900 }, colorScheme, reducedMotion: 'reduce' });
     if (context) { await page.setViewportSize({ width, height: 900 }); await page.emulateMedia({ colorScheme, reducedMotion: 'reduce' }); }
     const account = user ? { ...user, profile_required: false, session_token: 'isolated-theme-account' } : null;
+    const data = taskCount === undefined ? snapshot : {
+      ...snapshot,
+      lab_student_accounts: snapshot.lab_student_accounts.map(row => row.username === account.username ? { ...row, display_name: account.display_name } : row),
+      lab_student_name_labels: snapshot.lab_student_name_labels.map(row => row.username === account.username ? { ...row, display_name: account.display_name } : row),
+      lab_work_requests: Array.from({ length: taskCount }, (_, index) => ({
+        _id: 10000 + index, public_id: `QA-THEME-TASK-${index}`, request_type: '测试', work_content: '示例待确认任务',
+        applicant_username: account.username, applicant_name: account.display_name,
+        review_teacher_username: snapshot.lab_teacher_accounts[0].username, status: '已通过',
+        workload_quantity: 1, workload_unit: '小时', cost_test: 1, created_at: '2026-10-27T00:00:00Z',
+      })),
+      lab_purchase_requests: [], lab_stock_out_requests: [],
+    };
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.addInitScript(({ account, theme, blockedStorage }) => {
@@ -28,7 +41,7 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
       if (url.origin !== origin) return route.abort();
       if (!url.pathname.startsWith('/api/')) return route.continue();
       if (url.pathname === '/api/auth/me') return route.fulfill({ json: { ok: true, account, teachers: snapshot.lab_teacher_accounts } });
-      if (url.pathname === '/api/ops/listAll') return route.fulfill({ json: { ok: true, data: { ...snapshot, current_account: account, accounts: [...snapshot.accounts, finance] }, revision: 'theme-fixture' } });
+      if (url.pathname === '/api/ops/listAll') return route.fulfill({ json: { ok: true, data: { ...data, current_account: account, accounts: [...snapshot.accounts, finance] }, revision: 'theme-fixture' } });
       if (url.pathname === '/api/events') return route.fulfill({ contentType: 'text/event-stream', body: ': isolated theme fixture\n\n' });
       if (url.pathname === '/api/help-comments/session') return route.fulfill({ json: { ok: true, account, student_name_labels: snapshot.lab_student_name_labels } });
       return route.fulfill({ json: { ok: true, comments: [], rows: [], total: 0 } });
@@ -234,6 +247,57 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
     results.push({ themeBehavior: 'blocked-storage', errors: blocked.errors });
   } finally { await blocked.page.close(); }
 
+  // A nonzero, growing task badge must never collapse the mobile navigation track.
+  // Use real task fixtures so both the badge count and the layout follow app logic.
+  for (const width of [320, 360, 390, 640, 768, 1024, 1366, 1920]) for (const taskCount of [10, 99, 999]) {
+    const user = { ...users.find(user => user.account_type === 'student'), display_name: '示例学生欧阳长姓名测试' };
+    const stress = await makePage({ width, user, theme: 'mixed', taskCount });
+    try {
+      await stress.page.goto(origin);
+      await stress.page.waitForFunction(count => document.querySelector('.workspace-tasks b')?.textContent === String(count), taskCount);
+      await stress.page.evaluate(() => { document.querySelector('.workspace-context > span:last-child').textContent = '私用/项目用物品出库申请记录与处理进度'; });
+      const geometry = await checkGeometry(stress.page, `header-task-stress/${width}/${taskCount}`);
+      const hitTargets = await stress.page.evaluate(() => {
+        const nodes = [...document.querySelectorAll('.workspace-menu-button,.workspace-topbar-actions>button,.workspace-topbar-actions>a,.workspace-topbar-actions>.workspace-current-account,.workspace-topbar-actions .platform-theme-trigger')]
+          .filter(node => node.getClientRects().length && getComputedStyle(node).visibility !== 'hidden');
+        return nodes.map(node => {
+          const rect = node.getBoundingClientRect(), hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+          return { label: node.getAttribute('aria-label') || node.className, clickable: node.matches('button,a'), navigation: node.matches('.workspace-menu-button'),
+            x: rect.x, y: rect.y, width: rect.width, height: rect.height, hit: node === hit || node.contains(hit), interceptedBy: hit?.closest('button,a')?.getAttribute('aria-label') };
+        });
+      });
+      for (const target of hitTargets) {
+        assert(target.x >= 0 && target.x + target.width <= width + 1, `Header control fits viewport: ${JSON.stringify({ width, taskCount, target })}`);
+        if (target.clickable) {
+          assert.equal(target.hit, true, `Header control receives a center click: ${JSON.stringify({ width, taskCount, target })}`);
+          if (width <= 1099) assert(target.width >= (target.navigation ? 42 : 44) && target.height >= (target.navigation ? 42 : 44), `Touch target remains large enough: ${JSON.stringify(target)}`);
+        }
+      }
+      for (let index = 0; index < hitTargets.length; index++) for (const other of hitTargets.slice(index + 1)) {
+        const current = hitTargets[index], overlapX = Math.min(current.x + current.width, other.x + other.width) - Math.max(current.x, other.x),
+          overlapY = Math.min(current.y + current.height, other.y + other.height) - Math.max(current.y, other.y);
+        assert(!(overlapX > 1 && overlapY > 1), `Header controls never overlap: ${JSON.stringify({ width, taskCount, current, other })}`);
+      }
+      const centers = hitTargets.filter(target => target.clickable).map(target => target.y + target.height / 2);
+      assert(Math.max(...centers) - Math.min(...centers) <= 1, 'Header controls stay in one aligned row even with 999 pending tasks');
+      const headerGeometry = await stress.page.locator('.workspace-topbar').evaluate(node => ({
+        height: node.getBoundingClientRect().height,
+        anchorOffset: parseFloat(getComputedStyle(document.querySelector('.platform-workspace')).getPropertyValue('--workspace-anchor-offset')),
+      }));
+      assert(headerGeometry.height <= headerGeometry.anchorOffset, 'Module anchors clear the sticky header');
+      if (width <= 1099) {
+        await stress.page.getByRole('button', { name: '打开模块导航', exact: true }).click();
+        await stress.page.locator('.workspace-sidebar.is-open').waitFor();
+        await stress.page.keyboard.press('Escape');
+        assert.equal(await stress.page.getByRole('button', { name: '打开模块导航', exact: true }).getAttribute('aria-expanded'), 'false');
+      }
+      await inspectMenu(stress.page, `header-task-stress/${width}/${taskCount}`);
+      if ([320, 390, 1366].includes(width) && taskCount === 999) await stress.page.screenshot({ path: path.join(out, `theme-header-tasks-${taskCount}-${width}.png`) });
+      assert.deepEqual(stress.errors, []);
+      results.push({ themeHeaderTaskStress: true, width, taskCount, ...geometry, headerGeometry, hitTargets, errors: stress.errors });
+    } finally { await stress.page.close(); }
+  }
+
   // Show a normal business form and filters in dark mode, beyond the overview.
   const business = await makePage({ width: 390, theme: 'dark', user: users.find(user => user.account_type === 'student') });
   try {
@@ -248,5 +312,6 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
     results.push({ themeBusinessForm: true, ...geometry, lowContrast: readings.filter(row => row.ratio < 4.5), checks: readings.length, errors: business.errors });
     await business.page.screenshot({ path: path.join(out, 'theme-dark-mobile-business-form.png') });
   } finally { await business.page.close(); }
+  results.push(...await checkSemanticColors(browser, origin, out, snapshot, users));
   return results;
 }

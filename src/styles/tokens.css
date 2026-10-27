@@ -25,7 +25,7 @@ business styling stays with features. */
   --accent-hover: #1948ba;
   --accent-soft: #edf3ff;
   --success: #167650;
-  --warning: #a5660c;
+  --warning: #c2410c;
   --danger: #c72f3b;
   --radius: 12px;
   --radius-control: 8px;
@@ -43,9 +43,9 @@ business styling stays with features. */
   --success-ink: #166a4b;
   --success-soft: #ecfdf5;
   --success-border: #a5d9c2;
-  --warning-ink: #8c500b;
-  --warning-soft: #fff5df;
-  --warning-border: #dfb56d;
+  --warning-ink: #b63e14;
+  --warning-soft: #fff4ed;
+  --warning-border: #d57240;
   --danger-ink: #b91c35;
   --danger-soft: #fef2f2;
   --danger-border: #edb8bf;
@@ -125,10 +125,10 @@ business styling stays with features. */
   --success-ink: #85dfba;
   --success-soft: #14362f;
   --success-border: #387f69;
-  --warning: #a5660c;
-  --warning-ink: #ffd08b;
-  --warning-soft: #3c2d1b;
-  --warning-border: #9c7239;
+  --warning: #c64a13;
+  --warning-ink: #ffb285;
+  --warning-soft: #3d271d;
+  --warning-border: #b96c40;
   --danger: #be3544;
   --danger-ink: #ffacb9;
   --danger-soft: #3c202b;

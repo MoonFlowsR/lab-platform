@@ -65,7 +65,7 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     assert(await page.locator('.workspace-topbar-primary').evaluate(node => node === node.parentElement.firstElementChild), 'Synchronization stays in the left side of the topbar');
     assert.equal(await page.locator('.platform-sync-guidance').innerText(), '请等待同步完成后操作');
     assert(await page.locator('.platform-sync-guidance').evaluate(node => node.tagName === 'STRONG' && parseFloat(getComputedStyle(node).fontWeight) >= 700), 'The full synchronization guidance is bold');
-    assert.equal(await page.locator(".workspace-current-account").isVisible(), true);
+    assert.equal(await page.locator(".workspace-current-account").isVisible(), width > 360);
     assert.equal(await page.locator(".workspace-current-account > strong").isVisible(), width > 640);
     assert.equal(await page.locator(".workspace-current-account").evaluate(node => node.nextElementSibling?.getAttribute("aria-label")), "账户设置");
     assert.equal(await page.locator(".workspace-sidebar-footer .platform-person-suffix").textContent(), "（教师账号）");
