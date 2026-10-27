@@ -89,6 +89,30 @@ test('stock tasks follow purchaser identity, approval handover and self-purchase
   const center=buildTaskCenter({account:student,stockOutRequests,batches:[{_id:8,current_qty:4,purchaser_username:'former',approval_delegate_username:student.username}]});
   assert.equal(center.total,3); assert.equal(group(center,'stock-review').count,1); assert.equal(group(center,'stock-complete').count,2); assert.equal(group(center,'stock-waiting').count,1);
 });
+
+test('non-student stock participants have no operational tasks even when historical identities match', async () => {
+  const { buildTaskCenter, moduleTaskGroup } = await model;
+  for (const account_type of ['teacher', 'finance', 'admin']) {
+    const account = { username: 'historical-stock-participant', account_type };
+    const stockOutRequests = [
+      { _id: 1, status: '待采购人审批', purchaser_username: account.username, applicant_username: 'other-student' },
+      { _id: 2, status: '已同意待出库', applicant_username: account.username, purchaser_username: 'other-student' },
+      { _id: 3, status: '待采购人审批', applicant_username: account.username, purchaser_username: account.username, batch_id: 8 },
+      { _id: 4, status: '已驳回', applicant_username: account.username, purchaser_username: 'other-student' },
+    ];
+    const before = structuredClone(stockOutRequests);
+    const center = buildTaskCenter({ account, stockOutRequests, batches: [{ _id: 8, current_qty: 4, purchaser_username: account.username }] });
+    assert.equal(center.total, 0);
+    assert.equal(center.byModule.stock, undefined);
+    assert.equal(moduleTaskGroup(center, 'stock').count, 0);
+    assert(!center.groups.some(item => item.module === 'stock' && item.kind === 'action'));
+    if (account_type === 'admin') {
+      assert.equal(group(center, 'stock-team-review').count, 2);
+      assert.equal(group(center, 'stock-team-complete').count, 1);
+    }
+    assert.deepEqual(stockOutRequests, before);
+  }
+});
 test('inventory warnings match expiry boundaries, positive stock and long-term validity',async()=>{
   const {buildTaskCenter}=await model;
   const batches=[['2026-10-20',2],['2026-10-21',2],['2026-11-20',2],['2026-11-21',2],['长期',2],['2026-10-20',0]].map(([expiry_date,current_qty],i)=>({_id:i,expiry_date,current_qty,min_qty:0}));

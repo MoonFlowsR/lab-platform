@@ -17,7 +17,7 @@ function AccountManagementPage({ task, accounts = [], allAccounts = [], teachers
     try {
       const preview = await callLabOps('adminTransferStockApprover', {id:row.id || row._id, preview:true}, auditProps.account);
       if (!preview.count) return showAlert('该账号暂无需要移交的私用/项目用物品。');
-      const values = await showForm({title:'移交出库审批',message:'采购人及入库历史保留。未完成的出库申请改交接收人重新审批。',details:[{label:'原审批人',value:row.display_name || row.username},{label:'涉及批次',value:preview.count}],fields:[{name:'username',label:'接收人',required:true,value:'',render:({value,onChange})=><SearchableSelect required value={value} onChange={onChange} options={allAccounts.filter(a=>a.status==='active'&&a.username!==row.username&&['student','teacher'].includes(a.account_type)).map(a=>({value:a.username,label:a.display_name || a.username}))} placeholder="搜索或选择接收人"/>}]});
+      const values = await showForm({title:'移交出库审批',message:'采购人及入库历史保留。未完成的出库申请改交接收人重新审批。',details:[{label:'原审批人',value:row.display_name || row.username},{label:'涉及批次',value:preview.count}],fields:[{name:'username',label:'接收学生',required:true,value:'',render:({value,onChange})=><SearchableSelect required value={value} onChange={onChange} options={allAccounts.filter(a=>a.status==='active'&&a.username!==row.username&&a.account_type==='student').map(a=>({value:a.username,label:a.display_name || a.username}))} placeholder="搜索或选择接收学生"/>}]});
       if (!values) return;
       if (!await showConfirm('确认将这 '+preview.count+' 个批次的出库审批移交给 '+values.username+'？')) return;
       await callLabOps('adminTransferStockApprover',{id:row.id || row._id,username:values.username,revision:preview.revision},auditProps.account);
