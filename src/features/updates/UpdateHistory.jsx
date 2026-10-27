@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { version } from '../../../package.json';
 import history from '../../config/release-history.json';
-import ThemeSwitcher from '../../shared/components/ThemeSwitcher.jsx';
 import Icon from '../../shared/components/Icon.jsx';
 import PhraseText from '../../shared/components/PhraseText.jsx';
 import { usePageSearchHighlight } from '../../shared/hooks/page-search-highlight.js';
@@ -32,7 +31,7 @@ function UpdateEntry({ entry }) {
   </article>;
 }
 
-export default function UpdatesPage() {
+export default function UpdateHistory() {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('newest');
   const terms = useMemo(() => [...new Set(query.normalize('NFKC').trim().toLocaleLowerCase('zh-CN').split(/\s+/u).filter(Boolean))], [query]);
@@ -52,13 +51,9 @@ export default function UpdatesPage() {
     return [...byDate].map(([date, records]) => ({ date, records }));
   }, [filtered, sort]);
 
-  return <div className="updates-page" data-update-count={totalUpdates} data-current-version={version}>
-    <header className="updates-header">
-      <div className="updates-title"><h1>更新日志</h1><div className="updates-metadata"><span>当前版本 <strong>v{version}</strong></span><span>累计更新 <strong>{totalUpdates}</strong> 次</span></div></div>
-      <div className="updates-header-actions"><ThemeSwitcher /><a className="updates-return" href="/">返回平台<Icon name="arrow" size={17} /></a></div>
-    </header>
-    <main className="updates-main">
-      {latest && terms.length === 0 && <section className="updates-latest" aria-label="最新更新"><div className="updates-latest-meta"><span>最新更新</span><strong>v{latest.version}</strong><time dateTime={latest.date || undefined}>{dateLabel(latest.date)}</time></div><h2><PhraseText>{latest.summary}</PhraseText></h2></section>}
+  return <section className="update-history" aria-label="更新日志" data-update-count={totalUpdates} data-current-version={version}>
+      <div className="updates-heading"><h2>更新日志</h2><div className="updates-metadata"><span>当前版本 <strong>v{version}</strong></span><span>累计更新 <strong>{totalUpdates}</strong> 次</span></div></div>
+      {latest && terms.length === 0 && <section className="updates-latest" aria-label="最新更新"><div className="updates-latest-meta"><span>最新更新</span><strong>v{latest.version}</strong><time dateTime={latest.date || undefined}>{dateLabel(latest.date)}</time></div><h3><PhraseText>{latest.summary}</PhraseText></h3></section>}
       <div className="updates-controls">
         <div role="search" className="updates-search"><Icon name="search" size={19} /><input type="search" aria-label="搜索更新" placeholder="搜索内容或版本号" value={query} onChange={event => setQuery(event.target.value)} />{query && <button type="button" aria-label="清空搜索" onClick={() => setQuery('')}><Icon name="close" size={17} /></button>}</div>
         <label className="updates-sort"><span>排序</span><select aria-label="排序" value={sort} onChange={event => setSort(event.target.value)}><option value="newest">最新在前</option><option value="oldest">最早在前</option></select><Icon name="chevron" size={16} /></label>
@@ -71,6 +66,5 @@ export default function UpdatesPage() {
           <div className="updates-date-entries">{group.records.map(entry => <UpdateEntry key={entry.id} entry={entry} />)}</div>
         </details>)}
       </section>
-    </main>
-  </div>;
+  </section>;
 }

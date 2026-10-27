@@ -79,7 +79,9 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
     const geometry = await page.evaluate(() => ({ viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth }));
     assert(geometry.scrollWidth <= geometry.viewport, `${label} must fit the viewport: ${JSON.stringify(geometry)}`);
     const trigger = await page.locator('.platform-theme-trigger').boundingBox();
-    assert(trigger.width >= 44 && trigger.height >= 44, `${label}: theme control has a 44px touch target`);
+    const compactWorkspace = await page.locator('.platform-workspace').count() > 0 && geometry.viewport <= 420;
+    const minimumWidth = compactWorkspace ? geometry.viewport < 378 ? 36 : 40 : 44;
+    assert(trigger.width >= minimumWidth && trigger.height >= 44, `${label}: theme control respects the responsive touch target: ${JSON.stringify({ minimumWidth, trigger })}`);
     return geometry;
   }
   async function inspectMenu(page, label) {
@@ -291,7 +293,11 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
         assert(target.x >= 0 && target.x + target.width <= width + 1, `Header control fits viewport: ${JSON.stringify({ width, taskCount, target })}`);
         if (target.clickable) {
           assert.equal(target.hit, true, `Header control receives a center click: ${JSON.stringify({ width, taskCount, target })}`);
-          if (width <= 1099) assert(target.width >= (target.navigation ? 42 : 44) && target.height >= (target.navigation ? 42 : 44), `Touch target remains large enough: ${JSON.stringify(target)}`);
+          if (width <= 1099) {
+            const minimumWidth = width < 378 ? 36 : width <= 420 ? 40 : width <= 640 ? 44 : target.navigation ? 42 : 44;
+            const minimumHeight = width <= 640 ? 44 : target.navigation ? 42 : 44;
+            assert(target.width >= minimumWidth && target.height >= minimumHeight, `Touch target remains large enough for this viewport: ${JSON.stringify({ width, minimumWidth, minimumHeight, target })}`);
+          }
         }
       }
       for (let index = 0; index < hitTargets.length; index++) for (const other of hitTargets.slice(index + 1)) {
@@ -304,11 +310,22 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
         assert.equal(await stress.page.locator('.workspace-context > .workspace-sync-slot > .workspace-sync-control').count(), 1, 'Mobile manual synchronization follows navigation');
         const navigation = hitTargets.find(target => target.navigation), manual = hitTargets.find(target => target.label === '手动同步');
         assert(manual.x >= navigation.x + navigation.width && manual.x - navigation.x - navigation.width <= 8, `Mobile sync stays next to navigation under task/font stress: ${JSON.stringify({ width, taskCount, font, navigation, manual })}`);
+        assert(Math.abs(navigation.x - 12) <= 1 && Math.abs(manual.x - navigation.x - navigation.width - 4) <= 1, 'Mobile navigation and sync have balanced padding and a four-pixel gap');
+        const actionLayout = await stress.page.locator('.workspace-topbar-actions').evaluate(node => {
+          const boxes = [...node.children].filter(item => item.getClientRects().length && getComputedStyle(item).display !== 'none').map(item => item.getBoundingClientRect());
+          const icon = node.querySelector('.workspace-tasks>.platform-icon').getBoundingClientRect(), count = node.querySelector('.workspace-tasks>b').getBoundingClientRect();
+          return { right: boxes.at(-1).right, gaps: boxes.slice(1).map((box, index) => box.x - boxes[index].right),
+            taskInline: Math.abs(icon.y + icon.height / 2 - count.y - count.height / 2) <= 1 && icon.right <= count.x,
+            badgePosition: getComputedStyle(node.querySelector('.workspace-tasks>b')).position };
+        });
+        assert(Math.abs(width - actionLayout.right - navigation.x) <= 1 && actionLayout.gaps.every(gap => Math.abs(gap - 4) <= 1), `Mobile header padding and gaps stay consistent under stress: ${JSON.stringify({ width, taskCount, font, actionLayout })}`);
+        assert(actionLayout.taskInline && actionLayout.badgePosition === 'static', 'Mobile task icon and count remain side by side, without a corner badge');
         const syncLine = await stress.page.locator('.workspace-statusbar').evaluate(node => {
           const boxes = [...node.querySelectorAll('.workspace-sync-state,.platform-sync-guidance')].map(item => item.getBoundingClientRect());
-          return { centers: boxes.map(box => box.y + box.height / 2), right: Math.max(...boxes.map(box => box.right)), height: node.getBoundingClientRect().height, viewport: innerWidth };
+          return { centers: boxes.map(box => box.y + box.height / 2), stateX: boxes[0].x, right: Math.max(...boxes.map(box => box.right)), height: node.getBoundingClientRect().height, viewport: innerWidth };
         });
         assert(Math.abs(syncLine.centers[0] - syncLine.centers[1]) <= 1 && syncLine.right <= width, `Mobile synchronization stays on one aligned line under task/font stress: ${JSON.stringify({ width, taskCount, font, syncLine })}`);
+        assert(Math.abs(syncLine.stateX - manual.x) <= 1, `The mobile synchronization state aligns with its button: ${JSON.stringify({ width, taskCount, font, syncLine, manual })}`);
       }
       const centers = hitTargets.filter(target => target.clickable).map(target => target.y + target.height / 2);
       assert(Math.max(...centers) - Math.min(...centers) <= 1, `Header controls stay in one aligned row: ${JSON.stringify({ width, taskCount, font, centers, hitTargets })}`);

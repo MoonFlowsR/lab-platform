@@ -151,10 +151,10 @@ export default function Workspace({
             <strong><PersonName value={user} stacked mentorLabel={account.account_type === "student"} suffix={role} /></strong>
           </div>
         </div>
-        <a href="/updates" title="查看更新日志" className="workspace-version" aria-label={`查看更新日志：平台版本 ${packageInfo.version}，累计更新 ${releaseHistory.historicalUpdates + releaseHistory.releases.length} 次`}>
+        <small className="workspace-version" aria-label={`平台版本 ${packageInfo.version}，累计更新 ${releaseHistory.historicalUpdates + releaseHistory.releases.length} 次`}>
           <span>版本 v{packageInfo.version}</span>
           <span>累计更新 {releaseHistory.historicalUpdates + releaseHistory.releases.length} 次</span>
-        </a>
+        </small>
         </div>
       </aside>
       <div className="workspace-body" inert={menuOpen || undefined}>

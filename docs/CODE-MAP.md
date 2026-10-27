@@ -75,4 +75,4 @@
 
 版本记录：`scripts/release.cjs` 校验并准备大、中、小版本，统一更新包版本、`src/config/release-history.json` 和 `docs/CHANGELOG.md`；侧栏直接读取版本与累计次数，构建时检查一致性。操作见 [版本与更新记录](MAINTENANCE.md#版本与更新记录)。
 
-更新日志页面：`src/features/updates` 读取通用更新记录，提供日期分组、搜索和排序；`/updates` 独立加载，侧栏版本链接进入。
+更新日志：`src/features/updates/UpdateHistory.jsx` 读取通用记录，提供日期分组、搜索和排序，由使用帮助中“平台维护”后的同级板块进入；侧栏版本仅显示文本。

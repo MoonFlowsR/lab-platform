@@ -9,28 +9,28 @@ import releaseHistory from "../../src/config/release-history.json" with { type: 
 const expectedUpdates = releaseHistory.historicalUpdates + releaseHistory.releases.length;
 async function checkVersion(locator) {
   assert.equal(await locator.count(), 1);
+  assert.equal(await locator.evaluate(node => node.tagName), 'SMALL', 'Sidebar version information is plain text');
   const value = (await locator.textContent()).replace(/\s+/g, " ");
   assert(value.includes(`版本 v${packageInfo.version}`));
   assert(value.includes(`累计更新 ${expectedUpdates} 次`));
 }
 
 async function checkSidebarFocusLoop(page, sidebar) {
-  const history = sidebar.locator('a.workspace-version[href="/updates"]');
+  assert.equal(await sidebar.locator('a.workspace-version,a[href="/updates"]').count(), 0, 'The sidebar has no version or history navigation link');
   const close = sidebar.getByRole('button', { name: '关闭导航', exact: true });
-  await sidebar.locator('.platform-nav button').last().focus();
+  const lastModule = sidebar.locator('.platform-nav button').last();
+  await lastModule.focus();
   await page.keyboard.press('Tab');
-  assert.equal(await history.evaluate(node => node === document.activeElement), true, 'The update log follows the last navigation module in keyboard order');
-  await page.keyboard.press('Tab');
-  assert.equal(await close.evaluate(node => node === document.activeElement), true, 'The drawer wraps from its last link to the close button');
+  assert.equal(await close.evaluate(node => node === document.activeElement), true, 'The drawer wraps from its last module to the close button');
   await page.keyboard.press('Shift+Tab');
-  assert.equal(await history.evaluate(node => node === document.activeElement), true, 'Reverse tabbing from close returns to the update log');
+  assert.equal(await lastModule.evaluate(node => node === document.activeElement), true, 'Reverse tabbing from close returns to the last module');
   await page.keyboard.press('Tab');
   assert.equal(await close.evaluate(node => node === document.activeElement), true);
 }
 
 export async function checkWorkspace(browser, origin, out, snapshot, users) {
   const results = [];
-  async function createPage(width, user, failModule = false) {
+  async function createPage(width, user, failModule = false, data = snapshot) {
     const account = user && {
       ...user,
       profile_required: false,
@@ -60,7 +60,7 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
         return route.fulfill({
           json: {
             ok: true,
-            data: { ...snapshot, current_account: account },
+            data: { ...data, current_account: account },
             revision: "workspace",
           },
         });
@@ -303,13 +303,31 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     });
     await page.close();
   }
+  // Real role-specific pending records give every role a three-digit task count.
+  function mobileTaskSnapshot(account) {
+    const role = account.account_type;
+    const work = Array.from({ length: role === 'admin' ? 0 : 999 }, (_, index) => ({
+      _id: 20000 + index, public_id: `QA-MOBILE-TASK-${index}`, request_type: '测试', work_content: '示例待办',
+      applicant_username: role === 'student' ? account.username : users[2].username,
+      applicant_name: role === 'student' ? account.display_name : users[2].display_name,
+      review_teacher_username: role === 'teacher' ? account.username : users[1].username,
+      status: role === 'teacher' ? '待教师审核' : role === 'finance' ? '已完成' : '已通过',
+      cost_test: 1, workload_quantity: 1, workload_unit: '小时', settlement_status: '已挂账', reimbursed: false,
+      created_at: '2026-10-27T00:00:00Z', completed_at: role === 'finance' ? '2026-10-27T01:00:00Z' : '',
+    }));
+    return { ...snapshot, lab_work_requests: work, lab_purchase_requests: [], lab_stock_out_requests: [],
+      accounts: role === 'admin' ? [account, ...Array.from({ length: 999 }, (_, index) => ({ id: 30000 + index, username: `qa-mobile-pending-${index}`, display_name: '示例待启用账号', account_type: 'student', status: 'pending' }))] : snapshot.accounts };
+  }
+  const mobileRoles = [...users, { id: 94, _id: 94, username: 'qa-mobile-finance', display_name: '示例财务', account_type: 'finance', status: 'active' }];
   // The mobile sync control moves without duplicates; API behavior remains unchanged.
-  for (const width of [320, 390]) for (const theme of ['light', 'dark', 'mixed']) for (const textScale of [100, 125]) {
-    const page = await createPage(width, users[2]), errors = [];
+  for (const user of mobileRoles) for (const width of [320, 390]) for (const theme of ['light', 'dark', 'mixed']) for (const textScale of [100, 125]) {
+    const data = mobileTaskSnapshot(user), role = user.account_type;
+    const page = await createPage(width, user, false, data), errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.addInitScript(value => localStorage.setItem('platform:theme', value), theme);
     await page.goto(origin);
     await page.waitForFunction(() => document.querySelector('.workspace-sync-state')?.textContent.includes('同步完成'));
+    await page.waitForFunction(() => document.querySelector('.workspace-tasks b')?.textContent === '999');
     if (textScale === 125) await page.addStyleTag({ content: 'html{font-size:20px!important}' });
     async function inspectStatus(label) {
       const geometry = await page.locator('.workspace-statusbar').evaluate(node => {
@@ -318,7 +336,9 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
         return { viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth, x: box.x, right: box.right, height: box.height,
           stateX: a.x, stateRight: a.right, stateCenter: a.y + a.height / 2, guidanceCenter: b.y + b.height / 2,
           guidanceX: b.x, guidanceRight: b.right, guidanceHeight: b.height, fontSize: parseFloat(style.fontSize), guidanceText: guidance.textContent.trim(), bold: Number(style.fontWeight),
-          prefixVisible: getComputedStyle(node.querySelector('.workspace-sync-prefix')).display !== 'none' };
+          prefixVisible: getComputedStyle(node.querySelector('.workspace-sync-prefix')).display !== 'none',
+          completeTextFits: state.querySelector('span:last-child').scrollWidth <= state.querySelector('span:last-child').clientWidth,
+          syncX: document.querySelector('.workspace-sync-control').getBoundingClientRect().x };
       });
       const diagnostic = JSON.stringify({ width, theme, textScale, label, geometry });
       assert(geometry.scrollWidth <= width && geometry.x >= 0 && geometry.right <= width, `Mobile sync line fits the viewport: ${diagnostic}`);
@@ -328,6 +348,8 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
       assert.equal(geometry.guidanceText, '请等待同步完成后操作');
       assert(geometry.bold >= 700);
       assert.equal(geometry.prefixVisible, false, 'The mobile line avoids repeating the redundant status label');
+      assert(Math.abs(geometry.stateX - geometry.syncX) <= 1, `Status starts directly beneath the sync button: ${diagnostic}`);
+      if (label === 'complete' || label === 'resized') assert(geometry.completeTextFits, `The full four-character completion status remains readable: ${diagnostic}`);
       return geometry;
     }
     const complete = await inspectStatus('complete');
@@ -337,17 +359,30 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     await page.route('**/api/ops/listAll', async route => {
       requests++;
       await pending;
-      await route.fulfill({ json: { ok: true, data: { ...snapshot, current_account: { ...users[2], profile_required: false } }, revision: 'manual-sync-fixture' } });
+      await route.fulfill({ json: { ok: true, data: { ...data, current_account: { ...user, profile_required: false } }, revision: 'manual-sync-fixture' } });
     });
     try {
       const control = page.getByRole('button', { name: '手动同步', exact: true });
       assert.equal(await page.locator('.workspace-sync-control').count(), 1);
       assert.equal(await page.locator('.workspace-context > .workspace-sync-slot > .workspace-sync-control').count(), 1);
       const box = await control.boundingBox();
-      assert(box.width >= 44 && box.height >= 44);
+      assert(box.width >= (width <= 360 ? 36 : 40) && box.height >= 44);
       const menuBox = await page.locator('.workspace-menu-button').boundingBox();
       assert(box.x >= menuBox.x + menuBox.width && box.x - menuBox.x - menuBox.width <= 8, 'Mobile manual sync stays immediately right of the three-line navigation button');
       assert(Math.abs(box.y + box.height / 2 - menuBox.y - menuBox.height / 2) <= 1, 'Navigation and synchronization are vertically aligned');
+      assert(Math.abs(menuBox.x - 12) <= 1, 'The navigation button has consistent mobile left padding');
+      assert(Math.abs(box.x - menuBox.x - menuBox.width - 4) <= 1, 'Navigation and sync use the same four-pixel gap as the action bar');
+      const actionGeometry = await page.locator('.workspace-topbar-actions').evaluate(node => {
+        const boxes = [...node.children].filter(item => item.getClientRects().length && getComputedStyle(item).display !== 'none').map(item => item.getBoundingClientRect());
+        const icon = node.querySelector('.workspace-tasks > .platform-icon').getBoundingClientRect(), badge = node.querySelector('.workspace-tasks > b').getBoundingClientRect();
+        return { gaps: boxes.slice(1).map((box, index) => box.x - boxes[index].right), right: boxes.at(-1).right,
+          taskInline: Math.abs(icon.y + icon.height / 2 - badge.y - badge.height / 2) <= 1 && icon.right <= badge.x,
+          badgePosition: getComputedStyle(node.querySelector('.workspace-tasks > b')).position };
+      });
+      assert(actionGeometry.gaps.every(gap => Math.abs(gap - 4) <= 1), 'Mobile action gaps are consistent');
+      assert(Math.abs(width - actionGeometry.right - menuBox.x) <= 1, 'Mobile header left and right padding match');
+      assert.equal(actionGeometry.taskInline, true, 'The task icon and real three-digit count sit side by side');
+      assert.equal(actionGeometry.badgePosition, 'static', 'The task count is not an overlaid corner badge');
       assert(await page.locator('.workspace-menu-button').evaluate(node => node.nextElementSibling?.classList.contains('workspace-sync-slot')), 'DOM and visual button order agree');
       assert(await control.evaluate(node => { const r = node.getBoundingClientRect(), hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return node === hit || node.contains(hit); }), 'The mobile sync button receives a real center click');
       await control.click();
@@ -362,6 +397,26 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
       await page.getByRole('button', { name: '手动同步', exact: true }).waitFor();
       await page.waitForFunction(() => document.querySelector('.workspace-sync-state')?.textContent.includes('同步完成'));
       assert.equal(requests, 1, 'One manual click performs one read-only sync request');
+      let transitionLayout = null;
+      if (role === 'admin' && width === 390 && textScale === 125) {
+        await page.setViewportSize({ width: 370, height: 900 });
+        transitionLayout = await page.evaluate(() => {
+          const nav = document.querySelector('.workspace-menu-button').getBoundingClientRect(), sync = document.querySelector('.workspace-sync-control').getBoundingClientRect(),
+            exit = document.querySelector('.workspace-logout').getBoundingClientRect(), state = document.querySelector('.workspace-sync-state').getBoundingClientRect();
+          const controls = [...document.querySelectorAll('.workspace-menu-button,.workspace-sync-control,.workspace-topbar-actions>button,.workspace-topbar-actions>a,.platform-theme-trigger')]
+            .filter(node => node.getClientRects().length).map(node => {
+              const box = node.getBoundingClientRect(), hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+              return { label: node.getAttribute('aria-label'), x: box.x, right: box.right, width: box.width, height: box.height, hit: node === hit || node.contains(hit) };
+            });
+          return { viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth, navigationX: nav.x, syncWidth: sync.width,
+            syncGap: sync.x - nav.right, rightPadding: innerWidth - exit.right, statusOffset: state.x - sync.x, controls };
+        });
+        assert(transitionLayout.scrollWidth <= 370 && transitionLayout.syncWidth >= 36 && transitionLayout.syncWidth <= 40, 'The intermediate viewport keeps all actions in the compact width range');
+        assert(Math.abs(transitionLayout.navigationX - 12) <= 1 && Math.abs(transitionLayout.rightPadding - 12) <= 1 && Math.abs(transitionLayout.syncGap - 4) <= 1 && Math.abs(transitionLayout.statusOffset) <= 1);
+        assert(transitionLayout.controls.every(control => control.hit && control.width >= 36 && control.height >= 44 && control.x >= 0 && control.right <= 371), 'Intermediate-width controls remain visible and receive actual center clicks');
+        await page.screenshot({ path: path.join(out, `workspace-mobile-transition-${theme}.png`) });
+        await page.setViewportSize({ width, height: 900 });
+      }
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.waitForFunction(() => document.querySelectorAll('.workspace-statusbar > .workspace-sync-control').length === 1);
       assert.equal(await page.locator('.workspace-sync-control').count(), 1, 'Resizing to desktop moves the same single control back to the status row');
@@ -369,16 +424,16 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
       await page.waitForFunction(() => document.querySelectorAll('.workspace-context > .workspace-sync-slot > .workspace-sync-control').length === 1);
       assert.equal(await page.locator('.workspace-sync-control').count(), 1, 'Resizing back to phone never duplicates controls');
       await inspectStatus('resized');
-      await page.screenshot({ path: path.join(out, `workspace-mobile-sync-${width}-${theme}-${textScale}.png`) });
+      await page.screenshot({ path: path.join(out, `workspace-mobile-sync-${role}-${width}-${theme}-${textScale}.png`) });
       assert.deepEqual(errors, []);
-      results.push({ workspaceMobileSync: true, width, theme, textScale, requests, complete, busy, long, errors });
+      results.push({ workspaceMobileSync: true, role, width, theme, textScale, taskCount: 999, requests, complete, busy, long, actionGeometry, transitionLayout, errors });
     } catch (failure) {
-      const name = `workspace-mobile-sync-failure-${width}-${theme}-${textScale}`;
+      const name = `workspace-mobile-sync-failure-${role}-${width}-${theme}-${textScale}`;
       await page.screenshot({ path: path.join(out, `${name}.png`) }).catch(() => {});
       const diagnostic = await page.evaluate(() => ({ status: document.querySelector('.workspace-sync-state')?.textContent,
         controls: [...document.querySelectorAll('.workspace-sync-control')].map(node => ({ disabled: node.disabled, label: node.getAttribute('aria-label'), connected: node.isConnected })),
         body: document.body.innerText.slice(-1800) })).catch(() => null);
-      const detail = { width, theme, textScale, requests, errors, diagnostic, message: failure.message };
+      const detail = { role, width, theme, textScale, requests, errors, diagnostic, message: failure.message };
       await fs.writeFile(path.join(out, `${name}.json`), JSON.stringify(detail, null, 2));
       throw new Error(`${failure.message}\n${JSON.stringify(detail)}`, { cause: failure });
     } finally { releaseSync(); await page.close(); }

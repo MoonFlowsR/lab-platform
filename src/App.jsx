@@ -22,7 +22,6 @@ import { styles } from "./app/styles.js";
 import { DateInput, Field, SearchableSelect } from "./shared/components/ui.jsx";
 import AccountSettingsDialog from "./features/accounts/AccountSettingsDialog.jsx";
 const HelpPage = lazy(() => import("./features/help/HelpPage.jsx"));
-const UpdatesPage = lazy(() => import("./features/updates/UpdatesPage.jsx"));
 import { LoginPage } from "./features/accounts/LoginPage.jsx";
 import ModuleDateFilter from "./shared/components/ModuleDateFilter.jsx";
 import RecordFilters from "./shared/components/RecordFilters.jsx";
@@ -401,7 +400,12 @@ function App() {
     </Workspace>
   );
 }
+function UpdateHistoryRedirect() {
+  useEffect(() => { window.location.replace('/help?view=updates'); }, []);
+  return <PageLoading full message="正在打开使用帮助…" />;
+}
+
 export default function AppEntry() {
-  if (["/updates", "/updates/"].includes(window.location.pathname)) return <Suspense fallback={<PageLoading full message="正在打开更新日志…" />}><UpdatesPage /></Suspense>;
+  if (["/updates", "/updates/"].includes(window.location.pathname)) return <UpdateHistoryRedirect />;
   return <App />;
 }
