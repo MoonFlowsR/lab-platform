@@ -28,7 +28,11 @@ export async function checkTitles(browser, origin, out, snapshot, users) {
       const box = node.getBoundingClientRect(), measurements = [...node.querySelectorAll('.platform-brand-measure')];
       return { layout: node.dataset.titleLayout, width: box.width,
         preferredWidth: measurements[0].getBoundingClientRect().width, fullWidth: measurements[1].getBoundingClientRect().width,
-        lines: [...node.querySelectorAll('.platform-brand-lines > span')].map(line => { const range = document.createRange(); range.selectNodeContents(line); return { text: line.textContent, width: line.getBoundingClientRect().width, textWidth: range.getBoundingClientRect().width, height: line.getBoundingClientRect().height }; }),
+        lines: [...node.querySelectorAll('.platform-brand-lines > span')].map(line => { const text = line.querySelector('.platform-brand-line-text') || line; const range = document.createRange(); range.selectNodeContents(text); return { text: text.textContent, width: line.getBoundingClientRect().width, textWidth: range.getBoundingClientRect().width, height: line.getBoundingClientRect().height }; }),
+        trailing: (() => { const trailing = node.querySelector('.platform-brand-trailing'); if (!trailing) return null;
+          const box = trailing.getBoundingClientRect(), text = trailing.previousElementSibling.getBoundingClientRect();
+          return { x: box.x, right: box.right, y: box.y, bottom: box.bottom, width: box.width, textRight: text.right, textY: text.y, textBottom: text.bottom, textWidth: text.width,
+            clipped: trailing.scrollWidth > trailing.clientWidth }; })(),
         viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth };
     });
     const hasFallback = Array.isArray(settings.titleCompactLines) && settings.titleCompactLines.join('') === settings.title;
@@ -40,6 +44,11 @@ export async function checkTitles(browser, origin, out, snapshot, users) {
     assert(geometry.scrollWidth <= geometry.viewport, 'The title does not overflow the page');
     assert(geometry.lines.every(line => line.width <= geometry.width + 1), 'Title lines fit their container');
     assert(geometry.lines.every(line => line.textWidth <= geometry.width + 1), 'The rendered title text fits without clipping');
+    if (geometry.trailing) {
+      assert(!geometry.trailing.clipped, 'The independent version suffix is never clipped');
+      if (geometry.trailing.textWidth + geometry.trailing.width + 4 <= geometry.width + .5)
+        assert(geometry.trailing.x >= geometry.trailing.textRight - 1 && geometry.trailing.y < geometry.trailing.textBottom && geometry.trailing.bottom > geometry.trailing.textY, 'The version shares the last title line when it fits');
+    }
     return geometry;
   }
   for (const width of [320, 390, 1366]) for (const view of ['login', 'sidebar']) {

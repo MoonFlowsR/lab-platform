@@ -52,7 +52,7 @@ export default function UpdateHistory() {
   }, [filtered, sort]);
 
   return <section className="update-history" aria-label="更新日志" data-update-count={totalUpdates} data-current-version={version}>
-      <div className="updates-heading"><h2>更新日志</h2><div className="updates-metadata"><span>当前版本 <strong>v{version}</strong></span><span>累计更新 <strong>{totalUpdates}</strong> 次</span></div></div>
+      <div className="updates-heading"><h2>更新日志<span className="updates-heading-count">（{totalUpdates}）</span></h2><div className="updates-metadata"><span>当前版本 <strong>v{version}</strong></span></div></div>
       {latest && terms.length === 0 && <section className="updates-latest" aria-label="最新更新"><div className="updates-latest-meta"><span>最新更新</span><strong>v{latest.version}</strong><time dateTime={latest.date || undefined}>{dateLabel(latest.date)}</time></div><h3><PhraseText>{latest.summary}</PhraseText></h3></section>}
       <div className="updates-controls">
         <div role="search" className="updates-search"><Icon name="search" size={19} /><input type="search" aria-label="搜索更新" placeholder="搜索内容或版本号" value={query} onChange={event => setQuery(event.target.value)} />{query && <button type="button" aria-label="清空搜索" onClick={() => setQuery('')}><Icon name="close" size={17} /></button>}</div>

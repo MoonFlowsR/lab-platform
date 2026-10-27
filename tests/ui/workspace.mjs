@@ -4,19 +4,30 @@ import fs from "node:fs/promises";
 import { openNavigation } from "./navigation.mjs";
 import { showModuleRecords } from "./module-records.mjs";
 import packageInfo from "../../package.json" with { type: "json" };
-import releaseHistory from "../../src/config/release-history.json" with { type: "json" };
-
-const expectedUpdates = releaseHistory.historicalUpdates + releaseHistory.releases.length;
 async function checkVersion(locator) {
   assert.equal(await locator.count(), 1);
-  assert.equal(await locator.evaluate(node => node.tagName), 'SMALL', 'Sidebar version information is plain text');
-  const value = (await locator.textContent()).replace(/\s+/g, " ");
-  assert(value.includes(`版本 v${packageInfo.version}`));
-  assert(value.includes(`累计更新 ${expectedUpdates} 次`));
+  assert.equal(await locator.evaluate(node => node.tagName), 'SMALL', 'The brand version is plain text');
+  assert.equal((await locator.textContent()).trim(), `v${packageInfo.version}`);
+  assert(await locator.evaluate(node => !!node.closest('.workspace-brand') && !node.closest('a')), 'Only the platform brand contains the version');
+  if (!await locator.isVisible()) return null;
+  const geometry = await locator.evaluate(node => {
+    const version = node.getBoundingClientRect(), line = node.parentElement.previousElementSibling.getBoundingClientRect(),
+      title = node.closest('.platform-brand-title').getBoundingClientRect(), brand = node.closest('.workspace-brand').getBoundingClientRect(), style = getComputedStyle(node);
+    return { text: node.textContent, x: version.x, right: version.right, y: version.y, bottom: version.bottom, width: version.width, height: version.height,
+      lineX: line.x, lineRight: line.right, lineY: line.y, lineBottom: line.bottom, lineWidth: line.width, titleWidth: title.width, titleRight: title.right,
+      brandRight: brand.right, fontSize: parseFloat(style.fontSize), fontWeight: Number(style.fontWeight), color: style.color,
+      unclipped: node.scrollWidth <= node.clientWidth && node.scrollHeight <= node.clientHeight };
+  });
+  assert(geometry.unclipped && geometry.right <= geometry.titleRight + 1 && geometry.right <= geometry.brandRight + 1, `The complete version fits the brand: ${JSON.stringify(geometry)}`);
+  assert(geometry.fontSize >= 12 && geometry.fontWeight <= 500, 'The version is readable, small and visually secondary');
+  if (geometry.lineWidth + geometry.width + 4 <= geometry.titleWidth + .5)
+    assert(geometry.x >= geometry.lineRight - 1 && geometry.y < geometry.lineBottom && geometry.bottom > geometry.lineY, `The version follows the final title line when space permits: ${JSON.stringify(geometry)}`);
+  return geometry;
 }
 
 async function checkSidebarFocusLoop(page, sidebar) {
   assert.equal(await sidebar.locator('a.workspace-version,a[href="/updates"]').count(), 0, 'The sidebar has no version or history navigation link');
+  assert.equal(await sidebar.locator('.workspace-sidebar-bottom .workspace-version').count(), 0, 'Account information has no duplicate footer version');
   const close = sidebar.getByRole('button', { name: '关闭导航', exact: true });
   const lastModule = sidebar.locator('.platform-nav button').last();
   await lastModule.focus();
@@ -253,7 +264,7 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
         lines: node.querySelectorAll('.platform-brand-lines > span').length };
     });
     assert.equal(geometry.height, height, 'The sidebar tracks the visible viewport height');
-    assert(Math.abs(geometry.bottomContent + geometry.paddingBottom - geometry.bottom) <= 1, 'Account and version information stay at the bottom with safe-area padding');
+    assert(Math.abs(geometry.bottomContent + geometry.paddingBottom - geometry.bottom) <= 1, 'Account information stays at the bottom with safe-area padding');
     assert(geometry.navHeight >= 44, 'Short screens retain a usable navigation scroll area');
     assert(geometry.navBottom <= geometry.footerTop, 'Navigation never covers the identity footer');
     assert(Math.abs(geometry.markCenter - geometry.titleCenter) <= 1, 'Logo and title are vertically centered');
@@ -451,9 +462,12 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
       await page.waitForFunction(() => document.querySelectorAll('.workspace-context > .workspace-sync-slot > .workspace-sync-control').length === 1);
       assert.equal(await page.locator('.workspace-sync-control').count(), 1, 'Resizing back to phone never duplicates controls');
       await inspectStatus('resized');
+      await openNavigation(page);
+      const brandVersion = await checkVersion(page.locator('.workspace-brand .workspace-version'));
+      await page.getByRole('button', { name: '关闭导航', exact: true }).click();
       await page.screenshot({ path: path.join(out, `workspace-mobile-sync-${role}-${width}-${theme}-${textScale}.png`) });
       assert.deepEqual(errors, []);
-      results.push({ workspaceMobileSync: true, role, width, theme, textScale, taskCount: 999, requests, complete, busy, long, recovered, actionGeometry, transitionLayout, errors });
+      results.push({ workspaceMobileSync: true, role, width, theme, textScale, taskCount: 999, requests, complete, busy, long, recovered, actionGeometry, transitionLayout, brandVersion, errors });
     } catch (failure) {
       const name = `workspace-mobile-sync-failure-${role}-${width}-${theme}-${textScale}`;
       await page.screenshot({ path: path.join(out, `${name}.png`) }).catch(() => {});

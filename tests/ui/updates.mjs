@@ -54,7 +54,21 @@ export async function checkUpdates(browser, origin, out) {
     assert.equal(await root.getAttribute('data-update-count'), String(count));
     assert.equal(await root.getAttribute('data-current-version'), version);
     assert.equal(await page.getByRole('heading', { name: '平台使用帮助', exact: true }).count(), 1);
-    assert.equal(await page.getByRole('heading', { name: '更新日志', exact: true }).count(), 1);
+    const logHeading = page.getByRole('heading', { name: `更新日志（${count}）`, exact: true });
+    assert.equal(await logHeading.count(), 1);
+    assert.equal(await logHeading.textContent(), `更新日志（${count}）`);
+    assert.equal(await logHeading.locator('.updates-heading-count').textContent(), `（${count}）`);
+    const headingStyle = await logHeading.evaluate(node => {
+      const count = node.querySelector('.updates-heading-count'), headingCss = getComputedStyle(node), countCss = getComputedStyle(count);
+      const range = document.createRange(); range.selectNode(node.firstChild);
+      return { title: node.firstChild.textContent, titleRows: [...range.getClientRects()].filter(rect => rect.width > 0).length, fontSize: Number.parseFloat(headingCss.fontSize), countSize: Number.parseFloat(countCss.fontSize), color: headingCss.color, countColor: countCss.color };
+    });
+    assert.equal(headingStyle.title, '更新日志');
+    assert.equal(headingStyle.titleRows, 1, 'The four-character title stays together');
+    assert(headingStyle.countSize < headingStyle.fontSize && headingStyle.countColor !== headingStyle.color, 'The count is smaller and visually secondary');
+    assert.equal(await root.locator('.updates-metadata > span').count(), 1);
+    assert(!(await root.locator('.updates-metadata').innerText()).includes('累计更新'), 'The metadata does not repeat the heading count');
+    assert((await root.locator('.updates-metadata').innerText()).includes(`v${version}`));
     assert.equal(await page.getByRole('link', { name: '返回平台', exact: true }).getAttribute('href'), '/');
     assert.equal(await page.locator('html').getAttribute('data-theme'), theme);
     const viewButtons = page.locator('.help-role-switch > div > button');

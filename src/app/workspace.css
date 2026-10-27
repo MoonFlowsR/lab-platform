@@ -23,7 +23,7 @@
 }
 .workspace-brand {
   display: flex;
-  gap: 11px;
+  gap: 8px;
   align-items: center;
   padding: 0 2px 27px;
   font-weight: 700;
@@ -34,8 +34,9 @@
 .workspace-brand-mark {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 3em;
+  width: 40px;
+  min-height: 3em;
+  align-self: stretch;
   border: 1px solid var(--sidebar-mark-border);
   border-radius: 12px;
   background: var(--sidebar-mark-bg);
@@ -123,15 +124,13 @@
   font-size: var(--text-label);
 }
 .workspace-version {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 8px;
-  padding: 8px 4px 0;
+  display: inline-block;
   color: var(--sidebar-muted);
-  font-size: var(--text-caption);
-  line-height: 1.4;
+  font-size: .75rem;
+  font-weight: 500;
+  line-height: 1.25;
+  white-space: nowrap;
 }
-.workspace-version > span { white-space: nowrap; }
 .workspace-sidebar-footer > div {
   min-width: 0;
   overflow-wrap: anywhere;
@@ -622,8 +621,8 @@
   .workspace-sync-state { gap: 2px; }
 }
 @media (max-width: 360px) {
-  .workspace-topbar { --mobile-control-width: 36px; }
-  .workspace-statusbar.is-in-topbar { gap: 1px; }
+  .workspace-topbar { --mobile-control-width: 36px; --text-label: .85rem; }
+  .workspace-statusbar.is-in-topbar { gap: 1px; font-size: var(--text-label); }
   .workspace-topbar-actions > .workspace-current-account { display: none; }
 }
 @media (max-height: 540px) {
@@ -632,5 +631,4 @@
   .workspace-nav-caption { padding-bottom: 8px; }
   .workspace-sidebar-bottom { padding-top: 8px; }
   .workspace-sidebar-footer { padding-top: 10px; }
-  .workspace-version { padding-top: 6px; }
 }

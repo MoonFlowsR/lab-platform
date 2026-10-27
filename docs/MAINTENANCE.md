@@ -80,4 +80,4 @@ Windows后台管理入口为`scripts/service.ps1`，首次安装按README使用�
 
 在开发副本完成修改后执行，例如 `npm run release -- patch "修复手机布局"`。工具同步包版本、累计次数和 [更新记录](CHANGELOG.md)，准备发布候选；再按正常流程测试、备份和发布。一次更新里的多项修改合记一批，重新构建、测试重跑和重复部署沿用同一候选。
 
-`npm run release -- --check` 只检查记录；构建也自动检查版本一致性。侧栏读取包版本与 `src/config/release-history.json`。历史基线按已保存的完成回执汇总，过去未记录的版本号不补造。
+`npm run release -- --check` 只检查记录；构建也自动检查版本一致性。侧栏顶部读取包版本，帮助页更新日志按 `src/config/release-history.json` 计算累计次数。历史基线按已保存的完成回执汇总，过去未记录的版本号不补造。

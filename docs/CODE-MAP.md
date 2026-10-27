@@ -73,6 +73,6 @@
 
 批次信息修改权限：`src/features/inventory/batch-edit-policy.js` 供前后端共用。学生仅可在原采购单完成入库后的48小时内修改对应批次；服务端在库存修改事务中复核，前端按到期时间收起入口。
 
-版本记录：`scripts/release.cjs` 校验并准备大、中、小版本，统一更新包版本、`src/config/release-history.json` 和 `docs/CHANGELOG.md`；侧栏直接读取版本与累计次数，构建时检查一致性。操作见 [版本与更新记录](MAINTENANCE.md#版本与更新记录)。
+版本记录：`scripts/release.cjs` 校验并准备大、中、小版本，统一更新包版本、`src/config/release-history.json` 和 `docs/CHANGELOG.md`；侧栏顶部显示包版本，帮助页更新日志标题显示累计次数，构建时检查一致性。操作见 [版本与更新记录](MAINTENANCE.md#版本与更新记录)。
 
 更新日志：`src/features/updates/UpdateHistory.jsx` 读取通用记录，提供日期分组、搜索和排序，由使用帮助中“平台维护”后的同级板块进入；侧栏版本仅显示文本。

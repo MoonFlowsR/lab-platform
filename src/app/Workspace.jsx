@@ -7,7 +7,6 @@ import { splitPersonName } from "../shared/lib/person-name.js";
 import { accountTypeLabels, PLATFORM_TITLE } from "./config.js";
 import WorkspaceSync, { WorkspaceSyncContext } from "./WorkspaceSync.jsx";
 import packageInfo from "../../package.json" with { type: "json" };
-import releaseHistory from "../config/release-history.json" with { type: "json" };
 import "./workspace.css";
 
 const roleHeadings = {
@@ -111,7 +110,7 @@ export default function Workspace({
             <Icon name="flask" size={25} />
           </span>
           <span className="workspace-brand-name">
-            <PlatformTitle />
+            <PlatformTitle trailing={<small className="workspace-version" aria-label={`平台版本 ${packageInfo.version}`}>v{packageInfo.version}</small>} />
           </span>
         </div>
         <div className="workspace-nav-caption">
@@ -151,10 +150,6 @@ export default function Workspace({
             <strong><PersonName value={user} stacked mentorLabel={account.account_type === "student"} suffix={role} /></strong>
           </div>
         </div>
-        <small className="workspace-version" aria-label={`平台版本 ${packageInfo.version}，累计更新 ${releaseHistory.historicalUpdates + releaseHistory.releases.length} 次`}>
-          <span>版本 v{packageInfo.version}</span>
-          <span>累计更新 {releaseHistory.historicalUpdates + releaseHistory.releases.length} 次</span>
-        </small>
         </div>
       </aside>
       <div className="workspace-body" inert={menuOpen || undefined}>

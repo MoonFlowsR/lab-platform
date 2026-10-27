@@ -1,6 +1,7 @@
 .update-history{min-width:0;color:var(--ink);font-family:var(--font-ui);font-size:var(--text-body);line-height:1.6}
 .updates-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 16px;margin-bottom:12px}
-.updates-heading h2{margin:0;font-size:var(--text-section);line-height:1.4;font-weight:700}
+.updates-heading h2{margin:0;font-size:var(--text-section);line-height:1.4;font-weight:700;white-space:nowrap}
+.updates-heading-count{color:var(--muted);font-size:var(--text-body);font-weight:500}
 .updates-metadata{display:flex;align-items:center;flex-wrap:wrap;gap:3px 16px;color:var(--muted);font-size:var(--text-label);line-height:1.5}
 .updates-metadata>span{white-space:nowrap}
 .updates-metadata strong{color:var(--ink);font-weight:650}
@@ -47,6 +48,6 @@
 .update-history :is(button,a,select,summary):focus-visible{outline:2px solid var(--accent-ink);outline-offset:3px}
 .update-history .platform-text-phrase{display:inline-block;max-width:100%;vertical-align:top;overflow-wrap:anywhere}
 @media(min-width:1100px){.updates-date-entries{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px}.updates-entry:first-child:nth-last-child(odd){grid-column:1/-1}}
-@media(max-width:640px){.updates-heading{gap:5px 12px}.updates-metadata{flex-basis:100%}.updates-latest{padding:12px;margin-bottom:12px}.updates-controls{gap:8px}.updates-sort>span{display:none}.updates-sort select{width:112px;padding-inline:10px 29px}.updates-sort>svg{right:9px}.updates-search{gap:7px;padding-left:10px}.updates-search input{font-size:16px}.updates-date-group>summary{padding:11px 12px;gap:7px}.updates-date-entries{padding:0 12px}.updates-entry{padding:12px 0}.updates-note{margin-block:9px}.updates-history{gap:8px;margin-top:12px}}
+@media(max-width:640px){.updates-heading{gap:5px 12px}.updates-latest{padding:12px;margin-bottom:12px}.updates-controls{gap:8px}.updates-sort>span{display:none}.updates-sort select{width:112px;padding-inline:10px 29px}.updates-sort>svg{right:9px}.updates-search{gap:7px;padding-left:10px}.updates-search input{font-size:16px}.updates-date-group>summary{padding:11px 12px;gap:7px}.updates-date-entries{padding:0 12px}.updates-entry{padding:12px 0}.updates-note{margin-block:9px}.updates-history{gap:8px;margin-top:12px}}
 @media(max-width:359px){.updates-metadata{gap:2px 10px}.updates-date-group>summary{gap:6px}.updates-date-count{font-size:var(--text-caption)}}
 @media(prefers-reduced-motion:reduce){.updates-date-group>summary>.platform-icon{transition:none}}
