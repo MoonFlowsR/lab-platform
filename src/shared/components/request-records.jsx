@@ -46,8 +46,8 @@ function ReviewTeacherField({ teachers, value, onChange }) {
 }
 function RequestViewScope({ scope, onChange, label, moduleName, recordLabel = "进度" }) {
   return <section aria-label={label} className="platform-request-scope">
-    <Field label="查看范围"><SearchableSelect value={scope} onChange={onChange} clearOnInput={false} options={[{ value: "mine", label: "本人" }, { value: "all", label: "全部" }]} placeholder="搜索或选择查看范围" /></Field>
-    <small>调整查看范围可查看团队内其它{moduleName}{recordLabel}</small>
+    <Field label="查看范围"><SearchableSelect searchable={false} value={scope} onChange={onChange} options={[{ value: "mine", label: "本人" }, { value: "all", label: "全部" }]} placeholder="选择查看范围" /></Field>
+    <small><span className="platform-text-phrase">调整查看范围可查看</span><span className="platform-text-phrase">团队内其它{moduleName.replaceAll('/', '')}{recordLabel}</span></small>
   </section>;
 }
 function ReviewHistory({ row, logs = [] }) {

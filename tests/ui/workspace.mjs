@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import { openNavigation } from "./navigation.mjs";
 import { showModuleRecords } from "./module-records.mjs";
+import packageInfo from "../../package.json" with { type: "json" };
 
 export async function checkWorkspace(browser, origin, out, snapshot, users) {
   const results = [];
@@ -56,6 +57,9 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(origin);
     await page.getByTestId("task-total").waitFor();
+    assert.equal(await page.locator('.workspace-brand-name > small').count(), 0, 'The brand has no redundant subtitle');
+    assert.equal(await page.locator('.workspace-version').count(), 1);
+    assert.equal(await page.locator('.workspace-version').textContent(), `版本 v${packageInfo.version}`);
     assert(!(await page.locator(".platform-workspace").textContent()).includes("账号账号"));
     assert.equal(await page.locator(".workspace-welcome .platform-person-name").count(), 0);
     assert.equal(await page.locator(".platform-sync-status").count(), 1);
@@ -197,6 +201,52 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
       );
       assert.equal(await page.evaluate(() => document.body.style.overflow), "");
     }
+    await page.close();
+  }
+  for (const { width, height, user } of [
+    { width: 1440, height: 900, user: users[1] },
+    { width: 390, height: 900, user: users[2] },
+    { width: 390, height: 480, user: users[0] },
+    { width: 320, height: 480, user: users[2] },
+    { width: 640, height: 320, user: users[0] },
+    { width: 320, height: 320, user: users[2] },
+  ]) {
+    const page = await createPage(width, user), errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.setViewportSize({ width, height });
+    await page.goto(origin); await page.getByTestId('task-total').waitFor();
+    if (width < 1100) await openNavigation(page);
+    const sidebar = page.locator('.workspace-sidebar');
+    const geometry = await sidebar.evaluate(node => {
+      const box = node.getBoundingClientRect(), style = getComputedStyle(node), bottom = node.querySelector('.workspace-sidebar-bottom').getBoundingClientRect(),
+        footer = node.querySelector('.workspace-sidebar-footer').getBoundingClientRect(), nav = node.querySelector('.platform-nav'), navBox = nav.getBoundingClientRect(),
+        mark = node.querySelector('.workspace-brand-mark').getBoundingClientRect(), title = node.querySelector('.platform-brand-lines').getBoundingClientRect();
+      return { top: box.top, height: box.height, bottom: box.bottom, bottomContent: bottom.bottom, paddingBottom: parseFloat(style.paddingBottom),
+        footerTop: footer.top, footerBottom: footer.bottom, navTop: navBox.top, navBottom: navBox.bottom, navHeight: navBox.height, navScrollHeight: nav.scrollHeight,
+        markHeight: mark.height, titleHeight: title.height, markCenter: mark.y + mark.height / 2, titleCenter: title.y + title.height / 2,
+        lines: node.querySelectorAll('.platform-brand-lines > span').length };
+    });
+    assert.equal(geometry.height, height, 'The sidebar tracks the visible viewport height');
+    assert(Math.abs(geometry.bottomContent + geometry.paddingBottom - geometry.bottom) <= 1, 'Account and version information stay at the bottom with safe-area padding');
+    assert(geometry.navHeight >= 44, 'Short screens retain a usable navigation scroll area');
+    assert(geometry.navBottom <= geometry.footerTop, 'Navigation never covers the identity footer');
+    assert(Math.abs(geometry.markCenter - geometry.titleCenter) <= 1, 'Logo and title are vertically centered');
+    if (geometry.lines === 2) assert(Math.abs(geometry.markHeight - geometry.titleHeight) <= 1, 'Logo and the two-line title share a height');
+    await sidebar.locator('.platform-nav').evaluate(node => { node.scrollTop = node.scrollHeight; });
+    const afterScroll = await sidebar.locator('.workspace-sidebar-footer').boundingBox();
+    assert(Math.abs(afterScroll.y - geometry.footerTop) <= 1, 'Only the navigation list scrolls');
+    assert.equal(await sidebar.locator('.workspace-version').innerText(), `版本 v${packageInfo.version}`);
+    if (width < 1100) {
+      await sidebar.locator('.platform-nav button').last().focus();
+      await page.keyboard.press('Tab');
+      assert.equal(await sidebar.getByRole('button', { name: '关闭导航', exact: true }).evaluate(node => node === document.activeElement), true);
+      await sidebar.getByRole('button', { name: '关闭导航', exact: true }).click();
+      assert.equal(await sidebar.isVisible(), false);
+      await openNavigation(page);
+    }
+    await page.screenshot({ path: path.join(out, `workspace-sidebar-${width}-${height}-${user.account_type}.png`) });
+    assert.deepEqual(errors, []);
+    results.push({ workspaceSidebarFit: true, width, height, role: user.account_type, ...geometry, errors });
     await page.close();
   }
   for (const width of [1440, 390, 320]) {

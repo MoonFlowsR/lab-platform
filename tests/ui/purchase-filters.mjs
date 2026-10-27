@@ -34,16 +34,16 @@ export async function checkPurchaseFilters(browser, origin, out, snapshot, users
     assert.equal(await supplier.inputValue(), '全部');
     await supplier.fill('不存在的单位');
     await page.getByText('无相关内容', { exact: true }).waitFor();
-    assert.equal(await page.getByRole('option').count(), 0);
+    assert.equal(await page.getByRole('listbox').getByRole('option').count(), 0);
     await supplier.fill('示例供应商');
-    assert.equal(await page.getByRole('option').count(), 2);
-    await page.getByRole('option', { name: '示例供应商', exact: true }).click();
+    assert.equal(await page.getByRole('listbox').getByRole('option').count(), 2);
+    await page.getByRole('listbox').getByRole('option', { name: '示例供应商', exact: true }).click();
     assert.equal(await page.getByRole('listbox').count(), 0);
     if (role === 'admin') {
       assert.equal(await page.getByRole('button', { name: '同意', exact: true }).count(), 0);
       const teacherField = page.getByPlaceholder('搜索或选择教师姓名');
       await teacherField.fill(teacher.display_name);
-      await page.getByRole('option', { name: teacher.display_name, exact: true }).click();
+      await page.getByRole('listbox').getByRole('option', { name: teacher.display_name, exact: true }).click();
     }
     await page.getByRole('heading', { name: '待审批采购工单（2）', exact: true }).waitFor();
     assert.equal(await page.locator('.platform-business-headline strong').innerText(), '2');

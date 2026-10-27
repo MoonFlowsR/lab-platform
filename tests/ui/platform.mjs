@@ -23,6 +23,8 @@ import { checkPurchaseInbound } from './purchase-inbound.mjs';
 import { checkPurchaseChannels } from './purchase-channels.mjs';
 import { checkWorkReview } from './work-review.mjs';
 import { checkThemes } from './themes.mjs';
+import { checkDropdownModes } from './dropdown-modes.mjs';
+import { checkCompactLayout } from './compact-layout.mjs';
 import fs from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
@@ -102,6 +104,8 @@ async function checkOperations() {
 }
 try {
  if (process.env.UI_SUITE === 'themes') { results.push(...await checkThemes(browser,origin,out,snapshot,[admin,teachers[0],studentA])); }
+ else if (process.env.UI_SUITE === 'dropdowns') { results.push(...await checkDropdownModes(browser,origin,snapshot,[admin,teachers[0],studentA])); }
+ else if (process.env.UI_SUITE === 'compact') { results.push(...await checkCompactLayout(browser,origin,out,snapshot,[admin,teachers[0],studentA])); }
  else if (process.env.UI_SUITE === 'help-interactions') { results.push(...await checkHelpInteractions(browser,origin,studentA)); }
  else if (process.env.UI_SUITE === 'inventory-permissions') { results.push(...await checkInventoryPermissions(browser,origin,snapshot,[admin,teachers[0],studentA])); }
  else if (process.env.UI_SUITE === 'wrapping') { results.push(...await checkWrapping(browser,origin,snapshot,[admin,teachers[0],studentA])); }
@@ -183,8 +187,8 @@ try {
     await page.getByRole('button',{name:'修改学生资料',exact:true}).first().click();
     const dialog=page.getByRole('dialog');await dialog.waitFor();assert.equal(await dialog.getByText('修改密码',{exact:true}).count(),0);
     const teacher=dialog.getByRole('combobox').first();await teacher.fill('不存在的示例教师');
-    await dialog.getByText('无相关内容',{exact:true}).waitFor();assert.equal(await dialog.getByRole('option').count(),0);
-    await teacher.fill('示例教师甲');await dialog.getByRole('option').first().click();assert.equal(await dialog.getByRole('listbox').count(),0);
+    await dialog.getByText('无相关内容',{exact:true}).waitFor();assert.equal(await dialog.getByRole('listbox').getByRole('option').count(),0);
+    await teacher.fill('示例教师甲');await dialog.getByRole('listbox').getByRole('option').first().click();assert.equal(await dialog.getByRole('listbox').count(),0);
     await page.screenshot({path:path.join(out,'admin-profile-mobile.png')});
     await dialog.getByRole('button',{name:'关闭',exact:true}).click();
     await page.getByRole('button',{name:/展开筛选/}).click();
@@ -218,6 +222,8 @@ try {
  results.push(...await checkExcelExports(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkAuditClients(browser,origin,out,snapshot,admin));
  results.push(...await checkRegistration(browser,origin,out));
+ results.push(...await checkDropdownModes(browser,origin,snapshot,[admin,teachers[0],studentA]));
+ results.push(...await checkCompactLayout(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkThemes(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  if (process.env.UI_SUITE !== 'interface') results.push(...await checkOperations());
  const anonymous=await browser.newPage({viewport:{width:390,height:850}});let deniedReads=0;

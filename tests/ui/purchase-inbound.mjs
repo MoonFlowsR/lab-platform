@@ -40,12 +40,12 @@ export async function checkPurchaseInbound(browser,origin,out,snapshot,users){
    const form=page.locator('.platform-purchase-inbound');
    await form.getByLabel('实际到货数量',{exact:false}).fill('4');await form.getByLabel('单位',{exact:false}).fill('盒');
    await form.getByLabel('最终总采购费 / 元',{exact:false}).fill('60');
-   const status=form.locator('label').filter({hasText:/工单状态/}).getByRole('combobox');assert.equal(await status.inputValue(),'');assert.equal(await status.getAttribute('placeholder'),'请选择');
-   const room=form.getByRole('combobox',{name:/存放房间/});await room.fill('其它');await page.getByRole('option',{name:'其它',exact:true}).click();
+   const status=form.locator('label').filter({hasText:/工单状态/}).getByRole('combobox');assert.equal(await status.inputValue(),'');assert.equal(await status.locator('option:checked').textContent(),'请选择');assert.equal(await status.evaluate(element=>element.tagName),'SELECT');
+   const room=form.getByRole('combobox',{name:/存放房间/});await room.selectOption('__other_room__');
    await form.getByLabel('其它存放房间',{exact:false}).fill('示例房间');await form.getByLabel('具体位置简述',{exact:false}).fill('示例柜上层');await form.getByRole('checkbox',{name:'长期有效'}).check();
    await form.locator('input[type=file]').setInputFiles({name:'example.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==','base64')});
    await form.getByRole('button',{name:'确认入库并完成采购',exact:true}).click();assert.equal(calls.length,0);assert.equal(uploads.length,0);
-   await status.fill('已挂账');await page.getByRole('option',{name:'已挂账',exact:true}).click();
+   await status.selectOption('已挂账');
    await form.getByRole('button',{name:'确认入库并完成采购',exact:true}).click();const dialog=page.getByRole('dialog');await dialog.waitFor();
    for(const value of ['4 盒','¥60','已挂账','示例房间'])assert((await dialog.innerText()).includes(value),value);
    await page.screenshot({path:path.join(out,`inbound-confirm-student-${width}.png`)});

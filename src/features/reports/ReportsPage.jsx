@@ -63,7 +63,7 @@ export default function ReportsPage({ currentUser, onReimbursementChange, data, 
       <div className={`platform-student-filter-grid${canFilterTeacher ? " has-teacher" : ""}`} style={styles.formGrid}>
         <Field label="学生姓名"><SearchableSelect value={student} onChange={setStudent} clearOnInput={false} options={[{ value: '', label: '全部' }, ...studentOptions.map(account => ({ value: account.username, label: account.label }))]} placeholder="搜索或选择学生姓名" fixedOptions={['']} /></Field>
         {canFilterTeacher && <Field label="教师姓名"><SearchableSelect value={teacher} onChange={setTeacher} clearOnInput={false} options={[{ value: "", label: "全部" }, ...studentFilterOptions(teachers).map(account => ({ value: account.username, label: account.label }))]} placeholder="搜索或选择教师姓名" fixedOptions={[""]} /></Field>}
-        <Field label="时间范围"><SearchableSelect value={range} onChange={setRange} clearOnInput={false} options={[{ value: 'all', label: '全部时间' }, { value: 'custom', label: '自定义日期范围' }]} placeholder="搜索或选择时间范围" fixedOptions={['all']} /></Field>
+        <Field label="时间范围"><SearchableSelect searchable={false} value={range} onChange={setRange} clearOnInput={false} options={[{ value: 'all', label: '全部时间' }, { value: 'custom', label: '自定义日期范围' }]} placeholder="选择时间范围" fixedOptions={['all']} /></Field>
         {range === 'custom' && <><Field label="开始日期"><DateInput value={startDate} onChange={setStartDate} /></Field><Field label="结束日期"><DateInput value={endDate} onChange={setEndDate} /></Field></>}
       </div>
       {invalidRange && <p role="alert" style={{ ...styles.note, color: 'var(--danger-ink)', fontWeight: 700 }}>开始日期不能晚于结束日期，请调整时间范围。</p>}

@@ -73,8 +73,8 @@ export async function checkTypography(browser, origin, snapshot, users) {
       const searchBox = await search.boundingBox(), filterBox = await filter.boundingBox();
       assert(Math.abs(searchBox.y - filterBox.y) <= 2, 'Student search and filters share a row');
       assert(filterBox.x >= searchBox.x + searchBox.width + 8, 'Search and filters stay in separate cards');
-      const category = await filter.getByPlaceholder('搜索或选择材料类别').boundingBox();
-      const date = await filter.getByPlaceholder('搜索或选择时间范围').boundingBox();
+      const category = await filter.getByRole('combobox', { name: '材料类别' }).boundingBox();
+      const date = await filter.getByRole('combobox', { name: '建库日期' }).boundingBox();
       assert(Math.abs(category.y - date.y) <= 2, 'Default inventory filters share one row');
     }
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);

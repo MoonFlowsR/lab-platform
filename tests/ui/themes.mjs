@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { inflateSync } from 'node:zlib';
+import fs from 'node:fs/promises';
 import { openNavigation } from './navigation.mjs';
 import { showModuleRecords } from './module-records.mjs';
 import { checkSemanticColors } from './semantic-colors.mjs';
@@ -120,13 +121,22 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
         const representative = await contrast(page, '.platform-login-form-heading h2,.platform-login-form-heading p,.help-header h1,.help-subtitle,.workspace-sync-state,.platform-sync-guidance,.workspace-context');
         const lowContrast = representative.filter(row => row.ratio < 4.5);
         if (view === 'register') {
-          await page.getByRole('combobox').first().click();
-          const dropdown = page.getByRole('listbox').first();
-          await dropdown.waitFor();
-          const options = await contrast(page, '[role="listbox"] [role="option"]');
-          assert.deepEqual(options.filter(row => row.ratio < 4.5), [], 'Searchable options remain readable in either theme');
-          await page.getByRole('option', { name: '教师账号', exact: true }).click();
-          assert.equal(await dropdown.count(), 0, 'Selecting an option still collapses the menu');
+          const accountType = page.getByRole('combobox').first();
+          if (await accountType.evaluate(node => node.tagName === 'SELECT')) {
+            const box = await accountType.boundingBox(); assert(box.height >= 44, 'Fixed choices preserve a 44px native picker');
+            const nativeContrast = await contrast(page, '.platform-login-form select');
+            assert.deepEqual(nativeContrast.filter(row => row.ratio < 4.5), [], 'Native choices remain readable in either theme');
+            await accountType.selectOption('teacher');
+            assert.equal(await accountType.inputValue(), 'teacher');
+          } else {
+            await accountType.click();
+            const dropdown = page.getByRole('listbox').first();
+            await dropdown.waitFor();
+            const options = await contrast(page, '[role="listbox"] [role="option"]');
+            assert.deepEqual(options.filter(row => row.ratio < 4.5), [], 'Searchable options remain readable in either theme');
+            await dropdown.getByRole('option', { name: '教师账号', exact: true }).click();
+            assert.equal(await dropdown.count(), 0, 'Selecting an option still collapses the menu');
+          }
         }
         if (user && theme === 'dark' && width === 390) {
           await page.getByRole('button', { name: '账户设置', exact: true }).click();
@@ -249,14 +259,25 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
 
   // A nonzero, growing task badge must never collapse the mobile navigation track.
   // Use real task fixtures so both the badge count and the layout follow app logic.
-  for (const width of [320, 360, 390, 640, 768, 1024, 1366, 1920]) for (const taskCount of [10, 99, 999]) {
+  const headerWidths = [320, 360, 390, 640, 768, 1024, 1366, 1920];
+  const fontVariants = [
+    { font: 'serif', css: ':root{--font-ui:Georgia,"SimSun",serif!important}' },
+    { font: 'monospace', css: ':root{--font-ui:"Courier New","SimSun",monospace!important}' },
+    { font: 'text125', css: 'html{font-size:20px!important}' },
+  ];
+  const headerCases = [
+    ...headerWidths.flatMap(width => [10, 99, 999].map(taskCount => ({ width, taskCount, font: 'default' }))),
+    ...headerWidths.flatMap(width => fontVariants.map(variant => ({ width, taskCount: 999, ...variant }))),
+  ];
+  for (const { width, taskCount, font, css } of headerCases) {
     const user = { ...users.find(user => user.account_type === 'student'), display_name: '示例学生欧阳长姓名测试' };
     const stress = await makePage({ width, user, theme: 'mixed', taskCount });
     try {
       await stress.page.goto(origin);
       await stress.page.waitForFunction(count => document.querySelector('.workspace-tasks b')?.textContent === String(count), taskCount);
+      if (css) await stress.page.addStyleTag({ content: css });
       await stress.page.evaluate(() => { document.querySelector('.workspace-context > span:last-child').textContent = '私用/项目用物品出库申请记录与处理进度'; });
-      const geometry = await checkGeometry(stress.page, `header-task-stress/${width}/${taskCount}`);
+      const geometry = await checkGeometry(stress.page, `header-task-stress/${width}/${taskCount}/${font}`);
       const hitTargets = await stress.page.evaluate(() => {
         const nodes = [...document.querySelectorAll('.workspace-menu-button,.workspace-topbar-actions>button,.workspace-topbar-actions>a,.workspace-topbar-actions>.workspace-current-account,.workspace-topbar-actions .platform-theme-trigger')]
           .filter(node => node.getClientRects().length && getComputedStyle(node).visibility !== 'hidden');
@@ -279,22 +300,38 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
         assert(!(overlapX > 1 && overlapY > 1), `Header controls never overlap: ${JSON.stringify({ width, taskCount, current, other })}`);
       }
       const centers = hitTargets.filter(target => target.clickable).map(target => target.y + target.height / 2);
-      assert(Math.max(...centers) - Math.min(...centers) <= 1, 'Header controls stay in one aligned row even with 999 pending tasks');
-      const headerGeometry = await stress.page.locator('.workspace-topbar').evaluate(node => ({
-        height: node.getBoundingClientRect().height,
-        anchorOffset: parseFloat(getComputedStyle(document.querySelector('.platform-workspace')).getPropertyValue('--workspace-anchor-offset')),
-      }));
-      assert(headerGeometry.height <= headerGeometry.anchorOffset, 'Module anchors clear the sticky header');
+      assert(Math.max(...centers) - Math.min(...centers) <= 1, `Header controls stay in one aligned row: ${JSON.stringify({ width, taskCount, font, centers, hitTargets })}`);
+      const headerGeometry = await stress.page.locator('.workspace-topbar').evaluate(node => {
+        const workspace = document.querySelector('.platform-workspace'), probe = document.createElement('div');
+        probe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;width:0;height:var(--workspace-anchor-offset)';
+        workspace.appendChild(probe);
+        const anchorOffset = probe.getBoundingClientRect().height; probe.remove();
+        return { height: node.getBoundingClientRect().height, anchorOffset };
+      });
+      assert(headerGeometry.height <= headerGeometry.anchorOffset, `Module anchors clear the sticky header: ${JSON.stringify({ width, taskCount, font, headerGeometry })}`);
       if (width <= 1099) {
         await stress.page.getByRole('button', { name: '打开模块导航', exact: true }).click();
         await stress.page.locator('.workspace-sidebar.is-open').waitFor();
         await stress.page.keyboard.press('Escape');
         assert.equal(await stress.page.getByRole('button', { name: '打开模块导航', exact: true }).getAttribute('aria-expanded'), 'false');
       }
-      await inspectMenu(stress.page, `header-task-stress/${width}/${taskCount}`);
-      if ([320, 390, 1366].includes(width) && taskCount === 999) await stress.page.screenshot({ path: path.join(out, `theme-header-tasks-${taskCount}-${width}.png`) });
+      await inspectMenu(stress.page, `header-task-stress/${width}/${taskCount}/${font}`);
+      if ([320, 390, 1366].includes(width) && taskCount === 999) await stress.page.screenshot({ path: path.join(out, `theme-header-tasks-${taskCount}-${width}-${font}.png`) });
       assert.deepEqual(stress.errors, []);
-      results.push({ themeHeaderTaskStress: true, width, taskCount, ...geometry, headerGeometry, hitTargets, errors: stress.errors });
+      results.push({ themeHeaderTaskStress: font === 'default', themeHeaderFontStress: font !== 'default', font, width, taskCount, ...geometry, headerGeometry, hitTargets, errors: stress.errors });
+    } catch (failure) {
+      const diagnostic = await stress.page.evaluate(() => ({
+        viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth,
+        theme: document.documentElement.dataset.theme,
+        controls: [...document.querySelectorAll('.workspace-menu-button,.workspace-topbar-actions>button,.workspace-topbar-actions>a,.platform-theme-trigger')]
+          .filter(node => node.getClientRects().length && getComputedStyle(node).visibility !== 'hidden')
+          .map(node => { const rect = node.getBoundingClientRect(), style = getComputedStyle(node), hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+            return { label: node.getAttribute('aria-label'), x: rect.x, y: rect.y, width: rect.width, height: rect.height, centerY: rect.y + rect.height / 2, font: style.fontFamily, fontSize: style.fontSize, hit: node === hit || node.contains(hit) }; }),
+      })).catch(() => null);
+      const name = `theme-header-failure-${width}-${taskCount}-${font}`;
+      await fs.writeFile(path.join(out, `${name}.json`), JSON.stringify({ width, taskCount, font, message: failure.message, diagnostic }, null, 2));
+      await stress.page.screenshot({ path: path.join(out, `${name}.png`) }).catch(() => {});
+      throw failure;
     } finally { await stress.page.close(); }
   }
 
@@ -305,7 +342,7 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
     await openNavigation(business.page); await business.page.locator('.platform-nav').getByRole('button', { name: '测试', exact: true }).click();
     await showModuleRecords(business.page);
     await business.page.getByRole('button', { name: '新建测试', exact: true }).click();
-    const combo = business.page.locator('.platform-section-create [role="combobox"]').first();
+    const combo = business.page.locator('.platform-section-create input[role="combobox"]').first();
     await combo.click(); await business.page.getByRole('listbox').first().waitFor();
     const readings = await contrast(business.page, '.platform-section-create .platform-field>div,[role="listbox"] [role="option"],.platform-request-scope-note');
     const geometry = await checkGeometry(business.page, 'dark-business-form');

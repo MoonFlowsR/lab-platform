@@ -16,10 +16,10 @@ export async function checkRegistration(browser,origin,out){
    if(url.pathname==='/api/ops/listAll')protectedReads++;
    return route.fulfill({json:{ok:true}});
   });
-  await page.goto(origin+'/?register=1');const role=page.getByPlaceholder('搜索或选择账号类型');await role.waitFor();
-  await role.fill('');assert.equal(await page.getByRole('option').count(),4);
-  for(const label of ['学生','教师','管理员','财务']){
-   await role.fill(label);assert.equal(await page.getByRole('option').count(),1);await page.getByRole('option',{name:label+'账号',exact:true}).click();assert.equal(await page.getByRole('option').count(),0);
+  await page.goto(origin+'/?register=1');const role=page.getByRole('combobox',{name:'账号类型'});await role.waitFor();
+  assert.equal(await role.evaluate(element=>element.tagName),'SELECT');assert.equal(await role.locator('option:not([value=""])').count(),4);
+  for(const [label,value] of [['学生','student'],['教师','teacher'],['管理员','admin'],['财务','finance']]){
+   await role.selectOption(value);assert.equal(await role.inputValue(),value);assert.equal(await page.getByRole('listbox').count(),0);
    assert.equal(await page.locator('label').filter({hasText:label+'注册码'}).count(),1);
    for(const other of ['学生','教师','财务','管理员'].filter(item=>item!==label))assert.equal(await page.locator('label').filter({hasText:other+'注册码'}).count(),0);
   }

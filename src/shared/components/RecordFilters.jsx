@@ -10,7 +10,7 @@ export default function RecordFilters({ module = "", extraSummary = "", extraFie
     <div data-module={module} className={`platform-student-filter-grid${showTeacherFilter ? " has-teacher" : ""}${extraFields ? " has-extra" : ""}`} style={styles.formGrid}>
       <Field label="学生姓名"><SearchableSelect value={student} onChange={onStudentChange} clearOnInput={false} options={[{ value: '', label: '全部' }, ...options.map(account => ({ value: account.username, label: account.label }))]} placeholder="搜索或选择学生姓名" fixedOptions={['']} /></Field>
       {showTeacherFilter && <Field label="教师姓名"><SearchableSelect value={teacher} onChange={onTeacherChange} clearOnInput={false} options={[{ value: "", label: "全部" }, ...studentFilterOptions(teachers).map(account => ({ value: account.username, label: account.label }))]} placeholder="搜索或选择教师姓名" fixedOptions={[""]} /></Field>}
-      <Field label={dateLabel}><SearchableSelect value={range.mode || 'all'} onChange={value => onRangeChange(value === 'all' ? {} : { ...range, mode: 'custom' })} clearOnInput={false} options={[{ value: 'all', label: '全部时间' }, { value: 'custom', label: '自定义日期范围' }]} placeholder="搜索或选择时间范围" fixedOptions={['all']} /></Field>
+      <Field label={dateLabel}><SearchableSelect searchable={false} value={range.mode || 'all'} onChange={value => onRangeChange(value === 'all' ? {} : { ...range, mode: 'custom' })} clearOnInput={false} options={[{ value: 'all', label: '全部时间' }, { value: 'custom', label: '自定义日期范围' }]} placeholder="选择时间范围" fixedOptions={['all']} /></Field>
       {extraFields}
       {range.mode === 'custom' && <>
         <Field label="开始日期"><DateInput value={range.start || ''} min="" max="" onChange={value => onRangeChange({ ...range, start: value })} /></Field>

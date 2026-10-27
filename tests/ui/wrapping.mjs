@@ -39,8 +39,7 @@ export async function checkWrapping(browser, origin, snapshot, users) {
     if (account.account_type !== 'student') {
       const toggle = page.getByRole('button', { name: /展开筛选/ });
       if (await toggle.isVisible()) await toggle.click();
-      await page.getByPlaceholder('搜索或选择时间范围').fill('自定义日期范围');
-      await page.getByRole('option', { name: '自定义日期范围', exact: true }).click();
+      await page.locator('.platform-filter-panel select').selectOption('custom');
       const fields = page.locator('.platform-filter-panel input[type=date]');
       assert.equal(await fields.count(), 2);
       await fields.nth(0).fill('2026-10-01');

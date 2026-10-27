@@ -1,5 +1,5 @@
 .platform-workspace {
-  --workspace-anchor-offset: 94px;
+  --workspace-anchor-offset: 5.875rem;
   padding: 0 !important;
   min-height: 100dvh;
   background: var(--canvas);
@@ -10,13 +10,16 @@
   position: fixed;
   inset: 0 auto 0 0;
   width: var(--sidebar-width);
+  height: 100dvh;
+  max-height: 100dvh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background: var(--sidebar-bg);
   color: var(--sidebar-ink);
   border-right: 1px solid var(--sidebar-border);
   z-index: 80;
-  padding: 26px 16px 18px;
+  padding: 26px 16px max(18px, env(safe-area-inset-bottom));
 }
 .workspace-brand {
   display: flex;
@@ -31,8 +34,8 @@
 .workspace-brand-mark {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 44px;
+  width: 44px;
+  height: 3em;
   border: 1px solid var(--sidebar-mark-border);
   border-radius: 12px;
   background: var(--sidebar-mark-bg);
@@ -40,14 +43,6 @@
   flex-shrink: 0;
 }
 .workspace-brand-name { flex: 1; min-width: 0; }
-.workspace-brand small {
-  display: block;
-  font-weight: 400;
-  font-size: var(--text-caption);
-  color: var(--sidebar-muted);
-  letter-spacing: 1.3px;
-  margin-top: 5px;
-}
 .workspace-nav-caption {
   display: flex;
   justify-content: space-between;
@@ -58,11 +53,14 @@
 }
 .platform-workspace .platform-nav {
   display: flex !important;
+  flex: 1 1 auto;
   flex-direction: column;
+  min-height: 0;
   gap: 5px !important;
   margin: 0 !important;
   padding: 0;
   overflow: auto !important;
+  overscroll-behavior: contain;
 }
 .platform-workspace .platform-nav button {
   display: flex;
@@ -106,15 +104,26 @@
   background: #ffffff19;
   border-color: #ffffff25;
 }
+.workspace-sidebar-bottom {
+  flex: 0 0 auto;
+  margin-top: auto;
+  padding-top: 16px;
+}
 .workspace-sidebar-footer {
   display: flex;
   align-items: center;
   flex-shrink: 0;
   gap: 11px;
-  margin-top: auto;
-  padding: 18px 4px 0;
+  padding: 14px 4px 0;
   border-top: 1px solid var(--sidebar-border);
   font-size: var(--text-label);
+}
+.workspace-version {
+  display: block;
+  padding: 8px 4px 0;
+  color: var(--sidebar-muted);
+  font-size: var(--text-caption);
+  line-height: 1.4;
 }
 .workspace-sidebar-footer > div {
   min-width: 0;
@@ -322,7 +331,7 @@
   margin-left: 4px;
 }
 .workspace-content {
-  padding: 18px var(--workspace-gutter) 28px;
+  padding: 14px var(--workspace-gutter) 24px;
   min-height: calc(100dvh - 110px);
   outline: none;
 }
@@ -397,7 +406,7 @@
   }
 }
 @media (min-width: 1100px) and (max-width: 1439px) {
-  .platform-workspace { --workspace-anchor-offset: 124px; }
+  .platform-workspace { --workspace-anchor-offset: 7.75rem; }
   .workspace-topbar-actions .workspace-tool > span { display: none; }
   .workspace-topbar { gap: 8px; }
   .workspace-topbar-actions > .workspace-tasks { margin-right: 0; }
@@ -409,7 +418,7 @@
   .workspace-current-account { max-width: 96px; }
 }
 @media (max-width: 1099px) {
-  .platform-workspace { --workspace-anchor-offset: 132px; }
+  .platform-workspace { --workspace-anchor-offset: 8.25rem; }
   .workspace-sidebar {
     visibility: hidden;
     transform: translateX(-100%);
@@ -471,13 +480,10 @@
     gap: 4px 8px;
   }
   .workspace-content {
-    padding: 20px;
+    padding: 16px 20px;
   }
   .workspace-topbar-actions .workspace-tool span {
     display: none;
-  }
-  .workspace-sidebar-footer {
-    margin-top: 22px;
   }
   .platform-skip-link {
     left: 12px;
@@ -526,7 +532,7 @@
   }
   .workspace-current-account { flex: 0 0 auto; margin-left: 2px; margin-right: 2px; }
   .workspace-content {
-    padding: 18px 12px 20px;
+    padding: 14px 12px 18px;
   }
   .workspace-welcome {
     margin-bottom: 16px;
@@ -592,4 +598,14 @@
 }
 @media (max-width: 360px) {
   .workspace-topbar-actions > .workspace-current-account { display: none; }
+  .workspace-topbar-actions > .workspace-tasks > span { display: none; }
+  .workspace-topbar-actions > .workspace-tasks > .platform-icon { display: block !important; }
+}
+@media (max-height: 540px) {
+  .workspace-sidebar { padding-top: 12px; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+  .workspace-brand { padding-bottom: 14px; }
+  .workspace-nav-caption { padding-bottom: 8px; }
+  .workspace-sidebar-bottom { padding-top: 8px; }
+  .workspace-sidebar-footer { padding-top: 10px; }
+  .workspace-version { padding-top: 6px; }
 }

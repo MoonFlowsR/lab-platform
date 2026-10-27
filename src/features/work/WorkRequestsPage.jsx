@@ -120,10 +120,10 @@ function WorkRequestForm({ workHistory = [], teacherAccounts = [], fixedType, on
 
 
   return <section className="platform-section-create" style={styles.card}>
-    <div style={styles.cardHeader}>
+    <div className="platform-create-heading has-meta" style={styles.cardHeader}>
       <div>
         <h2 style={styles.h2}>{isEditing ? `修改并重新提交${fixedType}` : `新建${fixedType}申请`}</h2>
-        <p className="platform-request-form-meta" style={styles.muted}><span>申请人：<strong className="platform-identity"><PersonName value={initialData?.applicant_name || initialData?.applicant_username || currentUser?.display_name || currentUser?.username} /></strong></span><span>提交日期和时间由系统自动记录。</span></p>
+        <p className="platform-request-form-meta" style={styles.muted}><span>申请人：<strong className="platform-identity"><PersonName value={initialData?.applicant_name || initialData?.applicant_username || currentUser?.display_name || currentUser?.username} /></strong></span><span>提交时间：自动记录</span></p>
       </div>
       {isEditing ? <button type="button" style={styles.lightButton} onClick={onCancel}>取消修改</button> : <button type="button" style={styles.primaryButton} onClick={() => setShow(!show)}>{show ? "收起表单" : `新建${fixedType}`}</button>}
     </div>

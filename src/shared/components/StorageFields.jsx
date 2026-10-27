@@ -8,9 +8,9 @@ export default function StorageFields({ form, onChange, Field, SearchableSelect,
     onChange({ ...patch, storage_location: [next.storage_room, next.storage_detail].filter(Boolean).join(" · ") });
   }
   const roomFields = <>
-    <Field required label="存放房间"><SearchableSelect required clearOnInput={false}
+    <Field required label="存放房间"><SearchableSelect searchable={false} required clearOnInput={false}
       fixedOptions={platformSettings.rooms}
-      value={custom ? '__other_room__' : form.storage_room} placeholder="选择房间或搜索“其它”"
+      value={custom ? '__other_room__' : form.storage_room} placeholder="选择存放房间或“其它”"
       options={[...platformSettings.rooms, { value: '__other_room__', label: '其它' }]} onChange={value => {
         setCustom(value === '__other_room__'); set({ storage_room: value === '__other_room__' ? '' : value });
       }} /></Field>

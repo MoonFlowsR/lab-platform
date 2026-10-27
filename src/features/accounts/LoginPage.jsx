@@ -155,11 +155,12 @@ function LoginPage({ onLogin, onRegister, message }) {
             {mode === "register" && (
               <Field label="账号类型">
                 <SearchableSelect
+                  searchable={false}
                   required
                   value={form.account_type}
                   onChange={(value) => set("account_type", value)}
                   options={accountTypes}
-                  placeholder="搜索或选择账号类型"
+                  placeholder="选择账号类型"
                 />
               </Field>
             )}

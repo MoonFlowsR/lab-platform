@@ -72,12 +72,11 @@ export async function checkDashboardCounts(browser, origin, out, base, users) {
         if (width < 641) await page.getByRole('button', { name: /展开筛选/ }).click();
         const field = page.getByPlaceholder('搜索或选择' + (type === '采购' ? '采购单位' : type === '维修' ? '维修人员单位' : type + '机构'));
         await field.fill(type === '采购' ? '核对供应商' : '核对机构');
-        await page.getByRole('option', { name: type === '采购' ? '核对供应商' : '核对机构', exact: true }).click();
+        await page.getByRole('listbox').getByRole('option', { name: type === '采购' ? '核对供应商' : '核对机构', exact: true }).click();
       }
       if (role === 'student' || role === 'teacher') {
-        const scope = page.getByPlaceholder('搜索或选择查看范围');
-        await scope.fill(team ? '本人' : '全部');
-        await page.getByRole('option', { name: team ? '本人' : '全部', exact: true }).click();
+        const scope = page.getByRole('combobox', { name: '查看范围', exact: true });
+        await scope.selectOption(team ? 'mine' : 'all');
       }
       await openNavigation(page);await page.locator('.platform-nav').getByRole('button', { name: '总览', exact: true }).click();await showModuleRecords(page);
       await page.getByRole('button', { name: '查看' + (type === '采购' ? '采购/入库' : type) + ' →', exact: true }).click();

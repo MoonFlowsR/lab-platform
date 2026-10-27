@@ -8,8 +8,10 @@ import ExportButton from './ExportButton.jsx';
 import { WorkspaceSyncContext } from '../../app/WorkspaceSync.jsx';
 import Icon from './Icon.jsx';
 import PersonName from './PersonName.jsx';
+import PhraseText from './PhraseText.jsx';
 import { isPersonLabel } from '../lib/person-name.js';
 import './responsive-table.css';
+import './dropdown-control.css';
 
 function DateInput({ value, onChange, required = false, min = "2000-01-01", max = "2099-12-31" }) {
   const currentValue = toDateInputValue(value);
@@ -48,7 +50,7 @@ function DateInput({ value, onChange, required = false, min = "2000-01-01", max 
 }
 function Toolbar({ title, description, onExport, actions, scope }) {
   const context = useContext(WorkspaceSyncContext);
-  const toolbar = <section className="platform-page-heading" style={styles.toolbar}><div><h2 style={styles.h2}>{title}</h2>{description && <p style={styles.muted}>{description}</p>}</div><div className="platform-toolbar-actions">{scope}{(actions || onExport) && <div className="platform-export-buttons">{actions || <ExportButton onExport={onExport} />}</div>}</div></section>;
+  const toolbar = <section className="platform-page-heading" style={styles.toolbar}><div><h2 style={styles.h2}>{title}</h2>{description && <p style={styles.muted}><PhraseText>{description}</PhraseText></p>}</div><div className="platform-toolbar-actions">{scope}{(actions || onExport) && <div className="platform-export-buttons">{actions || <ExportButton onExport={onExport} />}</div>}</div></section>;
   return context?.toolbarTarget ? createPortal(toolbar, context.toolbarTarget) : toolbar;
 }
 function StatCard({ title, value, tone = "gray" }) {
@@ -56,7 +58,7 @@ function StatCard({ title, value, tone = "gray" }) {
   return <div style={{ ...styles.statCard, ...toneStyle }}><div style={styles.statTitle}>{title}</div><div style={styles.statValue}>{value}</div></div>;
 }
 const normalizeDropdownSearch = text => String(text ?? "").normalize("NFKC").trim().toLowerCase();
-function SearchableSelect({ value, onChange, options = [], placeholder = "搜索或选择", required = false, disabled = false, allowCustom = false, clearOnInput = true, emptyText = "无相关内容", fixedOptions = [], lastOptions = [], searchTerms }) {
+function SearchableSelect({ value, onChange, options = [], searchable = true, placeholder = searchable ? "搜索或选择" : "请选择", required = false, disabled = false, allowCustom = false, clearOnInput = true, emptyText = "无相关内容", fixedOptions = [], lastOptions = [], searchTerms }) {
   const normalizedOptions = useMemo(() => options.map(item => {
     const option = typeof item === "object" ? { value: String(item.value), label: String(item.label) } : { value: String(item), label: String(item) };
     return { ...option, searchLabel: normalizeDropdownSearch(option.label), searchAliases: (searchTerms?.get(option.value) || []).map(term => ({text:term,normalized:normalizeDropdownSearch(term)})) };
@@ -128,6 +130,22 @@ function SearchableSelect({ value, onChange, options = [], placeholder = "搜索
   useEffect(() => {
     if (open && activeIndex >= 0) wrapRef.current?.querySelectorAll('[role="option"]')[activeIndex]?.scrollIntoView({ block: "nearest" });
   }, [open, activeIndex]);
+
+  if (!searchable) return <div className="platform-search-select platform-choice-select" style={styles.searchSelectWrap}>
+    <select
+      ref={inputRef}
+      required={required}
+      disabled={disabled}
+      value={String(value ?? "")}
+      style={{ ...styles.input, paddingRight: 48 }}
+      onChange={event => onChange(event.target.value)}
+    >
+      {String(value ?? "") === "" && !normalizedOptions.some(item => item.value === "") && <option value="" disabled>{placeholder}</option>}
+      {value && !hasSelection && <option value={String(value)}>{String(value)}</option>}
+      {orderedOptions.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
+    </select>
+    <span aria-hidden="true" style={{ ...styles.searchSelectArrow, pointerEvents: "none" }}>▾</span>
+  </div>;
 
   return <div className="platform-search-select" ref={wrapRef} style={styles.searchSelectWrap}>
     <input

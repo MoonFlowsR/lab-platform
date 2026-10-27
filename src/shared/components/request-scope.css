@@ -41,17 +41,23 @@
   margin: 0 !important;
   white-space: nowrap;
 }
-.platform-request-scope .platform-search-select { width: 118px !important; min-width: 0; }
-.platform-request-scope input {
+.platform-request-scope .platform-search-select { width: 88px !important; min-width: 0; }
+.platform-request-scope select {
+  height: 32px;
+  min-height: 32px !important;
+  padding: 4px 28px 4px 10px !important;
+  font-size: var(--text-label) !important;
+  line-height: 1.4;
   color: var(--accent-ink);
   background: var(--accent-soft) !important;
   border-color:var(--accent-border) !important;
   font-weight: 750;
 }
+.platform-request-scope .platform-choice-select > span { width: 28px !important; font-size: 16px !important; }
 .platform-request-scope > small {
   color: var(--muted);
-  font-size: var(--text-caption);
-  line-height: 1.5;
+  font-size: var(--text-label);
+  line-height: 1.6;
   max-width: 100%;
   text-align: right;
 }
@@ -62,6 +68,9 @@
   .platform-movement-topline { gap: 8px; }
   .platform-business-metrics.is-single .has-header-actions .platform-business-statuses { grid-row: auto; }
   .platform-request-scope { max-width: 100%; }
-  .platform-request-scope .platform-search-select { width: 108px !important; }
+  .platform-request-scope .platform-search-select { width: 78px !important; }
+  .platform-request-scope > .platform-field { gap: 6px; }
+  .platform-request-scope > .platform-field > div:first-child,
+  .platform-request-scope > small { font-size: var(--text-caption) !important; }
   .platform-movement-topline > .platform-inventory-heading { flex-basis: auto; display: grid; gap: 0; }
 }

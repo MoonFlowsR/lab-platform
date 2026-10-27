@@ -90,7 +90,7 @@ export default function MaterialInitialization({ materialCatalog = [], materials
       <fieldset disabled={busy} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         <div style={styles.formGrid}>
           <div className="platform-initialization-grid" style={styles.fullWidth}>
-          <Field required label="材料类别"><SearchableSelect required value={form.category} options={['试剂原料', '耗材']} placeholder="搜索或选择材料类别" onChange={value => {
+          <Field required label="材料类别"><SearchableSelect searchable={false} required value={form.category} options={['试剂原料', '耗材']} placeholder="选择材料类别" onChange={value => {
             setForm(prev => ({ ...prev, category: value, name_cn: '', spec: '无', supplier: '', safety_notes: '' })); setCustomMaterial(false); setError('');
           }} /></Field>
           <div className="platform-initialization-cell"><Field required label="材料名称"><SearchableSelect required value={customMaterial ? otherMaterialName : canonicalMaterialName(form.name_cn)} onChange={name => { setCustomMaterial(name === otherMaterialName); changeMaterial(name === otherMaterialName ? '' : name); }} options={materialNames} searchTerms={materialTerms} lastOptions={[otherMaterialName]} placeholder="选择材料或搜索“其它”" /></Field>
@@ -99,7 +99,7 @@ export default function MaterialInitialization({ materialCatalog = [], materials
           <Field required label="现有数量"><input required type="number" min="0" step="any" style={styles.input} value={form.quantity} onChange={e => set('quantity', e.target.value)} placeholder="实际盘点数量，须大于 0" /></Field>
           <CustomOptionFields key={`unit:${entryId}:${form.name_cn}`} required label="单位" customLabel="其它单位" value={form.unit} onChange={value => set('unit', value)} options={unitOptions} placeholder="选择单位或搜索“其它”" customPlaceholder="请填写具体计量单位" maxLength={30} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
           <CustomOptionFields key={`supplier:${entryId}:${form.name_cn}`} label="采购渠道（可选）" customLabel="其它采购渠道（可选）" value={form.supplier} onChange={value => set('supplier', value)} options={supplierOptions} placeholder="选择渠道或搜索“其它”" customPlaceholder="请填写具体采购渠道" Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
-          <Field required label="使用目的"><SearchableSelect required value={form.purchase_purpose} onChange={value => set('purchase_purpose', value)} options={[{ value: '私用/项目用（出库需采购人审批）', label: '私用/项目用（出库需采购人审批）' }, '公用']} placeholder="搜索或选择使用目的" /></Field>
+          <Field required label="使用目的"><SearchableSelect searchable={false} required value={form.purchase_purpose} onChange={value => set('purchase_purpose', value)} options={[{ value: '私用/项目用（出库需采购人审批）', label: '私用/项目用（出库需采购人审批）' }, '公用']} placeholder="选择使用目的" /></Field>
           <ExpiryDateField value={form.expiry_date} onChange={value => set('expiry_date', value)} Field={Field} DateInput={DateInput} styles={styles} />
           <StorageFields compactDescription groupRoom key={entryId} form={form} onChange={patch => { setForm(prev => ({ ...prev, ...patch })); setError(''); }} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
           </div>
