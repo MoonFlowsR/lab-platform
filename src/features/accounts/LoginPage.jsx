@@ -44,7 +44,7 @@ function LoginPage({ onLogin, onRegister, message }) {
             <Icon name="flask" size={27} />
             <span>实验室协作平台</span>
           </div>
-          <h1><PlatformTitle /></h1>
+          <h1><PlatformTitle allowSingleLine /></h1>
           <p className="platform-login-lead">
             让每一次申请、协作和物品流转清晰有序。
           </p>

@@ -25,6 +25,7 @@ import { checkWorkReview } from './work-review.mjs';
 import { checkThemes } from './themes.mjs';
 import { checkDropdownModes } from './dropdown-modes.mjs';
 import { checkCompactLayout } from './compact-layout.mjs';
+import { checkTitles } from './titles.mjs';
 import fs from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
@@ -106,6 +107,7 @@ try {
  if (process.env.UI_SUITE === 'themes') { results.push(...await checkThemes(browser,origin,out,snapshot,[admin,teachers[0],studentA])); }
  else if (process.env.UI_SUITE === 'dropdowns') { results.push(...await checkDropdownModes(browser,origin,snapshot,[admin,teachers[0],studentA])); }
  else if (process.env.UI_SUITE === 'compact') { results.push(...await checkCompactLayout(browser,origin,out,snapshot,[admin,teachers[0],studentA])); }
+ else if (process.env.UI_SUITE === 'titles') { results.push(...await checkTitles(browser,origin,out,snapshot,[admin,teachers[0],studentA])); }
  else if (process.env.UI_SUITE === 'help-interactions') { results.push(...await checkHelpInteractions(browser,origin,studentA)); }
  else if (process.env.UI_SUITE === 'inventory-permissions') { results.push(...await checkInventoryPermissions(browser,origin,snapshot,[admin,teachers[0],studentA])); }
  else if (process.env.UI_SUITE === 'wrapping') { results.push(...await checkWrapping(browser,origin,snapshot,[admin,teachers[0],studentA])); }
@@ -224,6 +226,7 @@ try {
  results.push(...await checkRegistration(browser,origin,out));
  results.push(...await checkDropdownModes(browser,origin,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkCompactLayout(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
+ results.push(...await checkTitles(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkThemes(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  if (process.env.UI_SUITE !== 'interface') results.push(...await checkOperations());
  const anonymous=await browser.newPage({viewport:{width:390,height:850}});let deniedReads=0;

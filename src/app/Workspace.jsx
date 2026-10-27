@@ -111,17 +111,10 @@ export default function Workspace({
           <span className="workspace-brand-name">
             <PlatformTitle />
           </span>
-          <button
-            type="button"
-            className="workspace-nav-close"
-            aria-label="关闭导航"
-            onClick={() => setMenuOpen(false)}
-          >
-            <Icon name="close" />
-          </button>
         </div>
         <div className="workspace-nav-caption">
-          工作空间 <span>{role}</span>
+          <span>工作空间</span><span className="workspace-nav-caption-role">{role}</span>
+          <button type="button" className="workspace-nav-close" aria-label="关闭导航" onClick={() => setMenuOpen(false)}><Icon name="close" /></button>
         </div>
         <nav className="platform-nav" aria-label="主要模块">
           {tabs.map(([key, label]) => (

@@ -45,12 +45,16 @@
 .workspace-brand-name { flex: 1; min-width: 0; }
 .workspace-nav-caption {
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: 8px;
   font-size: var(--text-caption);
   letter-spacing: 1px;
   color: var(--sidebar-muted);
   padding: 0 12px 12px;
 }
+.workspace-nav-caption-role { margin-left: auto; }
+.workspace-nav-caption .workspace-nav-close { margin-left: 0; }
 .platform-workspace .platform-nav {
   display: flex !important;
   flex: 1 1 auto;
@@ -433,6 +437,7 @@
     visibility: visible;
     transform: translateX(0);
   }
+  .workspace-brand { padding-bottom: 8px; }
   .workspace-body {
     margin-left: 0;
   }
@@ -603,7 +608,7 @@
 }
 @media (max-height: 540px) {
   .workspace-sidebar { padding-top: 12px; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
-  .workspace-brand { padding-bottom: 14px; }
+  .workspace-brand { padding-bottom: 8px; }
   .workspace-nav-caption { padding-bottom: 8px; }
   .workspace-sidebar-bottom { padding-top: 8px; }
   .workspace-sidebar-footer { padding-top: 10px; }
