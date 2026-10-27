@@ -10,6 +10,8 @@ import PlatformTitle from "../../shared/components/PlatformTitle.jsx";
 import { Field, SearchableSelect } from "../../shared/components/ui.jsx";
 import Icon from "../../shared/components/Icon.jsx";
 import ThemeSwitcher from "../../shared/components/ThemeSwitcher.jsx";
+import packageInfo from "../../../package.json" with { type: "json" };
+import "./login-version.css";
 
 const roleDescriptions = [
   ["test", "学生", "申请与进度跟进，采购入库、材料建库、出退库与物品信息维护"],
@@ -44,7 +46,7 @@ function LoginPage({ onLogin, onRegister, message }) {
             <Icon name="flask" size={27} />
             <span>实验室协作平台</span>
           </div>
-          <h1><PlatformTitle allowSingleLine /></h1>
+          <h1><PlatformTitle allowSingleLine trailing={<small className="platform-login-version" aria-label={`平台版本 ${packageInfo.version}`}>v{packageInfo.version}</small>} /></h1>
           <p className="platform-login-lead">
             让每一次申请、协作和物品流转清晰有序。
           </p>

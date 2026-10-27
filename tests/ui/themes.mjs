@@ -84,12 +84,48 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
     assert(trigger.width >= minimumWidth && trigger.height >= 44, `${label}: theme control respects the responsive touch target: ${JSON.stringify({ minimumWidth, trigger })}`);
     return geometry;
   }
+  async function inspectSystemDevice(locator, label) {
+    const state = await locator.locator('svg').evaluate(node => {
+      const monitor = node.querySelector('.platform-theme-system-monitor'), phone = node.querySelector('.platform-theme-system-phone');
+      const visible = element => !!element && getComputedStyle(element).display !== 'none' && !!element.getClientRects().length;
+      return { width: innerWidth, monitorCount: node.querySelectorAll('.platform-theme-system-monitor').length,
+        phoneCount: node.querySelectorAll('.platform-theme-system-phone').length, monitor: visible(monitor), phone: visible(phone),
+        ariaHidden: node.getAttribute('aria-hidden'), iconWidth: node.getBoundingClientRect().width, iconHeight: node.getBoundingClientRect().height,
+        strokeWidth: node.getAttribute('stroke-width') };
+    });
+    assert.equal(state.monitorCount, 1, `${label}: one desktop symbol is present`);
+    assert.equal(state.phoneCount, 1, `${label}: one phone symbol is present`);
+    assert.equal(state.phone, state.width <= 640, `${label}: phones use the phone symbol: ${JSON.stringify(state)}`);
+    assert.equal(state.monitor, state.width >= 641, `${label}: wider screens use the monitor symbol: ${JSON.stringify(state)}`);
+    assert.equal(state.ariaHidden, 'true', `${label}: the device symbol is decorative`);
+    assert.equal(state.iconWidth, 19); assert.equal(state.iconHeight, 19); assert.equal(state.strokeWidth, '1.7');
+    return state;
+  }
+  async function checkSystemDeviceResize(page, surface) {
+    const frames = [];
+    for (const width of [390, 640, 641, 1366, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      const trigger = page.getByRole('button', { name: '显示方式：跟随系统', exact: true });
+      const selected = await inspectSystemDevice(trigger, `${surface}/${width}/trigger`);
+      await trigger.click();
+      const menuItem = page.getByRole('menuitemradio', { name: '跟随系统', exact: true });
+      assert.equal(await menuItem.getAttribute('aria-checked'), 'true');
+      const option = await inspectSystemDevice(menuItem, `${surface}/${width}/menu`);
+      if (width === 390 || width === 1366) await page.screenshot({ path: path.join(out, `theme-system-device-${surface}-${width}.png`) });
+      await page.keyboard.press('Escape');
+      assert.equal(await page.getByRole('menu').count(), 0);
+      frames.push({ surface, width, selected, option });
+    }
+    return frames;
+  }
   async function inspectMenu(page, label) {
     await page.locator('.platform-theme-trigger').click();
     const menu = page.getByRole('menu', { name: '显示方式', exact: true });
     await menu.waitFor();
     assert.equal(await menu.getByRole('menuitemradio').count(), 4);
     assert.equal(await menu.locator('[aria-checked="true"]').count(), 1);
+    await inspectSystemDevice(menu.getByRole('menuitemradio', { name: '跟随系统', exact: true }), `${label}/system-menu`);
     const box = await menu.boundingBox();
     assert(box.x >= 0 && box.x + box.width <= page.viewportSize().width + 1, `Theme menu fits the viewport: ${label}, ${JSON.stringify(box)}`);
     const readings = await contrast(page, '.platform-theme-trigger,.platform-theme-option');
@@ -183,8 +219,11 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
     await assertTheme(page, 'light', 'system');
     await page.emulateMedia({ colorScheme: 'dark' }); await assertTheme(page, 'dark', 'system');
     await page.emulateMedia({ colorScheme: 'light' }); await assertTheme(page, 'light', 'system');
+    const systemDeviceResize = await checkSystemDeviceResize(page, 'help');
+    await page.goto(origin); await page.getByTestId('task-total').waitFor(); await assertTheme(page, 'light', 'system');
+    systemDeviceResize.push(...await checkSystemDeviceResize(page, 'workspace'));
     assert.deepEqual(errors, []);
-    results.push({ themeBehavior: 'keyboard-persistence-help-system', errors });
+    results.push({ themeBehavior: 'keyboard-persistence-help-system', systemDeviceResize, errors });
   } finally { await page.close(); }
 
   // A one-pixel PNG has one scanline and no preceding pixel/row, so PNG filters
@@ -253,10 +292,11 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
   const blocked = await makePage({ blockedStorage: true, colorScheme: 'dark' });
   try {
     await blocked.page.goto(origin); await blocked.page.locator('.platform-theme-trigger').waitFor(); await assertTheme(blocked.page, 'dark', 'system');
+    const systemDeviceResize = await checkSystemDeviceResize(blocked.page, 'login');
     await blocked.page.locator('.platform-theme-trigger').click(); await blocked.page.getByRole('menuitemradio', { name: '浅色模式', exact: true }).click();
     await assertTheme(blocked.page, 'light');
     assert.deepEqual(blocked.errors, []);
-    results.push({ themeBehavior: 'blocked-storage', errors: blocked.errors });
+    results.push({ themeBehavior: 'blocked-storage', systemDeviceResize, errors: blocked.errors });
   } finally { await blocked.page.close(); }
 
   // A nonzero, growing task badge must never collapse the mobile navigation track.
@@ -322,10 +362,15 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
         assert(actionLayout.taskInline && actionLayout.badgePosition === 'static', 'Mobile task icon and count remain side by side, without a corner badge');
         const syncLine = await stress.page.locator('.workspace-statusbar').evaluate(node => {
           const boxes = [...node.querySelectorAll('.workspace-sync-state,.platform-sync-guidance')].map(item => item.getBoundingClientRect());
-          return { centers: boxes.map(box => box.y + box.height / 2), stateX: boxes[0].x, right: Math.max(...boxes.map(box => box.right)), height: node.getBoundingClientRect().height, viewport: innerWidth };
+          const text = node.querySelector('.workspace-sync-state>span:last-child'), dot = node.querySelector('.workspace-sync-dot').getBoundingClientRect(), box = node.getBoundingClientRect();
+          return { centers: boxes.map(box => box.y + box.height / 2), stateX: boxes[0].x, right: Math.max(...boxes.map(box => box.right)), height: box.height, viewport: innerWidth,
+            contentCenter: (boxes[0].x + boxes[1].right) / 2, containerCenter: (box.x + box.right) / 2,
+            dotTextGap: text.getBoundingClientRect().x - dot.right, stateGuidanceGap: boxes[1].x - boxes[0].right, completeTextFits: text.scrollWidth <= text.clientWidth };
         });
         assert(Math.abs(syncLine.centers[0] - syncLine.centers[1]) <= 1 && syncLine.right <= width, `Mobile synchronization stays on one aligned line under task/font stress: ${JSON.stringify({ width, taskCount, font, syncLine })}`);
-        assert(Math.abs(syncLine.stateX - manual.x) <= 1, `The mobile synchronization state aligns with its button: ${JSON.stringify({ width, taskCount, font, syncLine, manual })}`);
+        assert(Math.abs(syncLine.contentCenter - syncLine.containerCenter) <= 1 && Math.abs(syncLine.dotTextGap - 6) <= 1 && Math.abs(syncLine.stateGuidanceGap - 6) <= 1,
+          `The centered synchronization line has clear gaps under task/font stress: ${JSON.stringify({ width, taskCount, font, syncLine })}`);
+        assert(syncLine.completeTextFits, `The complete status remains readable under task/font stress: ${JSON.stringify({ width, taskCount, font, syncLine })}`);
       }
       const centers = hitTargets.filter(target => target.clickable).map(target => target.y + target.height / 2);
       assert(Math.max(...centers) - Math.min(...centers) <= 1, `Header controls stay in one aligned row: ${JSON.stringify({ width, taskCount, font, centers, hitTargets })}`);

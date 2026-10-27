@@ -355,7 +355,7 @@
   gap: 8px 16px;
   margin-bottom: 16px;
 }
-.workspace-welcome > div:first-child { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; min-width: 0; flex: 1 1 auto; }
+.workspace-welcome > div:first-child { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: nowrap; gap: 16px; min-width: 0; width: 100%; flex: 1 1 auto; }
 .workspace-toolbar-host { min-width: 0; }
 .workspace-welcome time { flex-shrink: 0; white-space: nowrap; }
 .workspace-footer > span { min-width: 0; text-wrap: pretty; }
@@ -560,11 +560,12 @@
   .workspace-context .platform-icon { width: 18px; height: 18px; }
   .workspace-statusbar.is-in-topbar { padding: 0; }
   .workspace-statusbar.is-in-topbar {
-    margin-left: calc(var(--mobile-control-width) + var(--mobile-control-gap));
-    width: calc(100% - var(--mobile-control-width) - var(--mobile-control-gap));
+    margin-left: 0;
+    width: 100%;
     min-width: 0;
+    justify-content: center;
     flex-wrap: nowrap;
-    gap: 4px;
+    gap: 6px;
     font-size: .875rem;
   }
   .workspace-sync-state { flex: 0 1 auto; }
@@ -618,11 +619,10 @@
   .workspace-context > span {
     display: none;
   }
-  .workspace-sync-state { gap: 2px; }
 }
 @media (max-width: 360px) {
   .workspace-topbar { --mobile-control-width: 36px; --text-label: .85rem; }
-  .workspace-statusbar.is-in-topbar { gap: 1px; font-size: var(--text-label); }
+  .workspace-statusbar.is-in-topbar { font-size: var(--text-label); }
   .workspace-topbar-actions > .workspace-current-account { display: none; }
 }
 @media (max-height: 540px) {

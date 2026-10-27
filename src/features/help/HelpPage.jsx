@@ -12,6 +12,7 @@ import { HELP_VIEWS, helpRoleForAccount, findHelpSection, helpSectionsForView, l
 import ThemeSwitcher from '../../shared/components/ThemeSwitcher.jsx';
 import PlatformTitle from '../../shared/components/PlatformTitle.jsx';
 import UpdateHistory from '../updates/UpdateHistory.jsx';
+import Icon from '../../shared/components/Icon.jsx';
 
 const helpViews = [...HELP_VIEWS, { value: 'updates', label: '更新日志' }];
 
@@ -254,18 +255,18 @@ export default function HelpPage({ currentUser }) {
   return <div className="help-page" id="help-top">
     <header className="help-header">
       <div><p className="help-brand"><PlatformTitle allowSingleLine /></p><h1>平台使用帮助</h1>{discussionEnabled && <p className="help-subtitle">更新于 {content.updated}</p>}</div>
-      <div className="help-header-actions"><ThemeSwitcher /><a className="help-return" href="/">返回平台</a></div>
+      <div className="help-header-actions"><ThemeSwitcher /><a className="help-return" href="/"><Icon name="arrowLeft" size={16} />返回平台</a></div>
     </header>
     <main className="help-main">
       <section className="help-role-switch" aria-label="选择帮助类别">
         <span>查看说明</span><div>{helpViews.map(role => <button key={role.value} type="button" aria-pressed={helpRole === role.value} onClick={() => chooseRole(role.value)}>{role.label}</button>)}</div>
-        <a className="help-source-link" href="https://github.com/MoonFlowsR/lab-platform" target="_blank" rel="noopener noreferrer">平台代码已在Github开源 ↗</a>
+        <a className="help-source-link" href="https://github.com/MoonFlowsR/lab-platform" target="_blank" rel="noopener noreferrer">平台代码已在Github开源<Icon name="arrowUpRight" size={16} /></a>
       </section>
       {!discussionEnabled ? <UpdateHistory /> : <>
       <section className="help-search" aria-label="帮助搜索">
         <label htmlFor="help-search-input">搜索{roleLabel}帮助</label>
         <div className="help-search-row"><input id="help-search-input" type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="搜索当前说明" /><button type="button" onClick={() => setQuery('')} disabled={!query}>清除搜索</button></div>
-        <p role="status" aria-live="polite" className={!terms.length ? 'help-search-status-idle' : undefined}>{terms.length ? `${sections.length} 个匹配章节 · 相关讨论见下方` : ''}</p>
+        <p role="status" aria-live="polite" className={!terms.length ? 'help-search-status-idle' : undefined}>{terms.length ? `${sections.length} 个匹配章节` : ''}</p>
       </section>
       <section className="help-comment-tools" aria-label="帮助评论">
         <span>选中正文可评论</span>
@@ -311,7 +312,6 @@ export default function HelpPage({ currentUser }) {
       {history && isAdmin && <CommentAudit query={query} token={token} revision={revision} studentNameIndex={studentNameIndex} commentAuthors={Object.fromEntries(comments.map(row => [row.id, row.author_name || row.author_username]))} sectionTitles={{ general: '直接留言', ...Object.fromEntries(content.sections.map(section => [section.id, section.title])) }} />}
       </>}
     </main>
-    {discussionEnabled && <footer className="help-footer">忘记密码请联系管理员重置。</footer>}
-    <a className="help-top-floating" href="#help-top" aria-label="返回顶部">↑ 返回顶部</a>
+    <a className="help-top-floating" href="#help-top" aria-label="返回顶部"><Icon name="arrowUp" size={16} />返回顶部</a>
   </div>;
 }

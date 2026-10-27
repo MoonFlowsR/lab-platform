@@ -1,5 +1,5 @@
 module.exports = function installAuth(context) {
-const { authAttempts, ADMIN_INVITE_CODE, FINANCE_INVITE_CODE, STUDENT_INVITE_CODE, TEACHER_INVITE_CODE, addAudit, app, asyncHandler, authMiddleware, bcrypt, db, getInitialAccountStatus, getRegisteredTeacherAccountsForDropdown, graduationExpiry, isValidLoginId, nowISO, publicAccount, recordChanges, signToken, studentProfiles } = context;
+const { authAttempts, clientVersion, ADMIN_INVITE_CODE, FINANCE_INVITE_CODE, STUDENT_INVITE_CODE, TEACHER_INVITE_CODE, addAudit, app, asyncHandler, authMiddleware, bcrypt, db, getInitialAccountStatus, getRegisteredTeacherAccountsForDropdown, graduationExpiry, isValidLoginId, nowISO, publicAccount, recordChanges, signToken, studentProfiles } = context;
 // Unknown accounts perform the same password check without revealing their existence.
 const missingAccountHash = bcrypt.hashSync(require('node:crypto').randomBytes(32).toString('hex'), 12);
 app.post("/api/auth/register", authAttempts.byAccount, asyncHandler(async (req, res) => {
@@ -57,7 +57,7 @@ app.post("/api/auth/register", authAttempts.byAccount, asyncHandler(async (req, 
     return res.json({ ok: true, account: safeAccount, pending: true, message: "账号已提交注册，待管理员审核通过后才能登录。" });
   }
 
-  res.json({ ok: true, account: safeAccount, session_token: signToken(account) });
+  res.json({ ok: true, account: safeAccount, session_token: signToken(account, clientVersion.requestVersion(req)) });
 }));
 
 app.post("/api/auth/login", authAttempts.byAccount, asyncHandler(async (req, res) => {
@@ -76,7 +76,7 @@ app.post("/api/auth/login", authAttempts.byAccount, asyncHandler(async (req, res
 
   const safeAccount = publicAccount(account);
   addAudit(req, safeAccount, "login", "accounts", safeAccount._id, null, safeAccount);
-  res.json({ ok: true, account: safeAccount, session_token: signToken(account) });
+  res.json({ ok: true, account: safeAccount, session_token: signToken(account, clientVersion.requestVersion(req)) });
 }));
 
 app.post("/api/auth/me", authMiddleware, asyncHandler(async (req, res) => {

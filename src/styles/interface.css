@@ -432,14 +432,13 @@
   font-weight: 650;
   cursor: pointer;
 }
-.platform-status-jump span {
-  font-size: var(--text-caption);
+.platform-status-jump .platform-icon {
   color: var(--muted);
 }
 .platform-status-jump:hover {
   color: var(--accent-ink);
 }
-.platform-status-jump:hover span {
+.platform-status-jump:hover .platform-icon {
   color: var(--accent-ink);
 }
 .platform-business-footer {

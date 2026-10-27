@@ -32,7 +32,7 @@ export function TaskLink({
         <span className="platform-task-amount">{money(group.amount)}</span>
       )}
       <span className="platform-task-action">
-        {group.action} <span aria-hidden="true">→</span>
+        {group.action}<Icon name="arrowUpRight" size={16} />
       </span>
     </button>
   );
@@ -84,7 +84,7 @@ export function TaskCenter({
             className="platform-task-report-link"
             onClick={onReports}
           >
-            统计与导出 <span aria-hidden="true">→</span>
+            统计与导出<Icon name="arrowUpRight" size={16} />
           </button>
         )}
       </div>
@@ -167,7 +167,7 @@ export function TaskFilterBanner({ task, onClear, onBack, query }) {
       </div>
       <div>
         <button type="button" onClick={onBack}>
-          返回待办
+          <Icon name="arrowLeft" size={16} />返回待办
         </button>
         <button type="button" onClick={onClear}>
           查看本模块全部记录

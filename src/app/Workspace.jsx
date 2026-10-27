@@ -244,7 +244,7 @@ export default function Workspace({
           <footer className="workspace-footer">
             <span>{PLATFORM_TITLE}</span>
             <a href="/help">
-              使用帮助 <span aria-hidden="true">↗</span>
+              使用帮助 <Icon name="arrowUpRight" size={15} />
             </a>
           </footer>
         </div>

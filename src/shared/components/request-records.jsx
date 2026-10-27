@@ -1,7 +1,6 @@
 import PersonName from './PersonName.jsx';
 import RequestIdentity from './RequestIdentity.jsx';
 import ReimbursementStatus, { ReimbursementBadge } from '../../features/finance/ReimbursementStatus.jsx';
-import { isReceivedPurchase, purchaseAmount, purchaseAmountLabel, purchaseQuantityText } from "../../features/purchases/purchase-values.js";
 import { styles } from "../../app/styles.js";
 import { formatDate, money, sortByCreatedAt } from "../../app/formatters.js";
 import { Badge, DataTable, Empty, Field, Info, SearchableSelect } from "./ui.jsx";
@@ -12,28 +11,6 @@ import './request-scope.css';
 
 function ClosureInfo({ row }) {
   return <p style={styles.meta}>关闭人：<strong className="platform-identity"><PersonName value={row.closed_by_name || row.closed_by_username || "未记录"} /></strong> · 关闭时间：{formatDate(row.closed_at)} · <strong>不计完成费用或入库金额</strong></p>;
-}
-function PurchaseSummaryCard({ currentUser, onReimbursementChange, row }) {
-  return <div className="platform-request-record" style={styles.listItem}>
-    <div style={styles.rowBetween}>
-      <div>
-        <h3 style={styles.h3}>{row.material_name || formatPublicNumber(row.public_id)}</h3>
-        <RequestIdentity row={row} />
-      </div>
-      <div style={styles.badgeRow}><Badge text={row.status} /><ReimbursementBadge row={row} /></div>
-    </div>
-    {row.status === "已关闭" && <ClosureInfo row={row} />}
-    <div className="platform-detail-grid" style={styles.detailGrid4}>
-      <Info label="规格" value={row.specification} />
-      <Info label={isReceivedPurchase(row) ? "到货数量" : "数量"} value={purchaseQuantityText(row)} />
-      <Info label="采购渠道" value={row.preferred_supplier} />
-      <Info label="使用目的" value={row.purchase_purpose || "未标注"} />
-      {row.received_status === "已入库" && <Info label="有效期" value={row.expiry_date || "未填写"} />}
-      <Info label={purchaseAmountLabel(row)} value={money(purchaseAmount(row))} />
-      {isReceivedPurchase(row) && <Info label="工单状态" value={<ReimbursementStatus row={row} currentUser={currentUser} onChange={onReimbursementChange} />} />}
-    </div>
-    {row.review_note && <p style={styles.note}><b>审批意见：</b>{row.review_note}{row.reviewed_by && <>（审批人：<strong className="platform-identity"><PersonName value={row.reviewed_by} /></strong>）</>}</p>}
-  </div>;
 }
 function RequestHistorySection({ title, rows, renderCard, emptyText, className = 'platform-section-history', defaultExpanded = false, showTitle = true }) {
   return <section className={className} style={styles.card} aria-label={title} tabIndex={-1}>
@@ -93,4 +70,4 @@ function WorkRequestCard({ currentUser, onReimbursementChange, row, logs = [], c
     {historyPanel}
   </div>;
 }
-export { ClosureInfo, PurchaseSummaryCard, RequestHistorySection, RequestViewScope, ReviewHistory, ReviewTeacherField, WorkRequestCard };
+export { ClosureInfo, RequestHistorySection, RequestViewScope, ReviewHistory, ReviewTeacherField, WorkRequestCard };

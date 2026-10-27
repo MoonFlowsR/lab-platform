@@ -11,11 +11,12 @@
 .platform-task-name{font-weight:700;line-height:1.5}
 .platform-task-link>strong{font-size:27px;font-variant-numeric:tabular-nums;color:var(--accent-ink);white-space:nowrap}
 .platform-task-link strong small{font-size: var(--text-caption);font-weight:500;color:var(--muted)}
-.platform-task-action{grid-column:2;text-align:right;color:var(--accent-ink);font-size: var(--text-body);font-weight:700;white-space:nowrap}
+.platform-task-action{grid-column:2;display:inline-flex;align-items:center;justify-content:flex-end;gap:6px;text-align:right;color:var(--accent-ink);font-size: var(--text-body);font-weight:700;white-space:nowrap}
 .platform-task-amount{color:var(--ink-secondary);font-variant-numeric:tabular-nums;font-size: var(--text-body)}
 
 .platform-task-empty{color:var(--muted);margin:8px 0;padding:14px 0}
 .platform-task-report-link,.platform-overview-shortcuts button{border:1px solid var(--line);border-radius:10px;min-height:42px;padding:10px 14px;background:var(--surface);color:var(--accent-ink);font:inherit;cursor:pointer}
+.platform-navigation-link,.platform-task-report-link,.platform-overview-shortcuts button,.platform-task-filter button{display:inline-flex;align-items:center;justify-content:center;gap:6px}
 .platform-task-entry{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--accent-border);background:var(--accent-soft);color:var(--accent-ink);border-radius:12px;min-height:42px;padding:10px 14px;font:inherit;font-weight:700;cursor:pointer}
 .platform-task-entry b,.platform-nav-task-count{display:inline-flex;align-items:center;justify-content:center;border-radius:12px;padding:1px 7px;min-width:24px;background:var(--danger);color:var(--on-accent);font-size: var(--text-caption);line-height:20px;font-variant-numeric:tabular-nums}
 .platform-nav-task-count{margin-left:6px}

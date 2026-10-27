@@ -62,7 +62,7 @@ export async function checkDashboardCounts(browser, origin, out, base, users) {
     assert.match(await page.getByRole('region', { name: '团队库存提醒', exact: true }).innerText(), /2 个批次/);
     await page.screenshot({ path: path.join(out, `counts-${label}-${width}.png`), fullPage: true });
     for (const type of types) {
-      await page.getByRole('button', { name: '查看' + (type === '采购' ? '采购/入库' : type) + ' →', exact: true }).click();
+      await page.getByRole('button', { name: '查看' + (type === '采购' ? '采购/入库' : type), exact: true }).click();
       for (const [i, className] of ['pending', 'approved', 'reviewed', 'modified'].entries()) {
         const section = page.locator('main > .platform-section-' + className);
         assert.match(await section.locator('h2').innerText(), new RegExp(`（${countsFor(type)[i]}）$`));
@@ -79,14 +79,14 @@ export async function checkDashboardCounts(browser, origin, out, base, users) {
         await scope.selectOption(team ? 'mine' : 'all');
       }
       await openNavigation(page);await page.locator('.platform-nav').getByRole('button', { name: '总览', exact: true }).click();await showModuleRecords(page);
-      await page.getByRole('button', { name: '查看' + (type === '采购' ? '采购/入库' : type) + ' →', exact: true }).click();
+      await page.getByRole('button', { name: '查看' + (type === '采购' ? '采购/入库' : type), exact: true }).click();
       assert.match(await page.locator('main > .platform-section-pending h2').innerText(), new RegExp(`（${countsFor(type)[0]}）$`));
       if (role !== 'student') assert.equal(await page.getByPlaceholder('搜索或选择' + (type === '采购' ? '采购单位' : type === '维修' ? '维修人员单位' : type + '机构')).inputValue(), '全部');
       await openNavigation(page);await page.locator('.platform-nav').getByRole('button', { name: '总览', exact: true }).click();await showModuleRecords(page);
     }
     await page.getByRole('searchbox', { name: '搜索记录', exact: true }).fill('987654');
     assert.match(await page.getByRole('region', { name: '团队库存提醒', exact: true }).innerText(), /2 个批次/);
-    await page.getByRole('button', { name: '查看全部库存 →', exact: true }).click();
+    await page.getByRole('button', { name: '查看全部库存', exact: true }).click();
     assert.match(await page.getByRole('region', { name: '当前筛选库存', exact: true }).innerText(), /2 个批次/);
     results.push({ dashboardCounts: true, role: label, width, totalPerType: total, countersMatchSections: true, scopeReset: true, groupedInventorySearch: true, overflow: await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), errors });
     await page.close();

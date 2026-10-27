@@ -1,0 +1,8 @@
+.platform-login-version {
+  color: var(--intro-muted);
+  font-size: .75rem;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: normal;
+  white-space: nowrap;
+}

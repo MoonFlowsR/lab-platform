@@ -1,5 +1,4 @@
 import { platformSettings } from '../shared/lib/platform-settings.js';
-import { actionName as auditActionLabel } from '../shared/lib/audit-labels.js';
 import dropdownOptions from "../config/dropdown-options.json";
 
 const { purchaseItems, purchaseSuppliers, purchaseUnits } = dropdownOptions;
@@ -16,4 +15,4 @@ const PLATFORM_TITLE = platformSettings.title;
 const ACCOUNT_STORAGE_KEY = "surface_lab_account";
 const AUTO_LOGOUT_MS = 30 * 60 * 1000;
 const suppliers = [...new Set(Object.values(purchaseSuppliers).flat())];
-export { ACCOUNT_STORAGE_KEY, API_BASE, AUTO_LOGOUT_MS, PLATFORM_TITLE, accountStatusLabels, accountTypeLabels, accountTypes, auditActionLabel, purchaseItems, purchaseSuppliers, purchaseUnits, suppliers };
+export { ACCOUNT_STORAGE_KEY, API_BASE, AUTO_LOGOUT_MS, PLATFORM_TITLE, accountStatusLabels, accountTypeLabels, accountTypes, purchaseItems, purchaseSuppliers, purchaseUnits, suppliers };

@@ -120,7 +120,7 @@ export async function checkFinance(browser,origin,out,snapshot,users){
     await checkReimbursementBreakdown(reportTotals);
    }
    assert.equal(finalAmount,await page.getByRole('region',{name:'测试统计',exact:true}).locator('.platform-business-footer').innerText());
-   await page.goto(origin+'/help');await page.getByRole('heading',{name:'01 财务总览与查看',exact:true}).waitFor();assert.equal(await page.getByText('平台代码已在Github开源 ↗',{exact:true}).count(),1);
+   await page.goto(origin+'/help');await page.getByRole('heading',{name:'01 财务总览与查看',exact:true}).waitFor();assert.equal(await page.getByRole('link',{name:'平台代码已在Github开源',exact:true}).count(),1);
   }
   results.push({financeRole:true,role,width,reimbursementChanges:changes,overflow:await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),errors});assert.deepEqual(errors,[]);await page.close();
  }

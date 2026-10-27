@@ -2,6 +2,8 @@
 .platform-theme-switcher>button.platform-theme-trigger{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:44px;min-height:44px;padding:8px 10px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--ink-secondary);font:inherit;font-size:var(--text-label);line-height:1.4;white-space:nowrap;cursor:pointer}
 .platform-theme-switcher>button.platform-theme-trigger:hover,.platform-theme-trigger[aria-expanded="true"]{background:var(--surface-hover);color:var(--accent-ink)}
 .platform-theme-switcher svg{flex:0 0 auto}
+.platform-theme-system-phone{display:none}
+.platform-theme-system-monitor{display:inline}
 .platform-theme-switcher :is(button):focus-visible{outline:3px solid var(--accent-ink);outline-offset:2px}
 .platform-theme-menu{position:absolute;z-index:110;top:calc(100% + 6px);right:0;display:grid;gap:3px;width:190px;max-width:calc(100vw - 20px);padding:6px;border:1px solid var(--line-strong);border-radius:12px;background:var(--surface);box-shadow:var(--shadow,0 12px 36px #0003)}
 .platform-theme-switcher .platform-theme-option{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:9px 11px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--ink);font:inherit;font-size:var(--text-label);line-height:1.4;text-align:left;white-space:nowrap;cursor:pointer}
@@ -15,5 +17,6 @@
 .help-header>.help-header-actions{display:flex;flex:0 0 auto;align-items:center;gap:8px;min-width:0}
 @media(max-width:1439px){.workspace-topbar-actions .platform-theme-current{display:none}.workspace-topbar-actions .platform-theme-trigger{padding:8px}}
 @media(max-width:760px){.help-header-actions .platform-theme-current{display:none}}
+@media(max-width:640px){.platform-theme-system-monitor{display:none}.platform-theme-system-phone{display:inline}}
 @media(max-width:420px){.platform-login-form-heading .platform-theme-current{display:none}.help-header>.help-header-actions{gap:3px}}
 @media print{.platform-theme-switcher{display:none!important}}

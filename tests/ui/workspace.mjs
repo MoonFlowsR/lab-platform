@@ -39,6 +39,31 @@ async function checkSidebarFocusLoop(page, sidebar) {
   assert.equal(await close.evaluate(node => node === document.activeElement), true);
 }
 
+async function checkWelcomeAlignment(page) {
+  const geometry = await page.locator('.workspace-welcome > div:first-child').evaluate(node => {
+    const heading = node.querySelector('h1'), date = node.querySelector('time'), box = node.getBoundingClientRect(),
+      titleBox = heading.getBoundingClientRect(), dateBox = date.getBoundingClientRect();
+    const baseline = element => {
+      const probe = document.createElement('span');
+      probe.setAttribute('aria-hidden', 'true');
+      probe.style.cssText = 'display:inline-block;width:0;height:0;margin:0;padding:0;border:0;vertical-align:baseline';
+      element.appendChild(probe);
+      const y = probe.getBoundingClientRect().y;
+      probe.remove();
+      return y;
+    };
+    return { viewport: innerWidth, right: box.right, titleX: titleBox.x, titleRight: titleBox.right, titleY: titleBox.y, titleBottom: titleBox.bottom,
+      dateX: dateBox.x, dateRight: dateBox.right, dateY: dateBox.y, dateBottom: dateBox.bottom,
+      titleBaseline: baseline(heading), dateBaseline: baseline(date), date: date.textContent,
+      dateNoWrap: getComputedStyle(date).whiteSpace === 'nowrap', dateFits: date.scrollWidth <= date.clientWidth };
+  });
+  assert(Math.abs(geometry.dateRight - geometry.right) <= 1, `The date aligns with the right edge of the welcome row: ${JSON.stringify(geometry)}`);
+  assert(Math.abs(geometry.titleBaseline - geometry.dateBaseline) <= 1, `The title and date share a real text baseline: ${JSON.stringify(geometry)}`);
+  assert(geometry.dateX >= geometry.titleRight && geometry.dateNoWrap && geometry.dateFits, `The complete date and weekday stay on the title line: ${JSON.stringify(geometry)}`);
+  assert(Math.max(geometry.dateY, geometry.titleY) < Math.min(geometry.dateBottom, geometry.titleBottom));
+  return geometry;
+}
+
 export async function checkWorkspace(browser, origin, out, snapshot, users) {
   const results = [];
   async function createPage(width, user, failModule = false, data = snapshot) {
@@ -92,6 +117,7 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(origin);
     await page.getByTestId("task-total").waitFor();
+    const welcome = await checkWelcomeAlignment(page);
     assert.equal(await page.locator('.workspace-brand-name > small').count(), 0, 'The brand has no redundant subtitle');
     await checkVersion(page.locator('.workspace-version'));
     assert(!(await page.locator(".platform-workspace").textContent()).includes("账号账号"));
@@ -222,6 +248,7 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     results.push({
       workspace: true,
       width,
+      welcome,
       keyboard: true,
       navigation: true,
       statusLinks: true,
@@ -344,6 +371,7 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     await page.waitForFunction(() => document.querySelector('.workspace-sync-state')?.textContent.includes('同步完成'));
     await page.waitForFunction(() => document.querySelector('.workspace-tasks b')?.textContent === '999');
     if (textScale === 125) await page.addStyleTag({ content: 'html{font-size:20px!important}' });
+    const mobileWelcome = await checkWelcomeAlignment(page);
     async function inspectStatus(label, expectedDot = 'success') {
       const geometry = await page.locator('.workspace-statusbar').evaluate(node => {
         const state = node.querySelector('.workspace-sync-state'), guidance = node.querySelector('.platform-sync-guidance'),
@@ -351,6 +379,9 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
           dot = node.querySelector('.workspace-sync-dot'), dotBox = dot.getBoundingClientRect(), dotStyle = getComputedStyle(dot);
         return { viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth, x: box.x, right: box.right, height: box.height,
           stateX: a.x, stateRight: a.right, stateCenter: a.y + a.height / 2, guidanceCenter: b.y + b.height / 2,
+          contentCenter: (a.x + b.right) / 2, containerCenter: (box.x + box.right) / 2,
+          dotTextGap: state.querySelector('span:last-child').getBoundingClientRect().x - dotBox.right,
+          stateGuidanceGap: b.x - a.right,
           guidanceX: b.x, guidanceRight: b.right, guidanceHeight: b.height, fontSize: parseFloat(style.fontSize), guidanceText: guidance.textContent.trim(), bold: Number(style.fontWeight),
           prefixVisible: getComputedStyle(node.querySelector('.workspace-sync-prefix')).display !== 'none',
           completeTextFits: state.querySelector('span:last-child').scrollWidth <= state.querySelector('span:last-child').clientWidth,
@@ -367,7 +398,8 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
       assert.equal(geometry.guidanceText, '请等待同步完成后操作');
       assert(geometry.bold >= 700);
       assert.equal(geometry.prefixVisible, false, 'The mobile line avoids repeating the redundant status label');
-      assert(Math.abs(geometry.stateX - geometry.syncX) <= 1, `Status starts directly beneath the sync button: ${diagnostic}`);
+      assert(Math.abs(geometry.contentCenter - geometry.containerCenter) <= 1, `The full synchronization line is centered: ${diagnostic}`);
+      assert(Math.abs(geometry.dotTextGap - 6) <= 1 && Math.abs(geometry.stateGuidanceGap - 6) <= 1, `The dot, status and guidance have clear six-pixel gaps: ${diagnostic}`);
       if (['complete', 'recovered', 'resized'].includes(label)) assert(geometry.completeTextFits, `The full four-character completion status remains readable: ${diagnostic}`);
       const palette = theme === 'dark'
         ? { success: 'rgb(52, 211, 153)', busy: 'rgb(251, 146, 60)', error: 'rgb(248, 113, 113)' }
@@ -437,17 +469,17 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
         await page.setViewportSize({ width: 370, height: 900 });
         transitionLayout = await page.evaluate(() => {
           const nav = document.querySelector('.workspace-menu-button').getBoundingClientRect(), sync = document.querySelector('.workspace-sync-control').getBoundingClientRect(),
-            exit = document.querySelector('.workspace-logout').getBoundingClientRect(), state = document.querySelector('.workspace-sync-state').getBoundingClientRect();
+            exit = document.querySelector('.workspace-logout').getBoundingClientRect(), state = document.querySelector('.workspace-sync-state').getBoundingClientRect(), guidance = document.querySelector('.platform-sync-guidance').getBoundingClientRect();
           const controls = [...document.querySelectorAll('.workspace-menu-button,.workspace-sync-control,.workspace-topbar-actions>button,.workspace-topbar-actions>a,.platform-theme-trigger')]
             .filter(node => node.getClientRects().length).map(node => {
               const box = node.getBoundingClientRect(), hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
               return { label: node.getAttribute('aria-label'), x: box.x, right: box.right, width: box.width, height: box.height, hit: node === hit || node.contains(hit) };
             });
           return { viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth, navigationX: nav.x, syncWidth: sync.width,
-            syncGap: sync.x - nav.right, rightPadding: innerWidth - exit.right, statusOffset: state.x - sync.x, controls };
+            syncGap: sync.x - nav.right, rightPadding: innerWidth - exit.right, statusCenterOffset: (state.x + guidance.right) / 2 - innerWidth / 2, controls };
         });
         assert(transitionLayout.scrollWidth <= 370 && transitionLayout.syncWidth >= 36 && transitionLayout.syncWidth <= 40, 'The intermediate viewport keeps all actions in the compact width range');
-        assert(Math.abs(transitionLayout.navigationX - 12) <= 1 && Math.abs(transitionLayout.rightPadding - 12) <= 1 && Math.abs(transitionLayout.syncGap - 4) <= 1 && Math.abs(transitionLayout.statusOffset) <= 1);
+        assert(Math.abs(transitionLayout.navigationX - 12) <= 1 && Math.abs(transitionLayout.rightPadding - 12) <= 1 && Math.abs(transitionLayout.syncGap - 4) <= 1 && Math.abs(transitionLayout.statusCenterOffset) <= 1);
         assert(transitionLayout.controls.every(control => control.hit && control.width >= 36 && control.height >= 44 && control.x >= 0 && control.right <= 371), 'Intermediate-width controls remain visible and receive actual center clicks');
         await page.screenshot({ path: path.join(out, `workspace-mobile-transition-${theme}.png`) });
         await page.setViewportSize({ width, height: 900 });
@@ -458,6 +490,7 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
       assert.equal(await page.locator('.workspace-sync-dot').isVisible(), true, 'Desktop synchronization also keeps its status dot');
       const desktopDot = await page.locator('.workspace-sync-dot').boundingBox();
       assert.equal(desktopDot.width, 8); assert.equal(desktopDot.height, 8);
+      const desktopWelcome = await checkWelcomeAlignment(page);
       await page.setViewportSize({ width, height: 900 });
       await page.waitForFunction(() => document.querySelectorAll('.workspace-context > .workspace-sync-slot > .workspace-sync-control').length === 1);
       assert.equal(await page.locator('.workspace-sync-control').count(), 1, 'Resizing back to phone never duplicates controls');
@@ -467,7 +500,7 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
       await page.getByRole('button', { name: '关闭导航', exact: true }).click();
       await page.screenshot({ path: path.join(out, `workspace-mobile-sync-${role}-${width}-${theme}-${textScale}.png`) });
       assert.deepEqual(errors, []);
-      results.push({ workspaceMobileSync: true, role, width, theme, textScale, taskCount: 999, requests, complete, busy, long, recovered, actionGeometry, transitionLayout, brandVersion, errors });
+      results.push({ workspaceMobileSync: true, role, width, theme, textScale, taskCount: 999, requests, complete, busy, long, recovered, actionGeometry, transitionLayout, brandVersion, welcome: { mobile: mobileWelcome, desktop: desktopWelcome }, errors });
     } catch (failure) {
       const name = `workspace-mobile-sync-failure-${role}-${width}-${theme}-${textScale}`;
       await page.screenshot({ path: path.join(out, `${name}.png`) }).catch(() => {});

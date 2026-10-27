@@ -41,7 +41,6 @@ const styles = {
   textarea: { width: "100%", minHeight: 70, boxSizing: "border-box", padding: "10px 12px", borderRadius: "var(--radius-control)", border: "1px solid var(--line-strong)", fontSize: "var(--text-body)", color: "var(--ink)", background: "var(--field-bg)", resize: "vertical" },
   fullWidth: { gridColumn: "1 / -1" },
   formActions: { gridColumn: "1 / -1", display: "flex", alignItems: "center", justifyContent: "flex-end", flexWrap: "wrap", gap: 8 },
-  buttonRow: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 12 },
   buttonRowCompact: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" },
   primaryButton: { background: "var(--accent)", color: "var(--on-accent)", border: "none", borderRadius: "var(--radius-control)", padding: "10px 16px", cursor: "pointer", fontWeight: 600, minHeight: 40 },
   secondaryButton: { background: "var(--accent)", color: "var(--on-accent)", border: "none", borderRadius: "var(--radius-control)", padding: "10px 16px", cursor: "pointer", fontWeight: 600, minHeight: 40 },

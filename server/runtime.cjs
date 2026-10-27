@@ -51,6 +51,8 @@ function loadLocalEnvFile() {
 
 loadLocalEnvFile();
 
+const clientVersion = require('./security/client-version.cjs')();
+
 const Database = require("better-sqlite3");
 
 const bcrypt = require("bcryptjs");
@@ -157,6 +159,7 @@ const app = express();
 app.set("json replacer", (key, value) => key === "storage_photo_attachment_id" ? undefined : value);
 
 const authAttempts = require("./security/auth-rate-limit.cjs")();
+app.use(clientVersion.authentication);
 app.use(authAttempts.byIp);
 
 const requestJson = require('./security/request-json.cjs')(express);
@@ -335,9 +338,9 @@ function publicAccount(account) {
   };
 }
 
-function signToken(account) {
+function signToken(account, clientVersionValue) {
   return jwt.sign(
-    { account_id: account.id, username: account.username, account_type: account.account_type, auth_version: studentProfiles.authVersion(), session_version: accountSessions.version(account) },
+    { account_id: account.id, username: account.username, account_type: account.account_type, auth_version: studentProfiles.authVersion(), session_version: accountSessions.version(account), ...(clientVersionValue ? { client_version: clientVersionValue } : {}) },
     JWT_SECRET,
     { expiresIn: "7d" }
   );
@@ -373,6 +376,7 @@ function authMiddleware(req, res, next) {
     if (!token) throw new Error("缺少登录 token，请重新登录。");
 
     const decoded = jwt.verify(token, JWT_SECRET);
+    clientVersion.assertToken(decoded);
     const account = graduationExpiry.enforceAccount(db.prepare("SELECT * FROM accounts WHERE username = ?").get(decoded.username));
 
     if (!account) throw new Error("账号不存在。");
@@ -385,7 +389,7 @@ function authMiddleware(req, res, next) {
     if (req.account.profile_required && !["/api/auth/me", "/api/profile/get", "/api/profile/save"].includes(req.path)) return res.status(403).json({ ok: false, code: "PROFILE_REQUIRED", message: "请先完善系统责任教师、实际指导教师和毕业年份。" });
     next();
   } catch (error) {
-    res.status(401).json({ ok: false, code: "SESSION_EXPIRED", message: error.message || "登录状态无效，请重新登录。" });
+    res.status(401).json({ ok: false, code: error.code === 'CLIENT_UPDATE_REQUIRED' ? error.code : "SESSION_EXPIRED", message: error.message || "登录状态无效，请重新登录。" });
   }
 }
 
@@ -603,5 +607,5 @@ const syncResponse = require("./services/sync-response.cjs")({ db, listAll });
 const deletionService = createDeletionService({ db, uploadDir: UPLOAD_DIR, nowISO, addAudit });
 
 const stockOutService = createStockOutService({ db, getRecord, listRecords, insertRecord, updateRecord, nextPublicId, addAudit, nowISO, storageDetails, requireItemPhoto, bindStockEvidence, batchPurchasePurpose, selectedStockTeachers });
-return { graduationExpiry, accountSessions, authAttempts, ADMIN_INVITE_CODE, FINANCE_INVITE_CODE, BACKUP_DIR, DB_PATH, DIST_DIR, HOST, PORT, PURCHASE_EDIT_FIELDS, STUDENT_INVITE_CODE, TEACHER_INVITE_CODE, UPLOAD_DIR, WORK_REQUEST_EDIT_FIELDS, addAudit, addReviewLog, app, asyncHandler, authMiddleware, batchPurchasePurpose, bcrypt, bindStockEvidence, closeRejectedRequest, completeWorkValues, db, deletionService, ensureCanAccessAttachmentTarget, ensureCanDownloadAttachment, express, fs, getInitialAccountStatus, getMonthFolder, getPreviousPurchases, getRecord, getRegisteredTeacherAccountsForDropdown, initializeMaterialStock, insertRecord, isValidLoginId, isImageAttachmentRecord, listRecords, nextPublicId, normalizeItemName, nowISO, num, path, pickFields, publicAccount, publicAccountForAdmin, purchaseCategory, purchasePurpose, recordChanges, requestJson, requireAdmin, requireAssignedReviewer, requireItemPhoto, requireOwner, requireStockEvidence, requireStudentSubmission, requireTeacherOrAdmin, requiredPurchaseExpiryDate, retiredLocationPhotoIds, safeCollectionName, safeFileName, saveWorkWithAttachments, selectedReviewTeacher, selectedStockTeachers, signToken, stockOutService, storageDetails, studentProfiles, syncResponse, updateBatchInformation, updateRecord, upload, validatePersonalHiddenCollection, workRequestCosts };
+return { graduationExpiry, accountSessions, authAttempts, clientVersion, ADMIN_INVITE_CODE, FINANCE_INVITE_CODE, BACKUP_DIR, DB_PATH, DIST_DIR, HOST, PORT, PURCHASE_EDIT_FIELDS, STUDENT_INVITE_CODE, TEACHER_INVITE_CODE, UPLOAD_DIR, WORK_REQUEST_EDIT_FIELDS, addAudit, addReviewLog, app, asyncHandler, authMiddleware, batchPurchasePurpose, bcrypt, bindStockEvidence, closeRejectedRequest, completeWorkValues, db, deletionService, ensureCanAccessAttachmentTarget, ensureCanDownloadAttachment, express, fs, getInitialAccountStatus, getMonthFolder, getPreviousPurchases, getRecord, getRegisteredTeacherAccountsForDropdown, initializeMaterialStock, insertRecord, isValidLoginId, isImageAttachmentRecord, listRecords, nextPublicId, normalizeItemName, nowISO, num, path, pickFields, publicAccount, publicAccountForAdmin, purchaseCategory, purchasePurpose, recordChanges, requestJson, requireAdmin, requireAssignedReviewer, requireItemPhoto, requireOwner, requireStockEvidence, requireStudentSubmission, requireTeacherOrAdmin, requiredPurchaseExpiryDate, retiredLocationPhotoIds, safeCollectionName, safeFileName, saveWorkWithAttachments, selectedReviewTeacher, selectedStockTeachers, signToken, stockOutService, storageDetails, studentProfiles, syncResponse, updateBatchInformation, updateRecord, upload, validatePersonalHiddenCollection, workRequestCosts };
 };

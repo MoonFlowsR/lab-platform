@@ -14,7 +14,8 @@ function ThemeIcon({ mode }) {
     {mode === "light" ? <><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>
       : mode === "dark" ? <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z" />
         : mode === "mixed" ? <><circle cx="12" cy="12" r="8" /><path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor" stroke="none" /></>
-          : <><rect x="3" y="4" width="18" height="13" rx="2" /><path d="M8 21h8m-4-4v4" /></>}
+          : <><g className="platform-theme-system-monitor"><rect x="3" y="4" width="18" height="13" rx="2" /><path d="M8 21h8m-4-4v4" /></g>
+            <g className="platform-theme-system-phone"><rect x="6" y="2" width="12" height="20" rx="2" /><path d="M10 5h4" /><circle cx="12" cy="18.5" r=".75" fill="currentColor" stroke="none" /></g></>}
   </svg>;
 }
 

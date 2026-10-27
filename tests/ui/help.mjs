@@ -36,7 +36,7 @@ export async function checkHelp(browser, origin, out, snapshot, users) {
     await page.locator('.help-page').waitFor();
     assert.equal(await page.locator('.help-legacy-note').count(), 0, 'Old report bookmarks resolve to current role help');
     const search = page.locator('#help-search-input');
-    await search.fill('数字角标');
+    await search.fill('全部待办');
     await page.locator('.help-article-content mark').first().waitFor();
     assert.equal(await page.locator('.help-article-content').count(), 1);
     assert((await page.locator('.help-article-content').innerText()).includes('全部待办'));
