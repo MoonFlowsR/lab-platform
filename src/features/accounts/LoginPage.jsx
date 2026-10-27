@@ -214,7 +214,7 @@ function LoginPage({ onLogin, onRegister, message }) {
           </form>
           {message}
           <details className="platform-login-mobile-roles">
-            <summary>各角色可以做什么</summary>
+            <summary>用户功能与权限</summary>
             {roleDescriptions.map(([, name, description]) => (
               <p key={name}>
                 <strong>{name}</strong> · {description}

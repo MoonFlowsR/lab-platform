@@ -91,6 +91,10 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     assert(await page.locator('.workspace-toolbar-host').evaluate(node => node === node.parentElement.firstElementChild), 'Module controls are first in the content');
     assert(await page.locator('.workspace-topbar-primary').evaluate(node => node === node.parentElement.firstElementChild), 'Synchronization stays in the left side of the topbar');
     assert.equal(await page.locator('.platform-sync-guidance').innerText(), '请等待同步完成后操作');
+    assert.equal(await page.locator('.workspace-sync-dot').isVisible(), true, 'The synchronization dot is visible on every viewport');
+    assert.equal(await page.locator('.workspace-sync-dot').getAttribute('aria-hidden'), 'true', 'The dot is decorative while the text conveys the state');
+    const dotBox = await page.locator('.workspace-sync-dot').boundingBox();
+    assert.equal(dotBox.width, 8); assert.equal(dotBox.height, 8);
     assert(await page.locator('.platform-sync-guidance').evaluate(node => node.tagName === 'STRONG' && parseFloat(getComputedStyle(node).fontWeight) >= 700), 'The full synchronization guidance is bold');
     assert.equal(await page.locator(".workspace-current-account").isVisible(), width > 360);
     assert.equal(await page.locator(".workspace-current-account > strong").isVisible(), width > 640);
@@ -329,16 +333,20 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
     await page.waitForFunction(() => document.querySelector('.workspace-sync-state')?.textContent.includes('同步完成'));
     await page.waitForFunction(() => document.querySelector('.workspace-tasks b')?.textContent === '999');
     if (textScale === 125) await page.addStyleTag({ content: 'html{font-size:20px!important}' });
-    async function inspectStatus(label) {
+    async function inspectStatus(label, expectedDot = 'success') {
       const geometry = await page.locator('.workspace-statusbar').evaluate(node => {
         const state = node.querySelector('.workspace-sync-state'), guidance = node.querySelector('.platform-sync-guidance'),
-          box = node.getBoundingClientRect(), a = state.getBoundingClientRect(), b = guidance.getBoundingClientRect(), style = getComputedStyle(guidance);
+          box = node.getBoundingClientRect(), a = state.getBoundingClientRect(), b = guidance.getBoundingClientRect(), style = getComputedStyle(guidance),
+          dot = node.querySelector('.workspace-sync-dot'), dotBox = dot.getBoundingClientRect(), dotStyle = getComputedStyle(dot);
         return { viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth, x: box.x, right: box.right, height: box.height,
           stateX: a.x, stateRight: a.right, stateCenter: a.y + a.height / 2, guidanceCenter: b.y + b.height / 2,
           guidanceX: b.x, guidanceRight: b.right, guidanceHeight: b.height, fontSize: parseFloat(style.fontSize), guidanceText: guidance.textContent.trim(), bold: Number(style.fontWeight),
           prefixVisible: getComputedStyle(node.querySelector('.workspace-sync-prefix')).display !== 'none',
           completeTextFits: state.querySelector('span:last-child').scrollWidth <= state.querySelector('span:last-child').clientWidth,
-          syncX: document.querySelector('.workspace-sync-control').getBoundingClientRect().x };
+          syncX: document.querySelector('.workspace-sync-control').getBoundingClientRect().x,
+          title: state.title, ariaLabel: state.getAttribute('aria-label'),
+          dot: { width: dotBox.width, height: dotBox.height, visible: !!dot.getClientRects().length && dotStyle.visibility === 'visible' && dotStyle.display !== 'none',
+            color: dotStyle.backgroundColor, ariaHidden: dot.getAttribute('aria-hidden'), className: dot.className } };
       });
       const diagnostic = JSON.stringify({ width, theme, textScale, label, geometry });
       assert(geometry.scrollWidth <= width && geometry.x >= 0 && geometry.right <= width, `Mobile sync line fits the viewport: ${diagnostic}`);
@@ -349,16 +357,26 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
       assert(geometry.bold >= 700);
       assert.equal(geometry.prefixVisible, false, 'The mobile line avoids repeating the redundant status label');
       assert(Math.abs(geometry.stateX - geometry.syncX) <= 1, `Status starts directly beneath the sync button: ${diagnostic}`);
-      if (label === 'complete' || label === 'resized') assert(geometry.completeTextFits, `The full four-character completion status remains readable: ${diagnostic}`);
+      if (['complete', 'recovered', 'resized'].includes(label)) assert(geometry.completeTextFits, `The full four-character completion status remains readable: ${diagnostic}`);
+      const palette = theme === 'dark'
+        ? { success: 'rgb(52, 211, 153)', busy: 'rgb(251, 146, 60)', error: 'rgb(248, 113, 113)' }
+        : { success: 'rgb(22, 163, 74)', busy: 'rgb(234, 88, 12)', error: 'rgb(239, 68, 68)' };
+      assert(geometry.dot.visible && geometry.dot.width === 8 && geometry.dot.height === 8, `The synchronization dot stays visible at a modest eight pixels: ${diagnostic}`);
+      assert.equal(geometry.dot.ariaHidden, 'true');
+      assert(geometry.dot.className.includes(`is-${expectedDot}`));
+      assert.equal(geometry.dot.color, palette[expectedDot], `The synchronization dot has the appropriate vivid state color: ${diagnostic}`);
+      assert.equal(geometry.title, geometry.ariaLabel, 'The full synchronization state remains available to assistive technology and tooltips');
       return geometry;
     }
     const complete = await inspectStatus('complete');
     let releaseSync;
     const pending = new Promise(resolve => { releaseSync = resolve; });
     let requests = 0;
+    let failSync = true;
     await page.route('**/api/ops/listAll', async route => {
       requests++;
       await pending;
+      if (failSync) return route.fulfill({ status: 503, json: { ok: false, message: '隔离同步失败测试，请再次手动同步。' } });
       await route.fulfill({ json: { ok: true, data: { ...data, current_account: { ...user, profile_required: false } }, revision: 'manual-sync-fixture' } });
     });
     try {
@@ -389,14 +407,20 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
       await page.getByRole('button', { name: '同步中…', exact: true }).waitFor();
       assert.equal(await page.getByRole('button', { name: '同步中…', exact: true }).isDisabled(), true);
       assert.equal(await page.locator('.workspace-sync-control').count(), 1);
-      const busy = await inspectStatus('busy');
-      // Long network diagnostics use the same status slot without hiding the instruction.
-      await page.locator('.workspace-sync-state > span:last-child').evaluate(node => { node.lastChild.textContent = '同步失败，请检查当前网络连接后重新尝试同步平台数据'; });
-      const long = await inspectStatus('long-network-status');
+      const busy = await inspectStatus('busy', 'busy');
       releaseSync();
       await page.getByRole('button', { name: '手动同步', exact: true }).waitFor();
+      await page.waitForFunction(() => document.querySelector('.workspace-sync-state')?.textContent.includes('同步失败'));
+      const long = await inspectStatus('real-network-error', 'error');
+      assert.equal(long.title, '同步状态：同步失败，请重试', 'The complete failure text remains available even if its display is shortened');
+      assert.equal(requests, 1, 'One manual click performs one failed read-only sync request');
+      if (role === 'student' && textScale === 125) await page.screenshot({ path: path.join(out, `workspace-sync-error-${width}-${theme}.png`) });
+      failSync = false;
+      await page.getByRole('button', { name: '手动同步', exact: true }).click();
       await page.waitForFunction(() => document.querySelector('.workspace-sync-state')?.textContent.includes('同步完成'));
-      assert.equal(requests, 1, 'One manual click performs one read-only sync request');
+      const recovered = await inspectStatus('recovered');
+      assert.equal(requests, 2, 'The explicit retry performs one additional read-only request and recovers successfully');
+      await page.getByRole('button', { name: '关闭操作提示', exact: true }).click();
       let transitionLayout = null;
       if (role === 'admin' && width === 390 && textScale === 125) {
         await page.setViewportSize({ width: 370, height: 900 });
@@ -420,13 +444,16 @@ export async function checkWorkspace(browser, origin, out, snapshot, users) {
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.waitForFunction(() => document.querySelectorAll('.workspace-statusbar > .workspace-sync-control').length === 1);
       assert.equal(await page.locator('.workspace-sync-control').count(), 1, 'Resizing to desktop moves the same single control back to the status row');
+      assert.equal(await page.locator('.workspace-sync-dot').isVisible(), true, 'Desktop synchronization also keeps its status dot');
+      const desktopDot = await page.locator('.workspace-sync-dot').boundingBox();
+      assert.equal(desktopDot.width, 8); assert.equal(desktopDot.height, 8);
       await page.setViewportSize({ width, height: 900 });
       await page.waitForFunction(() => document.querySelectorAll('.workspace-context > .workspace-sync-slot > .workspace-sync-control').length === 1);
       assert.equal(await page.locator('.workspace-sync-control').count(), 1, 'Resizing back to phone never duplicates controls');
       await inspectStatus('resized');
       await page.screenshot({ path: path.join(out, `workspace-mobile-sync-${role}-${width}-${theme}-${textScale}.png`) });
       assert.deepEqual(errors, []);
-      results.push({ workspaceMobileSync: true, role, width, theme, textScale, taskCount: 999, requests, complete, busy, long, actionGeometry, transitionLayout, errors });
+      results.push({ workspaceMobileSync: true, role, width, theme, textScale, taskCount: 999, requests, complete, busy, long, recovered, actionGeometry, transitionLayout, errors });
     } catch (failure) {
       const name = `workspace-mobile-sync-failure-${role}-${width}-${theme}-${textScale}`;
       await page.screenshot({ path: path.join(out, `${name}.png`) }).catch(() => {});

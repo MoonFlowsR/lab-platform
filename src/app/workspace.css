@@ -319,18 +319,23 @@
   white-space: nowrap;
 }
 .workspace-sync-dot {
-  width: 6px;
-  height: 6px;
+  --sync-dot-success: #16a34a;
+  --sync-dot-pending: #ea580c;
+  --sync-dot-error: #ef4444;
+  display: block;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: var(--success-ink);
+  background: var(--sync-dot-pending);
   flex-shrink: 0;
 }
-.workspace-sync-dot.is-busy {
-  background: var(--warning-ink);
+:root[data-theme="dark"] .workspace-sync-dot {
+  --sync-dot-success: #34d399;
+  --sync-dot-pending: #fb923c;
+  --sync-dot-error: #f87171;
 }
-.workspace-sync-dot.is-warning {
-  background: var(--danger-ink);
-}
+.workspace-sync-dot.is-success { background: var(--sync-dot-success); }
+.workspace-sync-dot.is-error { background: var(--sync-dot-error); }
 .workspace-statusbar .platform-sync-guidance {
   font-size: inherit;
   color: var(--danger-ink);
@@ -614,10 +619,11 @@
   .workspace-context > span {
     display: none;
   }
-  .workspace-sync-dot { display: none; }
+  .workspace-sync-state { gap: 2px; }
 }
 @media (max-width: 360px) {
   .workspace-topbar { --mobile-control-width: 36px; }
+  .workspace-statusbar.is-in-topbar { gap: 1px; }
   .workspace-topbar-actions > .workspace-current-account { display: none; }
 }
 @media (max-height: 540px) {

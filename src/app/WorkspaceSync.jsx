@@ -32,6 +32,8 @@ export default function WorkspaceSync({ className = "" }) {
   const mobile = useSyncExternalStore(subscribeMobile, isMobile, () => false);
   if (!context) return null;
   const { syncing, syncStatus, onSync, syncControlTarget } = context;
+  const statusText = String(syncStatus ?? "").trim();
+  const dotState = syncing ? "busy" : /^同步完成[。.]?$/.test(statusText) ? "success" : statusText.includes("失败") ? "error" : "waiting";
   const displayStatus = mobile ? String(syncStatus ?? "").replace(/[。.]$/, "") : syncStatus;
   const control = <SyncControl syncing={syncing} onSync={onSync} />;
   const mobileTarget = mobile && syncControlTarget;
@@ -41,7 +43,7 @@ export default function WorkspaceSync({ className = "" }) {
     <div className={`workspace-statusbar platform-sync-status${className ? ` ${className}` : ""}`}>
       {!mobileTarget && control}
       <span className="workspace-sync-state" title={`同步状态：${syncStatus}`} aria-label={`同步状态：${syncStatus}`}>
-        <span className={`workspace-sync-dot${syncing ? " is-busy" : syncStatus === "同步完成" || syncStatus === "同步完成。" ? "" : " is-warning"}`} />
+        <span className={`workspace-sync-dot is-${dotState}`} aria-hidden="true" />
         <span><span className="workspace-sync-prefix">同步状态：</span>{displayStatus}</span>
       </span>
       <strong className="platform-sync-guidance">
