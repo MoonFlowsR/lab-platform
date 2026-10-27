@@ -1,7 +1,6 @@
 import PersonName from './PersonName.jsx';
 import RequestIdentity from './RequestIdentity.jsx';
 import ReimbursementStatus, { ReimbursementBadge } from '../../features/finance/ReimbursementStatus.jsx';
-import { isReceivedPurchase, purchaseAmount, purchaseAmountLabel, purchaseQuantityText } from "../../features/purchases/purchase-values.js";
 import { styles } from "../../app/styles.js";
 import { formatDate, money, sortByCreatedAt } from "../../app/formatters.js";
 import { Badge, DataTable, Empty, Field, Info, SearchableSelect } from "./ui.jsx";
@@ -13,28 +12,6 @@ import './request-scope.css';
 function ClosureInfo({ row }) {
   return <p style={styles.meta}>关闭人：<strong className="platform-identity"><PersonName value={row.closed_by_name || row.closed_by_username || "未记录"} /></strong> · 关闭时间：{formatDate(row.closed_at)} · <strong>不计完成费用或入库金额</strong></p>;
 }
-function PurchaseSummaryCard({ currentUser, onReimbursementChange, row }) {
-  return <div className="platform-request-record" style={styles.listItem}>
-    <div style={styles.rowBetween}>
-      <div>
-        <h3 style={styles.h3}>{row.material_name || formatPublicNumber(row.public_id)}</h3>
-        <RequestIdentity row={row} />
-      </div>
-      <div style={styles.badgeRow}><Badge text={row.status} /><ReimbursementBadge row={row} /></div>
-    </div>
-    {row.status === "已关闭" && <ClosureInfo row={row} />}
-    <div className="platform-detail-grid" style={styles.detailGrid4}>
-      <Info label="规格" value={row.specification} />
-      <Info label={isReceivedPurchase(row) ? "到货数量" : "数量"} value={purchaseQuantityText(row)} />
-      <Info label="采购渠道" value={row.preferred_supplier} />
-      <Info label="使用目的" value={row.purchase_purpose || "未标注"} />
-      {row.received_status === "已入库" && <Info label="有效期" value={row.expiry_date || "未填写"} />}
-      <Info label={purchaseAmountLabel(row)} value={money(purchaseAmount(row))} />
-      {isReceivedPurchase(row) && <Info label="工单状态" value={<ReimbursementStatus row={row} currentUser={currentUser} onChange={onReimbursementChange} />} />}
-    </div>
-    {row.review_note && <p style={styles.note}><b>审批意见：</b>{row.review_note}{row.reviewed_by && <>（审批人：<strong className="platform-identity"><PersonName value={row.reviewed_by} /></strong>）</>}</p>}
-  </div>;
-}
 function RequestHistorySection({ title, rows, renderCard, emptyText, className = 'platform-section-history', defaultExpanded = false, showTitle = true }) {
   return <section className={className} style={styles.card} aria-label={title} tabIndex={-1}>
     {showTitle && <div style={styles.cardHeader}><h2 style={styles.h2} aria-label={`${title}（${rows.length}）`}>{title}<span className="platform-heading-count">（{rows.length}）</span></h2></div>}
@@ -42,12 +19,12 @@ function RequestHistorySection({ title, rows, renderCard, emptyText, className =
   </section>;
 }
 function ReviewTeacherField({ teachers, value, onChange }) {
-  return <Field required label="审核教师"><SearchableSelect required value={value || ""} onChange={onChange} options={teachers.map(teacher => ({ value: teacher.username, label: teacher.display_name && teacher.display_name !== teacher.username ? `${teacher.display_name}（${teacher.username}）` : teacher.display_name || teacher.username }))} placeholder="搜索或选择审核教师" />{teachers.length === 0 && <small style={{ ...styles.muted, color: "#b91c1c" }}>暂无可选教师，请联系管理员启用教师账号。</small>}</Field>;
+  return <Field required label="审核教师"><SearchableSelect required value={value || ""} onChange={onChange} options={teachers.map(teacher => ({ value: teacher.username, label: teacher.display_name && teacher.display_name !== teacher.username ? `${teacher.display_name}（${teacher.username}）` : teacher.display_name || teacher.username }))} placeholder="搜索或选择审核教师" />{teachers.length === 0 && <small style={{ ...styles.muted, color: "var(--danger-ink)" }}>暂无可选教师，请联系管理员启用教师账号。</small>}</Field>;
 }
 function RequestViewScope({ scope, onChange, label, moduleName, recordLabel = "进度" }) {
   return <section aria-label={label} className="platform-request-scope">
-    <Field label="查看范围"><SearchableSelect value={scope} onChange={onChange} clearOnInput={false} options={[{ value: "mine", label: "本人" }, { value: "all", label: "全部" }]} placeholder="搜索或选择查看范围" /></Field>
-    <small>调整查看范围可查看团队内其它{moduleName}{recordLabel}</small>
+    <Field label="查看范围"><SearchableSelect searchable={false} value={scope} onChange={onChange} options={[{ value: "mine", label: "本人" }, { value: "all", label: "全部" }]} placeholder="选择查看范围" /></Field>
+    <small><span className="platform-text-phrase">调整查看范围可查看</span><span className="platform-text-phrase">团队内其它{moduleName.replaceAll('/', '')}{recordLabel}</span></small>
   </section>;
 }
 function ReviewHistory({ row, logs = [] }) {
@@ -93,4 +70,4 @@ function WorkRequestCard({ currentUser, onReimbursementChange, row, logs = [], c
     {historyPanel}
   </div>;
 }
-export { ClosureInfo, PurchaseSummaryCard, RequestHistorySection, RequestViewScope, ReviewHistory, ReviewTeacherField, WorkRequestCard };
+export { ClosureInfo, RequestHistorySection, RequestViewScope, ReviewHistory, ReviewTeacherField, WorkRequestCard };

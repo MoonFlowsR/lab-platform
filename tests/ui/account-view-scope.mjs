@@ -38,8 +38,8 @@ export async function checkAccountViewScope(browser, origin, out, snapshot, teac
     await page.screenshot({ path: path.join(out, 'finance-overview-' + width + '.png'), fullPage: true });
     for (const type of ['测试', '加工', '维修', '采购']) {
       await openNavigation(page);await page.locator('.platform-nav').getByRole('button', { name: type + '审核', exact: true }).click();await showModuleRecords(page);
-      const scope = page.getByPlaceholder('搜索或选择查看范围');
-      assert.equal(await scope.inputValue(), '全部', type + ' default scope at ' + width);
+      const scope = page.getByRole('combobox', { name: '查看范围', exact: true });
+      assert.equal(await scope.inputValue(), 'all', type + ' default scope at ' + width);
       const pending = page.locator('main > .platform-section-pending');
       if (await pending.getByRole('button', { name: /^展开其余 \d+ 条$/ }).count()) await pending.getByRole('button', { name: /^展开其余 \d+ 条$/ }).click();
       assert.equal(await pending.locator('h3').count(), 2);
@@ -48,15 +48,14 @@ export async function checkAccountViewScope(browser, origin, out, snapshot, teac
       await page.getByRole('button', { name: /导出.*Excel/ }).first().click();
       const worksheetText = await readWorkbookText(await (await download).path());
       assert(worksheetText.includes(type === '采购' ? '团队核对材料' : '团队核对项目'));
-      await scope.fill('本人');
-      await page.getByRole('option', { name: '本人', exact: true }).click();
+      await scope.selectOption('mine');
       await page.waitForFunction(() => document.querySelectorAll('main > .platform-section-pending h3').length === 1);
       assert.equal(await pending.locator('h3').count(), 1);
-      assert.equal(await scope.inputValue(), '本人');
+      assert.equal(await scope.inputValue(), 'mine');
     }
     await page.reload();
     await openNavigation(page);await page.locator('.platform-nav').getByRole('button', { name: '测试审核', exact: true }).click();await showModuleRecords(page);
-    assert.equal(await page.getByPlaceholder('搜索或选择查看范围').inputValue(), '全部');
+    assert.equal(await page.getByRole('combobox', { name: '查看范围', exact: true }).inputValue(), 'all');
     results.push({ financeScope: true, width, overflow: await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), errors });
     await page.close();
   }

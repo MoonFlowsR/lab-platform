@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import Icon from "../shared/components/Icon.jsx";
 import PlatformTitle from "../shared/components/PlatformTitle.jsx";
+import ThemeSwitcher from "../shared/components/ThemeSwitcher.jsx";
 import PersonName from "../shared/components/PersonName.jsx";
 import { splitPersonName } from "../shared/lib/person-name.js";
 import { accountTypeLabels, PLATFORM_TITLE } from "./config.js";
 import WorkspaceSync, { WorkspaceSyncContext } from "./WorkspaceSync.jsx";
+import packageInfo from "../../package.json" with { type: "json" };
 import "./workspace.css";
 
 const roleHeadings = {
@@ -31,6 +33,7 @@ export default function Workspace({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [toolbarTarget, setToolbarTarget] = useState(null);
+  const [syncControlTarget, setSyncControlTarget] = useState(null);
   const navRef = useRef(null);
   const menuButton = useRef(null);
   const currentTitle = tabs.find(([key]) => key === activeTab)?.[1] || "总览";
@@ -81,7 +84,7 @@ export default function Workspace({
     window.scrollTo({ top: 0 });
   }
   return (
-    <WorkspaceSyncContext.Provider value={{ syncing, syncStatus, onSync, toolbarTarget }}>
+    <WorkspaceSyncContext.Provider value={{ syncing, syncStatus, onSync, toolbarTarget, syncControlTarget }}>
     <div className="platform-shell platform-workspace">
       <a className="platform-skip-link" href="#platform-content">
         跳转到页面内容
@@ -107,20 +110,12 @@ export default function Workspace({
             <Icon name="flask" size={25} />
           </span>
           <span className="workspace-brand-name">
-            <PlatformTitle />
-            <small>实验室协作平台</small>
+            <PlatformTitle trailing={<small className="workspace-version" aria-label={`平台版本 ${packageInfo.version}`}>v{packageInfo.version}</small>} />
           </span>
-          <button
-            type="button"
-            className="workspace-nav-close"
-            aria-label="关闭导航"
-            onClick={() => setMenuOpen(false)}
-          >
-            <Icon name="close" />
-          </button>
         </div>
         <div className="workspace-nav-caption">
-          工作空间 <span>{role}</span>
+          <span>工作空间</span><span className="workspace-nav-caption-role">{role}</span>
+          <button type="button" className="workspace-nav-close" aria-label="关闭导航" onClick={() => setMenuOpen(false)}><Icon name="close" /></button>
         </div>
         <nav className="platform-nav" aria-label="主要模块">
           {tabs.map(([key, label]) => (
@@ -146,6 +141,7 @@ export default function Workspace({
             </button>
           ))}
         </nav>
+        <div className="workspace-sidebar-bottom">
         <div className="workspace-sidebar-footer">
           <span className="workspace-avatar" aria-hidden="true">
             {Array.from(avatarName).slice(-2).join("")}
@@ -153,6 +149,7 @@ export default function Workspace({
           <div>
             <strong><PersonName value={user} stacked mentorLabel={account.account_type === "student"} suffix={role} /></strong>
           </div>
+        </div>
         </div>
       </aside>
       <div className="workspace-body" inert={menuOpen || undefined}>
@@ -170,6 +167,7 @@ export default function Workspace({
             >
               <Icon name="menu" />
             </button>
+            <div className="workspace-sync-slot" ref={setSyncControlTarget} />
             <span className="workspace-context-icon">
               <Icon name={activeTab} />
             </span>
@@ -178,6 +176,7 @@ export default function Workspace({
           <WorkspaceSync className="is-in-topbar" />
           </div>
           <div className="workspace-topbar-actions">
+            <ThemeSwitcher />
             <button
               type="button"
               className="workspace-tasks platform-task-entry"
@@ -245,7 +244,7 @@ export default function Workspace({
           <footer className="workspace-footer">
             <span>{PLATFORM_TITLE}</span>
             <a href="/help">
-              使用帮助 <span aria-hidden="true">↗</span>
+              使用帮助 <Icon name="arrowUpRight" size={15} />
             </a>
           </footer>
         </div>

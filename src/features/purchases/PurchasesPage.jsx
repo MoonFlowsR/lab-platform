@@ -203,17 +203,17 @@ function PurchaseForm({ teacherAccounts = [], materialCatalog = [], onSubmit, pu
   }
 
   return <section className="platform-section-create" style={styles.card}>
-    <div style={styles.cardHeader}>
+    <div className="platform-create-heading has-meta" style={styles.cardHeader}>
       <div>
         <h2 style={styles.h2}>{isEditing ? "修改并重新提交采购" : "新建采购申请"}</h2>
-        <p className="platform-request-form-meta" style={styles.muted}><span>申请人：<strong className="platform-identity"><PersonName value={initialData?.applicant_name || initialData?.applicant_username || currentUser?.display_name || currentUser?.username} /></strong></span><span>提交日期和时间由系统自动记录。</span></p>
+        <p className="platform-request-form-meta" style={styles.muted}><span>申请人：<strong className="platform-identity"><PersonName value={initialData?.applicant_name || initialData?.applicant_username || currentUser?.display_name || currentUser?.username} /></strong></span><span>提交时间：自动记录</span></p>
       </div>
       {isEditing ? <button type="button" style={styles.lightButton} onClick={onCancel}>取消修改</button> : <button type="button" style={styles.primaryButton} onClick={() => setShow(!show)}>{show ? "收起表单" : "新建采购"}</button>}
     </div>
 
     {show && <>
       <p style={styles.requiredHint}><span style={styles.requiredStar}>*</span> 为必填项</p>
-      <p role="note" style={{ color: "#b91c1c", fontSize: "var(--text-label)", lineHeight: 1.6, margin: "6px 0 12px" }}>若物品名称不存在，请先切换采购类别或尝试其他表示方法；仍未找到时选择“其它”填写，保存后自动加入列表。</p>
+      <p role="note" style={{ color: "var(--danger-ink)", fontSize: "var(--text-label)", lineHeight: 1.6, margin: "6px 0 12px" }}>若物品名称不存在，请先切换采购类别或尝试其他表示方法；仍未找到时选择“其它”填写，保存后自动加入列表。</p>
 
       {latestSame && <div style={styles.warningBox}>
         <b>检测到历史同名采购：</b>{formatPublicNumber(latestSame.public_id)}，最近数量 {latestSame.quantity} {latestSame.unit}，状态“{latestSame.status}”；当前库存：{currentStock}。请确认历史采购已用完或现有库存不足后再提交。
@@ -239,7 +239,7 @@ function PurchaseForm({ teacherAccounts = [], materialCatalog = [], onSubmit, pu
       }}>
 
         <Field required label="采购类别">
-          <SearchableSelect required value={purchaseCategory} options={["试剂原料", "耗材"]} placeholder="搜索或选择采购类别" onChange={value => {
+          <SearchableSelect searchable={false} required value={purchaseCategory} options={["试剂原料", "耗材"]} placeholder="选择采购类别" onChange={value => {
             setPurchaseCategory(value); setCustomMaterial(false);
             setForm((prev) => ({ ...prev, material_name: "", specification: "无", preferred_supplier: "", safety_notes: "", repeat_purchase_confirmed: false }));
           }} />
@@ -250,7 +250,7 @@ function PurchaseForm({ teacherAccounts = [], materialCatalog = [], onSubmit, pu
         <Field required label="数量"><input required type="number" min="0" step="any" style={styles.input} value={form.quantity} onChange={(e) => set("quantity", Number(e.target.value))} /></Field>
         <CustomOptionFields key={`unit:${initialData?._id || 'new'}:${form.material_name}`} required label="单位" customLabel="其它单位" value={form.unit} onChange={value => set("unit", value)} options={uniqueNonEmpty([...purchaseUnits, ...catalogItems.flatMap(item => item.units || []), initialData?.unit])} placeholder="选择单位或搜索“其它”" customPlaceholder="请填写具体计量单位" maxLength={30} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
         <CustomOptionFields key={`supplier:${initialData?._id || 'new'}:${form.material_name}`} required label="采购渠道" customLabel="其它采购渠道" value={form.preferred_supplier} onChange={value => set("preferred_supplier", value)} options={supplierNames} placeholder="选择渠道或搜索“其它”" customPlaceholder="请填写具体采购渠道" Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
-        <Field required label="使用目的"><SearchableSelect required value={form.purchase_purpose} onChange={value => set("purchase_purpose", value)} options={[{ value: "私用/项目用（出库需采购人审批）", label: "私用/项目用（出库需采购人审批）" }, "公用"]} placeholder="搜索或选择使用目的" /></Field>
+        <Field required label="使用目的"><SearchableSelect searchable={false} required value={form.purchase_purpose} onChange={value => set("purchase_purpose", value)} options={[{ value: "私用/项目用（出库需采购人审批）", label: "私用/项目用（出库需采购人审批）" }, "公用"]} placeholder="选择使用目的" /></Field>
         <ReviewTeacherField teachers={teacherAccounts} value={form.review_teacher_username} onChange={value => set("review_teacher_username", value)} />
         <Field required label="预计金额 / 元"><input required type="number" min="0" step="any" style={styles.input} value={form.estimated_price} onChange={(e) => set("estimated_price", Number(e.target.value))} /></Field>
 
@@ -312,7 +312,7 @@ function PurchaseInboundForm({ row, onSubmit, onCancel }) {
       <Field required label="实际到货数量"><input required type="number" min="0" step="any" style={styles.input} value={form.actual_qty} onChange={(e) => set("actual_qty", e.target.value)} /></Field>
       <Field required label="单位"><input required style={styles.input} value={form.unit} onChange={(e) => set("unit", e.target.value)} /></Field>
       <Field required label="最终总采购费 / 元"><input required type="number" min="0" step="any" style={styles.input} value={form.actual_total_price} onChange={e => set("actual_total_price", e.target.value)} /></Field>
-      <Field required label="工单状态"><SearchableSelect required value={form.settlement_status} onChange={value => set("settlement_status", value)} options={["已开票","已挂账"]} placeholder="请选择" /></Field>
+      <Field required label="工单状态"><SearchableSelect searchable={false} required value={form.settlement_status} onChange={value => set("settlement_status", value)} options={["已开票","已挂账"]} placeholder="请选择" /></Field>
       <StorageFields form={form} onChange={patch => setForm(prev => ({ ...prev, ...patch }))} Field={Field} SearchableSelect={SearchableSelect} styles={styles} />
       <ExpiryDateField value={form.expiry_date} onChange={value => set("expiry_date", value)} Field={Field} DateInput={DateInput} styles={styles} />
       <ItemPhotoFields photo={photo} onPhotoChange={setPhoto} Field={Field} FilePicker={FilePicker} styles={styles} />

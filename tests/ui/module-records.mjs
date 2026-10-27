@@ -6,10 +6,9 @@ export async function showModuleRecords(page) {
   if (!await queue.count()) return;
   await queue.getByRole('button', { name: '查看本模块全部记录', exact: true }).click();
   const account = await page.evaluate(() => JSON.parse(sessionStorage.getItem('surface_lab_account') || 'null'));
-  const scope = page.getByPlaceholder('搜索或选择查看范围');
+  const scope = page.getByRole('combobox', { name: '查看范围', exact: true });
   if (await scope.count() && ['student', 'teacher'].includes(account?.account_type)) {
-    const label = account.account_type === 'teacher' && account.default_view_scope === 'all' ? '全部' : '本人';
-    await scope.fill(label);
-    await page.getByRole('option', { name: label, exact: true }).click();
+    const value = account.account_type === 'teacher' && account.default_view_scope === 'all' ? 'all' : 'mine';
+    await scope.selectOption(value);
   }
 }

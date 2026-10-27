@@ -369,7 +369,7 @@ function App() {
   ];
 
   const workRows = filteredWorkRequests.filter(row => row.request_type === institutionType);
-  const inventoryCategoryField = <Field label="材料类别"><SearchableSelect value={inventoryCategory} onChange={setInventoryCategory} clearOnInput={false} options={inventoryCategoryOptions} placeholder="搜索或选择材料类别" fixedOptions={[""]} /></Field>;
+  const inventoryCategoryField = <Field label="材料类别"><SearchableSelect searchable={false} value={inventoryCategory} onChange={setInventoryCategory} clearOnInput={false} options={inventoryCategoryOptions} placeholder="选择材料类别" fixedOptions={[""]} /></Field>;
 
   return (
     <Workspace account={currentUser} tabs={tabs} activeTab={activeTab} taskCenter={taskCenter} syncing={syncing} syncStatus={syncStatus} onNavigate={openModule} onOverview={openOverview} onSync={loadAll} onSettings={() => setAccountSettingsOpen(true)} onLogout={logoutAccount}>
@@ -383,7 +383,7 @@ function App() {
         {datedModules.includes(activeTab) && <ModuleDateFilter SearchableSelect={SearchableSelect} DateInput={DateInput} module={activeTab} range={dateRange} onChange={range => setModuleRanges(prev => ({ ...prev, [activeTab]: range }))} />}
       </section>}
       </div>
-      {showStudentFilter && !activeTask && <RecordFilters module={activeTab} extraSummary={activeTab === "stock" ? stockMovementType : selectedInstitution} onResetSearch={() => { setQuery(""); setModuleInstitutions(prev => ({ ...prev, [activeTab]: "" })); setStockMovementType(''); if (activeTab === "materials") setInventoryCategory(""); }} extraFields={activeTab === "materials" ? inventoryCategoryField : activeTab === "stock" ? <Field label="出入退库类型"><SearchableSelect value={stockMovementType} onChange={setStockMovementType} clearOnInput={false} options={[{value:"",label:"全部"},...["出库","入库","退库"].map(value=>({value,label:value}))]} fixedOptions={[""]} placeholder="搜索或选择出入退库类型" /></Field> : showInstitutionFilter ? <Field label={institutionLabel}><SearchableSelect key={activeTab} value={selectedInstitution} onChange={value => setModuleInstitutions(prev => ({ ...prev, [activeTab]: value }))} clearOnInput={false} options={[{value:"",label:"全部"}, ...institutionOptions.map(value => ({value,label:value}))]} fixedOptions={[""]} placeholder={"搜索或选择" + institutionLabel} /></Field> : null} showTeacherFilter={isAdmin} teachers={filterTeacherAccounts} teacher={selectedModuleTeacher} onTeacherChange={teacher => setModuleTeachers(prev => ({ ...prev, [activeTab]: teacher }))} students={studentAccounts} student={selectedModuleStudent} onStudentChange={student => setModuleStudents(prev => ({ ...prev, [activeTab]: student }))} range={dateRange} onRangeChange={range => setModuleRanges(prev => ({ ...prev, [activeTab]: range }))} styles={styles} Field={Field} SearchableSelect={SearchableSelect} DateInput={DateInput} />}
+      {showStudentFilter && !activeTask && <RecordFilters module={activeTab} extraSummary={activeTab === "stock" ? stockMovementType : selectedInstitution} onResetSearch={() => { setQuery(""); setModuleInstitutions(prev => ({ ...prev, [activeTab]: "" })); setStockMovementType(''); if (activeTab === "materials") setInventoryCategory(""); }} extraFields={activeTab === "materials" ? inventoryCategoryField : activeTab === "stock" ? <Field label="出入退库类型"><SearchableSelect searchable={false} value={stockMovementType} onChange={setStockMovementType} clearOnInput={false} options={[{value:"",label:"全部"},...["出库","入库","退库"].map(value=>({value,label:value}))]} fixedOptions={[""]} placeholder="选择出入退库类型" /></Field> : showInstitutionFilter ? <Field label={institutionLabel}><SearchableSelect key={activeTab} value={selectedInstitution} onChange={value => setModuleInstitutions(prev => ({ ...prev, [activeTab]: value }))} clearOnInput={false} options={[{value:"",label:"全部"}, ...institutionOptions.map(value => ({value,label:value}))]} fixedOptions={[""]} placeholder={"搜索或选择" + institutionLabel} /></Field> : null} showTeacherFilter={isAdmin} teachers={filterTeacherAccounts} teacher={selectedModuleTeacher} onTeacherChange={teacher => setModuleTeachers(prev => ({ ...prev, [activeTab]: teacher }))} students={studentAccounts} student={selectedModuleStudent} onStudentChange={student => setModuleStudents(prev => ({ ...prev, [activeTab]: student }))} range={dateRange} onRangeChange={range => setModuleRanges(prev => ({ ...prev, [activeTab]: range }))} styles={styles} Field={Field} SearchableSelect={SearchableSelect} DateInput={DateInput} />}
 
       <PageBoundary key={activeTab}><Suspense fallback={<PageLoading message="正在打开模块…" />}>
       {activeTask && <TaskFilterBanner task={activeTask} query={query} onBack={openOverview} onClear={leaveTask} />}
@@ -400,4 +400,12 @@ function App() {
     </Workspace>
   );
 }
-export default App;
+function UpdateHistoryRedirect() {
+  useEffect(() => { window.location.replace('/help?view=updates'); }, []);
+  return <PageLoading full message="正在打开使用帮助…" />;
+}
+
+export default function AppEntry() {
+  if (["/updates", "/updates/"].includes(window.location.pathname)) return <UpdateHistoryRedirect />;
+  return <App />;
+}

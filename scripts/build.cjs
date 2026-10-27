@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
+require('./release.cjs').check(root);
 const staging = path.join(root, '.build-' + process.pid);
 const target = path.join(root, 'dist');
 try {

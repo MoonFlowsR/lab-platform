@@ -53,7 +53,7 @@ export async function checkWorkReview(browser, origin, out, snapshot, users) {
       if(role==='teacher'||role==='admin'){
         if(width<640)await page.getByRole('button',{name:/展开筛选/}).click();
         const field=page.getByPlaceholder('搜索或选择'+(type==='维修'?'维修人员单位':type+'机构'));await field.fill('示例机构乙');
-        assert.equal(await page.getByRole('option').count(),1);await page.getByRole('option').click();assert.equal(await page.getByRole('listbox').count(),0);
+        assert.equal(await page.getByRole('listbox').getByRole('option').count(),1);await page.getByRole('listbox').getByRole('option').click();assert.equal(await page.getByRole('listbox').count(),0);
         await page.getByRole('heading',{name:'已完成'+type+'工单（1）',exact:true}).waitFor();
         assert.equal(await pending.locator('h3').count(),0);
         const download=page.waitForEvent('download');await page.getByRole('button',{name:/导出.*Excel/}).first().click();
@@ -66,11 +66,11 @@ export async function checkWorkReview(browser, origin, out, snapshot, users) {
 
       if(role==='student'){
         await reviewed.getByRole('button',{name:'确认完成',exact:true}).click();const dialog=page.getByRole('dialog');
-        if(type==='维修'){await dialog.getByPlaceholder('选择计量单位或搜索“其它”').fill('其它');await dialog.getByRole('option',{name:'其它',exact:true}).click();await dialog.getByPlaceholder('请填写具体计量单位').fill('台');}
+        if(type==='维修'){await dialog.getByPlaceholder('选择计量单位或搜索“其它”').fill('其它');await dialog.getByRole('listbox').getByRole('option',{name:'其它',exact:true}).click();await dialog.getByPlaceholder('请填写具体计量单位').fill('台');}
         await dialog.getByRole('button',{name:'确认完成',exact:true}).click();assert.equal(submitted.length,['测试','加工','维修'].indexOf(type));
         await dialog.getByRole('alert').waitFor();
         assert((await dialog.innerText()).includes('工单状态'));assert(!(await dialog.innerText()).includes('订单状态'));
-        const field=dialog.getByPlaceholder('请选择',{exact:true});assert.equal(await field.inputValue(),'');await field.fill('已挂账');await dialog.getByRole('option',{name:'已挂账',exact:true}).click();
+        const field=dialog.getByRole('combobox',{name:/工单状态/});assert.equal(await field.inputValue(),'');assert.equal(await field.locator('option:checked').textContent(),'请选择');await field.selectOption('已挂账');
         await page.screenshot({path:path.join(out,`completion-${type}-${width}.png`)});
         assert.equal(await dialog.evaluate(el=>el.getBoundingClientRect().right<=innerWidth&&el.getBoundingClientRect().left>=0),true);
         await dialog.getByRole('button',{name:'确认完成',exact:true}).click();await dialog.waitFor({state:'hidden'});
@@ -81,11 +81,11 @@ export async function checkWorkReview(browser, origin, out, snapshot, users) {
         const section=page.locator('main > .platform-section-create');await section.getByRole('button',{name:'新建维修',exact:true}).click();const form=section.locator('form');
         const text=await form.innerText();assert(!text.includes('安全事项'));assert(!text.includes('维修渠道'));assert(!text.includes('维修名称'));
         for(const label of ['维修设备','工作量','计量单位','维修人员','维修人员单位','预计总维修费','审核教师','备注（可选）','附件（可选）'])assert(text.includes(label));
-        const unit= form.getByPlaceholder('选择计量单位或搜索“其它”');assert.equal(await unit.inputValue(),'次');await unit.fill('其它');await form.getByRole('option',{name:'其它',exact:true}).click();await form.getByPlaceholder('请填写具体计量单位').fill('台');
-        await form.getByPlaceholder('选择维修设备或搜索“其它”').fill('同项目核对');await form.getByRole('option',{name:'同项目核对',exact:true}).click();
-        await form.getByPlaceholder('选择维修人员单位或搜索“其它”').fill('示例机构甲');await form.getByRole('option',{name:'示例机构甲',exact:true}).click();
+        const unit= form.getByPlaceholder('选择计量单位或搜索“其它”');assert.equal(await unit.inputValue(),'次');await unit.fill('其它');await form.getByRole('listbox').getByRole('option',{name:'其它',exact:true}).click();await form.getByPlaceholder('请填写具体计量单位').fill('台');
+        await form.getByPlaceholder('选择维修设备或搜索“其它”').fill('同项目核对');await form.getByRole('listbox').getByRole('option',{name:'同项目核对',exact:true}).click();
+        await form.getByPlaceholder('选择维修人员单位或搜索“其它”').fill('示例机构甲');await form.getByRole('listbox').getByRole('option',{name:'示例机构甲',exact:true}).click();
         await form.locator('input[type=number]').nth(0).fill('2');await form.locator('input[type=number]').nth(1).fill('90');
-        await form.getByPlaceholder('搜索或选择审核教师').fill(teacher.display_name);await form.getByRole('option').click();
+        await form.getByPlaceholder('搜索或选择审核教师').fill(teacher.display_name);await form.getByRole('listbox').getByRole('option').click();
         await form.getByRole('button',{name:'提交教师审核',exact:true}).click();assert.equal(created.length,0);
         await form.getByPlaceholder('填写维修人员姓名').fill(' 示例维修人员 ');
         await page.screenshot({path:path.join(out,'repair-form-'+width+'.png'),fullPage:true});

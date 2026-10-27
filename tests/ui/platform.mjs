@@ -22,6 +22,11 @@ import { checkAccountViewScope } from './account-view-scope.mjs';
 import { checkPurchaseInbound } from './purchase-inbound.mjs';
 import { checkPurchaseChannels } from './purchase-channels.mjs';
 import { checkWorkReview } from './work-review.mjs';
+import { checkThemes } from './themes.mjs';
+import { checkDropdownModes } from './dropdown-modes.mjs';
+import { checkCompactLayout } from './compact-layout.mjs';
+import { checkTitles } from './titles.mjs';
+import { checkUpdates } from './updates.mjs';
 import fs from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
@@ -76,7 +81,7 @@ const auditLogs=[
  log(21,{action:'qa_other_teacher_operation',operator_username:teachers[1].username,operator_role:'teacher',target_type:'accounts',target_id:'12'}),
 ];
 const snapshot={current_account:admin,accounts,audit_logs:auditLogs,lab_student_accounts:students,lab_teacher_accounts:teachers,lab_registered_teacher_accounts:teachers,lab_accounts:teachers,lab_student_name_labels:nameLabels,lab_work_requests:[work,mentorOnlyWork,teacherApplicantWork],lab_purchase_requests:[purchase],lab_material_batches:[batch],lab_materials:[material],lab_stock_transactions:transactions,lab_stock_out_requests:[],lab_review_logs:[],lab_attachments:[attachment],lab_user_hidden_records:[],lab_test_processing_units:[],lab_purchase_catalog:[],lab_material_catalog:[]};
-const server=http.createServer(async(req,res)=>{const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname),target=path.resolve(dist,(pathname==='/'||pathname==='/help')?'index.html':`.${pathname}`);if(path.relative(dist,target).startsWith('..')){res.writeHead(403);return res.end();}try{const data=await fs.readFile(target);res.writeHead(200,{'Content-Type':({'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml'})[path.extname(target)]||'application/octet-stream'});res.end(data);}catch{res.writeHead(404);res.end('not found');}});
+const server=http.createServer(async(req,res)=>{const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname),target=path.resolve(dist,(['/', '/help', '/updates', '/updates/'].includes(pathname))?'index.html':`.${pathname}`);if(path.relative(dist,target).startsWith('..')){res.writeHead(403);return res.end();}try{const data=await fs.readFile(target);res.writeHead(200,{'Content-Type':({'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml'})[path.extname(target)]||'application/octet-stream'});res.end(data);}catch{res.writeHead(404);res.end('not found');}});
 await fs.mkdir(out,{recursive:true});
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const port=server.address().port,origin=`http://127.0.0.1:${port}`;
@@ -100,7 +105,12 @@ async function checkOperations() {
  ];
 }
 try {
- if (process.env.UI_SUITE === 'help-interactions') { results.push(...await checkHelpInteractions(browser,origin,studentA)); }
+ if (process.env.UI_SUITE === 'themes') { results.push(...await checkThemes(browser,origin,out,snapshot,[admin,teachers[0],studentA])); }
+ else if (process.env.UI_SUITE === 'dropdowns') { results.push(...await checkDropdownModes(browser,origin,snapshot,[admin,teachers[0],studentA])); }
+ else if (process.env.UI_SUITE === 'compact') { results.push(...await checkCompactLayout(browser,origin,out,snapshot,[admin,teachers[0],studentA])); }
+ else if (process.env.UI_SUITE === 'titles') { results.push(...await checkTitles(browser,origin,out,snapshot,[admin,teachers[0],studentA])); }
+ else if (process.env.UI_SUITE === 'updates') { results.push(...await checkUpdates(browser,origin,out)); }
+ else if (process.env.UI_SUITE === 'help-interactions') { results.push(...await checkHelpInteractions(browser,origin,studentA)); }
  else if (process.env.UI_SUITE === 'inventory-permissions') { results.push(...await checkInventoryPermissions(browser,origin,snapshot,[admin,teachers[0],studentA])); }
  else if (process.env.UI_SUITE === 'wrapping') { results.push(...await checkWrapping(browser,origin,snapshot,[admin,teachers[0],studentA])); }
  else if (process.env.UI_SUITE === 'typography') { results.push(...await checkTypography(browser,origin,snapshot,[admin,teachers[0],studentA])); }
@@ -181,8 +191,8 @@ try {
     await page.getByRole('button',{name:'修改学生资料',exact:true}).first().click();
     const dialog=page.getByRole('dialog');await dialog.waitFor();assert.equal(await dialog.getByText('修改密码',{exact:true}).count(),0);
     const teacher=dialog.getByRole('combobox').first();await teacher.fill('不存在的示例教师');
-    await dialog.getByText('无相关内容',{exact:true}).waitFor();assert.equal(await dialog.getByRole('option').count(),0);
-    await teacher.fill('示例教师甲');await dialog.getByRole('option').first().click();assert.equal(await dialog.getByRole('listbox').count(),0);
+    await dialog.getByText('无相关内容',{exact:true}).waitFor();assert.equal(await dialog.getByRole('listbox').getByRole('option').count(),0);
+    await teacher.fill('示例教师甲');await dialog.getByRole('listbox').getByRole('option').first().click();assert.equal(await dialog.getByRole('listbox').count(),0);
     await page.screenshot({path:path.join(out,'admin-profile-mobile.png')});
     await dialog.getByRole('button',{name:'关闭',exact:true}).click();
     await page.getByRole('button',{name:/展开筛选/}).click();
@@ -216,6 +226,11 @@ try {
  results.push(...await checkExcelExports(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkAuditClients(browser,origin,out,snapshot,admin));
  results.push(...await checkRegistration(browser,origin,out));
+ results.push(...await checkDropdownModes(browser,origin,snapshot,[admin,teachers[0],studentA]));
+ results.push(...await checkCompactLayout(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
+ results.push(...await checkTitles(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
+ results.push(...await checkUpdates(browser,origin,out));
+ results.push(...await checkThemes(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  if (process.env.UI_SUITE !== 'interface') results.push(...await checkOperations());
  const anonymous=await browser.newPage({viewport:{width:390,height:850}});let deniedReads=0;
  await anonymous.route('**/*',route=>{const u=new URL(route.request().url());if(u.origin!==origin)return route.abort();if(!u.pathname.startsWith('/api/'))return route.continue();if(u.pathname==='/api/help-comments'){deniedReads++;return route.fulfill({status:401,json:{ok:false,message:'请先登录。'}});}return route.fulfill({json:{ok:true,comments:[]}});});

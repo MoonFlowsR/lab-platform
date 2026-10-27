@@ -1,0 +1,53 @@
+.update-history{min-width:0;color:var(--ink);font-family:var(--font-ui);font-size:var(--text-body);line-height:1.6}
+.updates-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 16px;margin-bottom:12px}
+.updates-heading h2{margin:0;font-size:var(--text-section);line-height:1.4;font-weight:700;white-space:nowrap}
+.updates-heading-count{color:var(--muted);font-size:var(--text-body);font-weight:500}
+.updates-metadata{display:flex;align-items:center;flex-wrap:wrap;gap:3px 16px;color:var(--muted);font-size:var(--text-label);line-height:1.5}
+.updates-metadata>span{white-space:nowrap}
+.updates-metadata strong{color:var(--ink);font-weight:650}
+.updates-latest{margin:0 0 16px;padding:14px 16px;border:1px solid var(--accent-border);border-left:3px solid var(--accent-ink);border-radius:var(--radius);background:var(--surface)}
+.updates-latest-meta{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;color:var(--muted);font-size:var(--text-label);line-height:1.5}
+.updates-latest-meta>span{color:var(--accent-ink);font-weight:650}
+.updates-latest-meta>strong{color:var(--ink)}
+.updates-latest-meta time{white-space:nowrap}
+.updates-latest h3{margin:6px 0 0;font-size:var(--text-heading);font-weight:650;line-height:1.55;overflow-wrap:anywhere}
+.updates-controls{display:flex;align-items:center;gap:12px}
+.updates-search{display:flex;align-items:center;gap:9px;flex:1;min-width:0;min-height:44px;padding-left:12px;border:1px solid var(--line-strong);border-radius:var(--radius-control);background:var(--field-bg);color:var(--muted)}
+.updates-search:focus-within{border-color:var(--accent);box-shadow:var(--focus-ring)}
+.updates-search input{width:100%;min-width:0;min-height:42px;padding:8px 9px 8px 0;border:0;outline:0;background:transparent;color:var(--ink);font:inherit;font-size:var(--text-body);line-height:1.4}
+.updates-search input::placeholder{color:var(--placeholder);opacity:1}
+.updates-search input::-webkit-search-cancel-button{appearance:none}
+.update-history .updates-search>button{display:flex;align-items:center;justify-content:center;flex:0 0 44px;min-height:42px;padding:0;border:0;border-radius:var(--radius-control);background:transparent;color:var(--muted);cursor:pointer}
+.update-history .updates-search>button:hover{color:var(--accent-ink);background:var(--surface-hover)}
+.updates-sort{position:relative;display:flex;align-items:center;gap:8px;flex:0 0 auto;color:var(--muted);font-size:var(--text-label)}
+.updates-sort select{appearance:none;min-height:44px;padding:8px 36px 8px 12px;border:1px solid var(--line-strong);border-radius:var(--radius-control);background:var(--field-bg);color:var(--ink);font:inherit;font-size:var(--text-body);cursor:pointer}
+.updates-sort>svg{position:absolute;right:12px;pointer-events:none}
+.updates-note{margin:10px 0;color:var(--muted);font-size:var(--text-label);line-height:1.65}
+.updates-search-status{min-height:0;margin:8px 0;color:var(--muted);font-size:var(--text-label)}
+.updates-search-status:empty{display:none}
+.updates-history{display:grid;gap:10px;margin-top:14px}
+.updates-date-group{min-width:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+.updates-date-group>summary{display:flex;align-items:center;gap:9px;min-height:52px;padding:12px 14px;list-style:none;cursor:pointer;font-size:var(--text-body);font-weight:650;line-height:1.5}
+.updates-date-group>summary::-webkit-details-marker{display:none}
+.updates-date-group>summary>.platform-icon{color:var(--muted);transform:rotate(-90deg);transition:transform .15s}
+.updates-date-group[open]>summary>.platform-icon{transform:rotate(0)}
+.updates-date-group>summary>span:first-of-type{min-width:0;overflow-wrap:anywhere}
+.updates-date-name{display:flex;align-items:center;flex-wrap:wrap;gap:0 8px}
+.updates-date-name>span{white-space:nowrap}
+.updates-date-count{margin-left:auto;color:var(--muted);font-size:var(--text-label);font-weight:500;white-space:nowrap}
+.updates-date-entries{display:grid;padding:0 16px}
+.updates-entry{min-width:0;padding:15px 0;border-top:1px solid var(--line)}
+.updates-entry-meta{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-bottom:5px;font-size:var(--text-label);line-height:1.5}
+.updates-entry-meta>strong{color:var(--ink);font-weight:700}
+.updates-level{display:inline-flex;align-items:center;min-height:23px;padding:2px 7px;border-radius:6px;background:var(--surface-muted);color:var(--ink-secondary);font-size:var(--text-caption);font-weight:600}
+.updates-level.is-major{background:var(--accent-soft);color:var(--accent-ink)}
+.updates-level.is-minor{background:var(--purple-soft);color:var(--purple-ink)}
+.updates-entry h3{margin:0;font-size:var(--text-body);font-weight:600;line-height:1.7;overflow-wrap:anywhere}
+.updates-entry ul{display:grid;gap:3px;margin:5px 0 0;padding-left:20px;list-style:disc;color:var(--ink-secondary);line-height:1.75;overflow-wrap:anywhere}
+.updates-empty{margin:0;padding:24px 16px;border:1px dashed var(--line-strong);border-radius:var(--radius);color:var(--muted);text-align:center}
+.update-history :is(button,a,select,summary):focus-visible{outline:2px solid var(--accent-ink);outline-offset:3px}
+.update-history .platform-text-phrase{display:inline-block;max-width:100%;vertical-align:top;overflow-wrap:anywhere}
+@media(min-width:1100px){.updates-date-entries{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px}.updates-entry:first-child:nth-last-child(odd){grid-column:1/-1}}
+@media(max-width:640px){.updates-heading{gap:5px 12px}.updates-latest{padding:12px;margin-bottom:12px}.updates-controls{gap:8px}.updates-sort>span{display:none}.updates-sort select{width:112px;padding-inline:10px 29px}.updates-sort>svg{right:9px}.updates-search{gap:7px;padding-left:10px}.updates-search input{font-size:16px}.updates-date-group>summary{padding:11px 12px;gap:7px}.updates-date-entries{padding:0 12px}.updates-entry{padding:12px 0}.updates-note{margin-block:9px}.updates-history{gap:8px;margin-top:12px}}
+@media(max-width:359px){.updates-metadata{gap:2px 10px}.updates-date-group>summary{gap:6px}.updates-date-count{font-size:var(--text-caption)}}
+@media(prefers-reduced-motion:reduce){.updates-date-group>summary>.platform-icon{transition:none}}

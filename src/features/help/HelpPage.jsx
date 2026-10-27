@@ -9,9 +9,16 @@ import { CommentAudit, CommentComposer, CommentThread, HelpDialog, commentReques
 import { liveCommentRoots, sectionAnnotations } from './help-annotations.js';
 import { createStudentNameIndex, displayStudentAccount, displayStudentComment } from '../accounts/student-name-display.js';
 import { HELP_VIEWS, helpRoleForAccount, findHelpSection, helpSectionsForView, legacyCommentSections } from './help-role-sections.js';
+import ThemeSwitcher from '../../shared/components/ThemeSwitcher.jsx';
+import PlatformTitle from '../../shared/components/PlatformTitle.jsx';
+import UpdateHistory from '../updates/UpdateHistory.jsx';
+import Icon from '../../shared/components/Icon.jsx';
+
+const helpViews = [...HELP_VIEWS, { value: 'updates', label: '更新日志' }];
 
 function initialHelpView(currentUser) {
   const role = helpRoleForAccount(currentUser?.account_type);
+  if (new URLSearchParams(window.location.search).get('view') === 'updates') return { role: 'updates', anchor: '', legacy: false };
   let anchor = '';
   try { anchor = decodeURIComponent(window.location.hash.slice(1)); } catch { /* Ignore malformed links. */ }
   const exportsTarget = role === 'student' ? 'student-exports' : role === 'finance' ? 'finance-reimbursement' : `${role}-reports`;
@@ -56,6 +63,7 @@ function selectedHelpText() {
 export default function HelpPage({ currentUser }) {
   const [initialView] = useState(() => initialHelpView(currentUser));
   const [helpRole, setHelpRole] = useState(initialView.role);
+  const discussionEnabled = helpRole !== 'updates';
   const [showLegacy, setShowLegacy] = useState(initialView.legacy);
   const [legacyAnchor, setLegacyAnchor] = useState(initialView.legacy ? initialView.anchor : '');
   const [tocOpen, setTocOpen] = useState(false);
@@ -77,7 +85,7 @@ export default function HelpPage({ currentUser }) {
   const [auditCommentsLoaded, setAuditCommentsLoaded] = useState(false);
   const token = currentUser?.session_token || '';
   const isAdmin = account?.account_type === 'admin';
-  const roleLabel = HELP_VIEWS.find(role => role.value === helpRole)?.label || '学生';
+  const roleLabel = helpViews.find(role => role.value === helpRole)?.label || '学生';
   const tocLabel = helpRole === 'maintenance' ? '平台维护目录' : `${roleLabel}操作目录`;
   const legacySections = useMemo(() => legacyCommentSections(content.sections, comments, legacyAnchor), [comments, legacyAnchor]);
   const legacyCommentCount = comments.filter(row => !row.parent_id && content.sections.some(section => section.id === row.section_id && !Object.hasOwn(section, 'role'))).length;
@@ -99,16 +107,18 @@ export default function HelpPage({ currentUser }) {
     return () => { document.title = previous; };
   }, []);
   useEffect(() => {
+    if (!discussionEnabled) return;
     let alive = true; setRawAccount(null); setStudentNames([]);
     if (token) commentRequest('/session', token).then(json => { if (alive) { setRawAccount(json.account); setStudentNames(json.student_name_labels || []); } }).catch(() => {});
     return () => { alive = false; };
-  }, [token]);
+  }, [token, discussionEnabled]);
   useEffect(() => {
     if (refreshState !== 'done') return;
     const timer = setTimeout(() => setRefreshState('idle'), 5300);
     return () => clearTimeout(timer);
   }, [refreshState]);
   useEffect(() => {
+    if (!discussionEnabled) return;
     let alive = true, anonymousDenied = false, activeRequest = null;
     if (!history || !isAdmin) setAuditCommentsLoaded(false);
     const load = async () => {
@@ -128,7 +138,7 @@ export default function HelpPage({ currentUser }) {
     load(); const interval = setInterval(load, 10000);
     document.addEventListener('visibilitychange', load);
     return () => { alive = false; clearInterval(interval); document.removeEventListener('visibilitychange', load); activeRequest?.abort(); };
-  }, [token, isAdmin, history, revision]);
+  }, [token, isAdmin, history, revision, discussionEnabled]);
   useEffect(() => {
     if (!jump || (jump.id === 'comment-audit' && !auditCommentsLoaded)) return;
     const target = document.getElementById(jump.id);
@@ -163,9 +173,10 @@ export default function HelpPage({ currentUser }) {
     setSelection(previous => previous?.section_id === next?.section_id && previous?.block_id === next?.block_id && previous?.quote === next?.quote ? previous : next);
   }, []);
   useEffect(() => {
+    if (!discussionEnabled) return;
     document.addEventListener('selectionchange', captureSelection);
     return () => document.removeEventListener('selectionchange', captureSelection);
-  }, [captureSelection]);
+  }, [captureSelection, discussionEnabled]);
   function commentSelection(anchor = selectedHelpText()) {
     if (!anchor || anchor.quote.length > 1000) { captureSelection(); return; }
     setComposer({ anchor }); setError(''); clearSelection();
@@ -209,8 +220,13 @@ export default function HelpPage({ currentUser }) {
   }
   function chooseRole(role) {
     setHelpRole(role); setShowLegacy(false); setLegacyAnchor(''); setTocOpen(false); setQuery(''); setActiveComment(null); setCommentTargets(null); setJump(null); clearSelection();
+    if (role === 'updates') { setComposer(null); manualRefresh.current = null; setRefreshState('idle'); }
     const first = helpSectionsForView(content.sections, role)[0];
-    if (first) window.history.replaceState(null, '', `#${first.id}`);
+    const url = new URL(window.location.href);
+    if (role === 'updates') url.searchParams.set('view', 'updates');
+    else url.searchParams.delete('view');
+    url.hash = first?.id || '';
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash);
   }
   function locate(root) {
     setQuery(''); revealCommentSection(root); setActiveComment(root);
@@ -238,18 +254,19 @@ export default function HelpPage({ currentUser }) {
 
   return <div className="help-page" id="help-top">
     <header className="help-header">
-      <div><p className="help-brand">{platformSettings.title}</p><h1>平台使用帮助</h1><p className="help-subtitle">更新于 {content.updated}</p></div>
-      <a className="help-return" href="/">返回平台</a>
+      <div><p className="help-brand"><PlatformTitle allowSingleLine /></p><h1>平台使用帮助</h1>{discussionEnabled && <p className="help-subtitle">更新于 {content.updated}</p>}</div>
+      <div className="help-header-actions"><ThemeSwitcher /><a className="help-return" href="/"><Icon name="arrowLeft" size={16} />返回平台</a></div>
     </header>
     <main className="help-main">
       <section className="help-role-switch" aria-label="选择帮助类别">
-        <span>查看说明</span><div>{HELP_VIEWS.map(role => <button key={role.value} type="button" aria-pressed={helpRole === role.value} onClick={() => chooseRole(role.value)}>{role.label}</button>)}</div>
-        <a className="help-source-link" href="https://github.com/MoonFlowsR/lab-platform" target="_blank" rel="noopener noreferrer">平台代码已在Github开源 ↗</a>
+        <span>查看说明</span><div>{helpViews.map(role => <button key={role.value} type="button" aria-pressed={helpRole === role.value} onClick={() => chooseRole(role.value)}>{role.label}</button>)}</div>
+        <a className="help-source-link" href="https://github.com/MoonFlowsR/lab-platform" target="_blank" rel="noopener noreferrer">平台代码已在Github开源<Icon name="arrowUpRight" size={16} /></a>
       </section>
+      {!discussionEnabled ? <UpdateHistory /> : <>
       <section className="help-search" aria-label="帮助搜索">
         <label htmlFor="help-search-input">搜索{roleLabel}帮助</label>
         <div className="help-search-row"><input id="help-search-input" type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="搜索当前说明" /><button type="button" onClick={() => setQuery('')} disabled={!query}>清除搜索</button></div>
-        <p role="status" aria-live="polite" className={!terms.length ? 'help-search-status-idle' : undefined}>{terms.length ? `${sections.length} 个匹配章节 · 相关讨论见下方` : ''}</p>
+        <p role="status" aria-live="polite" className={!terms.length ? 'help-search-status-idle' : undefined}>{terms.length ? `${sections.length} 个匹配章节` : ''}</p>
       </section>
       <section className="help-comment-tools" aria-label="帮助评论">
         <span>选中正文可评论</span>
@@ -293,8 +310,8 @@ export default function HelpPage({ currentUser }) {
         {!messages.length && <p className="help-message-empty">{terms.length ? "无相关留言或评论。" : "暂无留言，欢迎提出问题或建议。"}</p>}
       </section>
       {history && isAdmin && <CommentAudit query={query} token={token} revision={revision} studentNameIndex={studentNameIndex} commentAuthors={Object.fromEntries(comments.map(row => [row.id, row.author_name || row.author_username]))} sectionTitles={{ general: '直接留言', ...Object.fromEntries(content.sections.map(section => [section.id, section.title])) }} />}
+      </>}
     </main>
-    <footer className="help-footer">忘记密码请联系管理员重置。</footer>
-    <a className="help-top-floating" href="#help-top" aria-label="返回顶部">↑ 返回顶部</a>
+    <a className="help-top-floating" href="#help-top" aria-label="返回顶部"><Icon name="arrowUp" size={16} />返回顶部</a>
   </div>;
 }

@@ -12,10 +12,12 @@ app.get('/api/health', (req, res) => {
 });
 
 if (fs.existsSync(DIST_DIR)) {
-  app.use(express.static(DIST_DIR));
+  app.use(express.static(DIST_DIR, { setHeaders(res, file) {
+    if (path.basename(file) === 'index.html') res.setHeader('Cache-Control', 'no-cache');
+  } }));
   app.use((req, res) => {
     if (req.path.startsWith("/api/")) return res.status(404).json({ ok: false, message: "API 不存在。" });
-    res.sendFile(path.join(DIST_DIR, "index.html"));
+    res.set('Cache-Control', 'no-cache').sendFile(path.join(DIST_DIR, "index.html"));
   });
 }
 

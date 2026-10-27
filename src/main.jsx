@@ -5,7 +5,9 @@ import App from './App.jsx'
 import PlatformDialogHost from './shared/components/platform-dialog.jsx'
 
 import { platformSettings } from './shared/lib/platform-settings.js'
+import { initializeTheme } from './shared/lib/theme.js'
 
+initializeTheme();
 document.title = platformSettings.title;
 
 createRoot(document.getElementById('root')).render(

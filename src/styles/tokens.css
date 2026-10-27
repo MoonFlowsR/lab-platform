@@ -25,12 +25,146 @@ business styling stays with features. */
   --accent-hover: #1948ba;
   --accent-soft: #edf3ff;
   --success: #167650;
-  --warning: #a5660c;
+  --warning: #c2410c;
   --danger: #c72f3b;
   --radius: 12px;
   --radius-control: 8px;
   --shadow: 0 2px 5px #1c365707, 0 8px 24px #1c365704;
   --focus-ring: 0 0 0 3px #245bdd25;
+  color-scheme: light;
+  --ink-strong: #10223b;
+  --ink-secondary: #475569;
+  --placeholder: #607089;
+  --field-bg: #ffffff;
+  --surface-hover: #edf3ff;
+  --accent-ink: #245bdd;
+  --accent-border: #adc4ef;
+  --on-accent: #ffffff;
+  --success-ink: #166a4b;
+  --success-soft: #ecfdf5;
+  --success-border: #a5d9c2;
+  --warning-ink: #b63e14;
+  --warning-soft: #fff4ed;
+  --warning-border: #d57240;
+  --danger-ink: #b91c35;
+  --danger-soft: #fef2f2;
+  --danger-border: #edb8bf;
+  --purple: #7144b7;
+  --purple-ink: #6d28b5;
+  --purple-soft: #f5f0ff;
+  --purple-border: #cdb5ec;
+  --cyan-ink: #0e7490;
+  --mark-bg: #ffdf75;
+  --mark-ink: #493400;
+  --overlay: #10223c66;
+  --sidebar-bg: #ffffff;
+  --sidebar-ink: #475569;
+  --sidebar-strong: #10223b;
+  --sidebar-muted: #607089;
+  --sidebar-border: #e1e7f0;
+  --sidebar-hover: #edf3ff;
+  --sidebar-accent: #245bdd;
+  --sidebar-mark-bg: #edf3ff;
+  --sidebar-mark-border: #adc4ef;
+  --sidebar-badge-bg: #edf3ff;
+  --sidebar-badge-ink: #245bdd;
+  --sidebar-badge-border: #adc4ef;
+  --sidebar-avatar-bg: #edf3ff;
+  --sidebar-avatar-border: #adc4ef;
+  --sidebar-avatar-ink: #245bdd;
+  --intro-bg: #edf3ff;
+  --intro-ink: #10223b;
+  --intro-muted: #475569;
+  --intro-accent: #245bdd;
+  --intro-border: #adc4ef;
+  --topbar-bg: #ffffff;
+}
+@media screen {
+:root[data-theme="mixed"] {
+  --sidebar-bg: #14263e;
+  --sidebar-ink: #d4dfef;
+  --sidebar-strong: #ffffff;
+  --sidebar-muted: #a6bad4;
+  --sidebar-border: #ffffff12;
+  --sidebar-hover: #ffffff0a;
+  --sidebar-accent: #8ab6ff;
+  --sidebar-mark-bg: #ffffff0b;
+  --sidebar-mark-border: #ffffff27;
+  --sidebar-badge-bg: #ffffff19;
+  --sidebar-badge-ink: #ffffff;
+  --sidebar-badge-border: #ffffff25;
+  --sidebar-avatar-bg: #314866;
+  --sidebar-avatar-border: #526784;
+  --sidebar-avatar-ink: #e5efff;
+  --intro-bg: #162b46;
+  --intro-ink: #ffffff;
+  --intro-muted: #adbfda;
+  --intro-accent: #a0bce7;
+  --intro-border: #ffffff15;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #0b1220;
+  --surface: #142033;
+  --surface-muted: #19283c;
+  --surface-hover: #223751;
+  --field-bg: #101b2c;
+  --ink: #e3ebf6;
+  --ink-strong: #f3f6fc;
+  --ink-secondary: #b9c7da;
+  --muted: #a6b5ca;
+  --placeholder: #93a5c0;
+  --line: #34475f;
+  --line-strong: #4c6483;
+  --accent: #386edc;
+  --accent-hover: #2b5dc5;
+  --accent-ink: #9bbfff;
+  --accent-soft: #1b3357;
+  --accent-border: #4b75ac;
+  --success: #167650;
+  --success-ink: #85dfba;
+  --success-soft: #14362f;
+  --success-border: #387f69;
+  --warning: #c64a13;
+  --warning-ink: #ffb285;
+  --warning-soft: #3d271d;
+  --warning-border: #b96c40;
+  --danger: #be3544;
+  --danger-ink: #ffacb9;
+  --danger-soft: #3c202b;
+  --danger-border: #955063;
+  --purple: #7144b7;
+  --purple-ink: #d0b8ff;
+  --purple-soft: #2d2546;
+  --purple-border: #75618e;
+  --cyan-ink: #88d8ec;
+  --mark-bg: #695219;
+  --mark-ink: #fff1b0;
+  --overlay: #000000a6;
+  --sidebar-bg: #0e192b;
+  --sidebar-ink: #d4dfef;
+  --sidebar-strong: #ffffff;
+  --sidebar-muted: #a6bad4;
+  --sidebar-border: #34475f;
+  --sidebar-hover: #ffffff0a;
+  --sidebar-accent: #9bbfff;
+  --sidebar-mark-bg: #ffffff0b;
+  --sidebar-mark-border: #ffffff27;
+  --sidebar-badge-bg: #ffffff19;
+  --sidebar-badge-ink: #ffffff;
+  --sidebar-badge-border: #ffffff25;
+  --sidebar-avatar-bg: #253b57;
+  --sidebar-avatar-border: #526784;
+  --sidebar-avatar-ink: #e5efff;
+  --intro-bg: #101b2c;
+  --intro-ink: #f3f6fc;
+  --intro-muted: #b9c7da;
+  --intro-accent: #9bbfff;
+  --intro-border: #34475f;
+  --topbar-bg: #142033;
+  --shadow: 0 2px 6px #00000020, 0 12px 30px #00000028;
+  --focus-ring: 0 0 0 3px #9bbfff55;
+}
 }
 @media (min-width: 1800px) {
   :root {
@@ -93,7 +227,7 @@ textarea {
 }
 .platform-shell input::placeholder,
 .platform-shell textarea::placeholder {
-  color: #778398;
+  color: var(--placeholder);
 }
 .platform-shell button:not(:disabled):active {
   transform: translateY(1px);
@@ -107,6 +241,7 @@ textarea {
   }
 }
 @media print {
+  :root { color-scheme: light !important; }
   .workspace-sidebar,
   .workspace-topbar,
   .workspace-statusbar,

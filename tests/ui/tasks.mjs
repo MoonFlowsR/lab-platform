@@ -113,13 +113,13 @@ export async function checkTasks(browser, origin, out, base, users) {
       const error=page.getByRole('dialog');await error.getByText('示例失败：请重试。',{exact:true}).waitFor();await error.getByRole('button',{name:'知道了',exact:true}).click();assert.equal(await header.locator('b').innerText(),String(expected));
       await page.getByRole('button',{name:'同意',exact:true}).first().click();await page.getByRole('dialog').getByRole('button',{name:'确认同意',exact:true}).click();
     }else if(role==='student'){
-      await page.getByRole('button',{name:'确认完成',exact:true}).click();const dialog=page.getByRole('dialog');await dialog.getByPlaceholder('请选择',{exact:true}).fill('已挂账');await dialog.getByRole('option',{name:'已挂账',exact:true}).click();await dialog.getByRole('button',{name:'确认完成',exact:true}).click();
+      await page.getByRole('button',{name:'确认完成',exact:true}).click();const dialog=page.getByRole('dialog'),status=dialog.getByRole('combobox',{name:/工单状态/});assert.equal(await status.inputValue(),'');await status.selectOption('已挂账');await dialog.getByRole('button',{name:'确认完成',exact:true}).click();
     }else if(role==='finance')await page.getByRole('checkbox').check();
     else{await page.getByRole('button',{name:'审核通过',exact:true}).first().click();await page.getByRole('dialog').getByRole('button',{name:'确认',exact:true}).click();}
     await page.waitForFunction(value=>document.querySelector('.platform-task-entry b')?.textContent===String(value),expected-1);
     if(count===1)await page.getByText('此项待办已处理完毕。',{exact:true}).waitFor();
     await page.getByRole('button',{name:'查看本模块全部记录',exact:true}).click();assert.equal(await page.locator('.platform-task-filter').count(),0);
-    if(role==='student'||role==='teacher'){assert.equal(await page.getByPlaceholder('搜索或选择查看范围').inputValue(),'全部');}
+    if(role==='student'||role==='teacher'){assert.equal(await page.getByRole('combobox',{name:'查看范围',exact:true}).inputValue(),'all');}
     await header.click();
     if(role==='student'){
       await page.locator('[data-task="stock-review"]').click();assert.equal(await page.locator('.platform-stock-request').count(),1);

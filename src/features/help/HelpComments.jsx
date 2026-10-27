@@ -48,7 +48,7 @@ export function CommentComposer({ quote, parent, account, busy, onSubmit, onCanc
     <h3>{parent ? <>回复 <PersonName value={parent.author_name || parent.author_username} /></> : message ? '直接留言' : '评论所选内容'}</h3>
     {parent ? <blockquote>{parent.body}</blockquote> : quote && <blockquote>{quote}</blockquote>}
     <label><strong>{message ? '留言内容' : '评论内容'}<span className="help-composer-required">（必填）</span></strong><textarea required disabled={!account || busy} maxLength={2000} rows={4} value={body} onChange={event => setBody(event.target.value)} placeholder="填写问题或建议（不超过2000字）" /></label>
-    {!account ? <p role="alert">请先注册账号并登录后{message ? '发表留言' : '发表评论'}。<a href="/?register=1">去注册</a> · <a href="/">去登录</a></p> : <p className="help-comment-note">发表人：{account.display_name || account.username}。留言、评论、回复和删除操作会留存记录，管理员可查看。</p>}
+    {!account ? <p role="alert">请先注册账号并登录后{message ? '发表留言' : '发表评论'}。<a href="/?register=1">去注册</a> · <a href="/">去登录</a></p> : <p className="help-comment-note">发表人：{account.display_name || account.username}</p>}
     <button type="submit" disabled={!account || busy || !body.trim()}>{busy ? '发表中…' : parent ? '发表回复' : message ? '发表留言' : '发表评论'}</button>
     {onCancel && <button type="button" onClick={onCancel} disabled={busy}>取消</button>}
   </form>;

@@ -27,3 +27,13 @@ jobs:
       - run: npm audit --omit=dev --audit-level=high
       - run: npx playwright install --with-deps chromium
       - run: npm run test:ui
+        id: ui
+      - name: Upload failed UI diagnostics
+        if: ${{ failure() && steps.ui.outcome == 'failure' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: ui-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-results/ui/
+          retention-days: 7
+          if-no-files-found: ignore
+          include-hidden-files: false

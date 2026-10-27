@@ -80,7 +80,7 @@ export async function checkFinance(browser,origin,out,snapshot,users){
    const card=modified.locator('.platform-request-record').first();
    if(role==='finance'){
     assert.equal(await page.getByRole('button',{name:/^新建/}).count(),0);assert.equal(await page.getByRole('button',{name:/^(同意|驳回|确认完成|确认到货并入库|从我的列表隐藏)$/}).count(),0);
-    assert.equal(await page.getByPlaceholder('搜索或选择查看范围').count(),0);assert.equal(await modified.getByRole('checkbox').count(),1);const check=modified.getByRole('checkbox');
+    assert.equal(await page.getByRole('combobox',{name:'查看范围',exact:true}).count(),0);assert.equal(await modified.getByRole('checkbox').count(),1);const check=modified.getByRole('checkbox');
     if(await check.isChecked())await check.uncheck();
     await check.check();await page.waitForFunction(id=>document.querySelector(`input[aria-label="已报销 ${id}"]`)?.checked,'QA-FIN-'+t+'-4');
     await page.waitForFunction(()=>!document.querySelector('.platform-reimbursement-check input:disabled'));
@@ -120,7 +120,7 @@ export async function checkFinance(browser,origin,out,snapshot,users){
     await checkReimbursementBreakdown(reportTotals);
    }
    assert.equal(finalAmount,await page.getByRole('region',{name:'测试统计',exact:true}).locator('.platform-business-footer').innerText());
-   await page.goto(origin+'/help');await page.getByRole('heading',{name:'01 财务总览与查看',exact:true}).waitFor();assert.equal(await page.getByText('平台代码已在Github开源 ↗',{exact:true}).count(),1);
+   await page.goto(origin+'/help');await page.getByRole('heading',{name:'01 财务总览与查看',exact:true}).waitFor();assert.equal(await page.getByRole('link',{name:'平台代码已在Github开源',exact:true}).count(),1);
   }
   results.push({financeRole:true,role,width,reimbursementChanges:changes,overflow:await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),errors});assert.deepEqual(errors,[]);await page.close();
  }

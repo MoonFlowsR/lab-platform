@@ -1,3 +1,5 @@
+import packageInfo from '../../../package.json' with { type: 'json' };
+
 export function browserClient(navigatorInfo = globalThis.navigator) {
   const ua = String(navigatorInfo?.userAgent || '');
   const platform = String(navigatorInfo?.platform || '');
@@ -8,4 +10,4 @@ export function browserClient(navigatorInfo = globalThis.navigator) {
   return 'unknown';
 }
 
-export const clientHeaders = () => ({ 'X-Platform-Client': browserClient() });
+export const clientHeaders = () => ({ 'X-Platform-Client': browserClient(), 'X-Platform-UI-Version': packageInfo.version });

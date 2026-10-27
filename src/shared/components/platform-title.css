@@ -1,5 +1,16 @@
 .platform-brand-title { display: block; position: relative; min-width: 0; }
 .platform-brand-lines, .platform-brand-lines > span { display: block; }
 .platform-brand-title.is-split .platform-brand-lines > span { white-space: nowrap; }
+.platform-brand-title.is-single .platform-brand-lines > span { white-space: nowrap; }
 .platform-brand-measure { position: absolute; inset: 0 auto auto 0; width: max-content; visibility: hidden; pointer-events: none; white-space: nowrap; }
 .platform-brand-measure > span { display: block; }
+.platform-brand-title.has-trailing { --platform-title-trailing-gap: 4px; }
+.platform-brand-title.has-trailing .platform-brand-final-line {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: var(--platform-title-trailing-gap);
+}
+.platform-brand-title.has-trailing .platform-brand-line-text,
+.platform-brand-trailing { flex: 0 0 auto; white-space: nowrap; }
+.platform-brand-trailing { display: inline-flex; line-height: 1.25; }

@@ -1,4 +1,5 @@
 import PersonName from '../../shared/components/PersonName.jsx';
+import PhraseText from '../../shared/components/PhraseText.jsx';
 import { Badge, DataTable, Field, SearchableSelect, Toolbar } from "../../shared/components/ui.jsx";
 import { materialSearchTerms } from "../inventory/material-model-search.js";
 import { styles } from "../../app/styles.js";
@@ -81,7 +82,7 @@ function StockForm({ currentUser, purchaseRequests = [], materialCatalog = [], b
   const batchSearchTerms = new Map(matchingBatches.map(batch => [String(batch._id), [batch.batch_code, formatPublicNumber(batch.batch_code)]]));
   const set = (key,value) => setForm(prev=>({...prev,[key]:value}));
   return <section className="platform-section-create" style={styles.card}>
-    <div style={styles.cardHeader}><div><h2 style={styles.h2}>新增出/退库记录</h2><p style={styles.muted}>出库：领用库存；退库：归还剩余材料。到货入库在采购工单完成。</p>{form.transaction_type === '出库' && <p role="note" style={{ color: "#b91c1c", fontSize: 15, fontWeight: 700, lineHeight: 1.6, margin: "8px 0 0" }}>私用/项目用物品：采购人本人可直接登记；其他人须经采购人审批，通过后方可使用！</p>}</div><button type="button" style={styles.primaryButton} onClick={()=>setShow(!show)}>{show ? '收起表单' : '新增记录'}</button></div>
+    <div className="platform-create-heading is-movement" style={styles.cardHeader}><div><h2 style={styles.h2}>新增出/退库记录</h2><p className="platform-create-description" style={styles.muted}><PhraseText>出库：领用库存；退库：归还剩余材料。到货入库在采购工单完成。</PhraseText></p>{show && form.transaction_type === '出库' && <p className="platform-create-notice" role="note" style={{ color: "var(--danger-ink)", fontSize: 15, fontWeight: 700, lineHeight: 1.6, margin: "8px 0 0" }}><PhraseText>私用/项目用物品：采购人本人可直接登记；其他人须经采购人审批，通过后方可使用！</PhraseText></p>}</div><button type="button" style={styles.primaryButton} onClick={()=>setShow(!show)}>{show ? '收起表单' : '新增记录'}</button></div>
     {show && <><p style={styles.requiredHint}><span style={styles.requiredStar}>*</span> 为必填项</p><form style={styles.formGrid} onSubmit={async event=>{
       event.preventDefault(); if(busy)return;
       if(!form.storage_detail.trim()) return showAlert('请填写具体位置简述。');
@@ -90,7 +91,7 @@ function StockForm({ currentUser, purchaseRequests = [], materialCatalog = [], b
       setBusy(true); try { const ok=await onSubmit(form,photo); if(ok!==false){setMaterialName('');setForm(defaults());setPhoto(null);setShow(false);} } finally {setBusy(false);}
     }}>
 
-        <Field required label="类型"><SearchableSelect required value={form.transaction_type} onChange={value=>{set('transaction_type',value);setPhoto(null);set('entry_key',crypto.randomUUID());}} options={['出库','退库']} placeholder="搜索或选择出/退库类型" /></Field>
+        <Field required label="类型"><SearchableSelect searchable={false} required value={form.transaction_type} onChange={value=>{set('transaction_type',value);setPhoto(null);set('entry_key',crypto.randomUUID());}} options={['出库','退库']} placeholder="选择出/退库类型" /></Field>
       <Field required label="材料名称"><SearchableSelect required value={materialName} onChange={name=>{setMaterialName(name);setForm(prev=>({...prev,batch_id:'',unit:'',storage_room:'',storage_detail:'',storage_location:'',entry_key:crypto.randomUUID()}));setPhoto(null);}} options={materialNames} searchTerms={materialTerms} placeholder="搜索或选择采购材料" /></Field>
       <Field required label="材料批次"><SearchableSelect required disabled={!materialName} value={form.batch_id} onChange={value=>{const batch=batches.find(row=>String(row._id)===value);setForm(prev=>({...prev,batch_id:value,unit:batch?.unit || '',storage_room:batch?.storage_room || '',storage_detail:batch?.storage_detail || '',storage_location:batch?.storage_location || '',entry_key:crypto.randomUUID()}));setPhoto(null);}} options={matchingBatches.map(batch=>({value:batch._id,label:`${formatPublicNumber(batch.batch_code)} · ${batch.material_name} · 规格 ${batch.spec || '无'} · ${batch.storage_room || '房间未登记'} · ${batch.purchase_purpose || '未标注'} · 当前 ${batch.current_qty} ${batch.unit}`}))} searchTerms={batchSearchTerms} placeholder={materialName ? '搜索或选择批次' : '请先选择材料'} /></Field>
       {materialName && !matchingBatches.length && <p role="note" style={{...styles.fullWidth,...styles.muted}}>该材料暂无库存批次。采购到货请在采购工单入库；现存材料可先建库。</p>}

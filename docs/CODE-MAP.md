@@ -12,6 +12,9 @@
 | 出库、退库、采购人审批 | `src/features/stock` | `server/features/stock`、`server/services/operations/stock.cjs` |
 | 总览与报表 | `src/features/dashboard`、`src/features/reports` | 共用业务记录与筛选规则 |
 | 帮助、留言 | `src/features/help` | `server/features/help` |
+| 外观主题 | `src/shared/components/ThemeSwitcher.jsx`、`src/shared/lib/theme.js` | 浏览器本地偏好，无服务端数据 |
+
+浅色、深色与混合模式的颜色统一在 `src/styles/tokens.css` 定义；`index.html` 在加载页面前应用已保存的主题。登录页、工作台与帮助页共用切换控件，也可跟随系统明暗变化。
 
 帮助正文在 `src/features/help/content.json`，按账号角色组织。改写正文时保留旧块编号，将原文归入 `history` 供评论回溯；新内容追加为当前块。报表帮助入口指向对应角色章节。正文同时用于服务端评论校验，更新后需重载服务，并检查 `help-export.test.cjs` 与 `tests/ui/help.mjs`。
 
@@ -62,10 +65,16 @@
 
 记录折叠：`RecentRecords.jsx`统一卡片、表格的最新一条显示与展开入口；受控组件`RecordVisibility`供报表和账号列表复用，数量取当前筛选结果，导出使用完整数据。
 
-撤回测试的教师显示规则由`review-scope.js`的`workRecordVisible`统一处理，总览、工单、近半年历史与报表使用同一数据集；学生重提与审计记录保留。
+撤回测试的教师显示规则由`review-scope.js`的`requestRecordVisible`统一处理，总览、工单、近半年历史与报表使用同一数据集；学生重提与审计记录保留。
 
 角色待办：`src/features/tasks/task-model.js`从同步记录派生个人任务、团队跟进和库存预警，共用现有审批、完成和报销条件。`moduleTaskGroup`汇总模块待办，供角标和处理列表共用。`TaskCenter.jsx`显示入口与筛选提示；`Dashboard.jsx`显示任务、进度和提醒。`App.jsx`清除旧筛选、按记录ID打开对应待办；从提示栏可进入新建和历史记录。完整统计与导出由`features/reports`及`dashboard-metrics.js`负责。
 
 界面布局、设计变量和双端验证入口见 [界面维护](UI-GUIDE.md)。
 
 批次信息修改权限：`src/features/inventory/batch-edit-policy.js` 供前后端共用。学生仅可在原采购单完成入库后的48小时内修改对应批次；服务端在库存修改事务中复核，前端按到期时间收起入口。
+
+版本记录：`scripts/release.cjs` 校验并准备大、中、小版本，统一更新包版本、`src/config/release-history.json` 和 `docs/CHANGELOG.md`；侧栏顶部显示包版本，帮助页更新日志标题显示累计次数，构建时检查一致性。操作见 [版本与更新记录](MAINTENANCE.md#版本与更新记录)。
+
+更新日志：`src/features/updates/UpdateHistory.jsx` 读取通用记录，提供日期分组、搜索和排序，由使用帮助中“平台维护”后的同级板块进入；侧栏版本仅显示文本。
+
+客户端升级：`server/security/client-version.cjs` 实现可选最低版本门槛；认证路由检查请求版本，JWT记录客户端版本，统一鉴权拒绝旧会话。`src/shared/api/client-platform.js` 随请求发送包版本。配置与发布顺序见 [版本与更新记录](MAINTENANCE.md#版本与更新记录)。

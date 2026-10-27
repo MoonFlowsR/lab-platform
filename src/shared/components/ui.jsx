@@ -8,8 +8,10 @@ import ExportButton from './ExportButton.jsx';
 import { WorkspaceSyncContext } from '../../app/WorkspaceSync.jsx';
 import Icon from './Icon.jsx';
 import PersonName from './PersonName.jsx';
+import PhraseText from './PhraseText.jsx';
 import { isPersonLabel } from '../lib/person-name.js';
 import './responsive-table.css';
+import './dropdown-control.css';
 
 function DateInput({ value, onChange, required = false, min = "2000-01-01", max = "2099-12-31" }) {
   const currentValue = toDateInputValue(value);
@@ -28,7 +30,7 @@ function DateInput({ value, onChange, required = false, min = "2000-01-01", max 
     <span
       className="platform-date-display"
       aria-hidden="true"
-      style={{ ...styles.dateSelectButton, color: currentValue ? "#0f172a" : "#64748b" }}
+      style={{ ...styles.dateSelectButton, color: currentValue ? "var(--ink)" : "var(--muted)" }}
     >
       {currentValue ? currentValue.replace(/-/g, "/") : "yyyy/mm/dd"}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg>
@@ -48,15 +50,15 @@ function DateInput({ value, onChange, required = false, min = "2000-01-01", max 
 }
 function Toolbar({ title, description, onExport, actions, scope }) {
   const context = useContext(WorkspaceSyncContext);
-  const toolbar = <section className="platform-page-heading" style={styles.toolbar}><div><h2 style={styles.h2}>{title}</h2>{description && <p style={styles.muted}>{description}</p>}</div><div className="platform-toolbar-actions">{scope}{(actions || onExport) && <div className="platform-export-buttons">{actions || <ExportButton onExport={onExport} />}</div>}</div></section>;
+  const toolbar = <section className="platform-page-heading" style={styles.toolbar}><div><h2 style={styles.h2}>{title}</h2>{description && <p style={styles.muted}><PhraseText>{description}</PhraseText></p>}</div><div className="platform-toolbar-actions">{scope}{(actions || onExport) && <div className="platform-export-buttons">{actions || <ExportButton onExport={onExport} />}</div>}</div></section>;
   return context?.toolbarTarget ? createPortal(toolbar, context.toolbarTarget) : toolbar;
 }
 function StatCard({ title, value, tone = "gray" }) {
-  const toneStyle = { gray: { background: "#f8fafc", color: "#0f172a" }, blue: { background: "#eff6ff", color: "#1d4ed8" }, green: { background: "#ecfdf5", color: "#047857" }, orange: { background: "#fff7ed", color: "#c2410c" }, red: { background: "#fef2f2", color: "#b91c1c" }, purple: { background: "#f5f3ff", color: "#6d28d9" } }[tone];
+  const toneStyle = { gray: { background: "var(--surface-muted)", color: "var(--ink)" }, blue: { background: "var(--accent-soft)", color: "var(--accent-ink)" }, green: { background: "var(--success-soft)", color: "var(--success-ink)" }, orange: { background: "var(--warning-soft)", color: "var(--warning-ink)" }, red: { background: "var(--danger-soft)", color: "var(--danger-ink)" }, purple: { background: "var(--purple-soft)", color: "var(--purple-ink)" } }[tone];
   return <div style={{ ...styles.statCard, ...toneStyle }}><div style={styles.statTitle}>{title}</div><div style={styles.statValue}>{value}</div></div>;
 }
 const normalizeDropdownSearch = text => String(text ?? "").normalize("NFKC").trim().toLowerCase();
-function SearchableSelect({ value, onChange, options = [], placeholder = "搜索或选择", required = false, disabled = false, allowCustom = false, clearOnInput = true, emptyText = "无相关内容", fixedOptions = [], lastOptions = [], searchTerms }) {
+function SearchableSelect({ value, onChange, options = [], searchable = true, placeholder = searchable ? "搜索或选择" : "请选择", required = false, disabled = false, allowCustom = false, clearOnInput = true, emptyText = "无相关内容", fixedOptions = [], lastOptions = [], searchTerms }) {
   const normalizedOptions = useMemo(() => options.map(item => {
     const option = typeof item === "object" ? { value: String(item.value), label: String(item.label) } : { value: String(item), label: String(item) };
     return { ...option, searchLabel: normalizeDropdownSearch(option.label), searchAliases: (searchTerms?.get(option.value) || []).map(term => ({text:term,normalized:normalizeDropdownSearch(term)})) };
@@ -129,6 +131,22 @@ function SearchableSelect({ value, onChange, options = [], placeholder = "搜索
     if (open && activeIndex >= 0) wrapRef.current?.querySelectorAll('[role="option"]')[activeIndex]?.scrollIntoView({ block: "nearest" });
   }, [open, activeIndex]);
 
+  if (!searchable) return <div className="platform-search-select platform-choice-select" style={styles.searchSelectWrap}>
+    <select
+      ref={inputRef}
+      required={required}
+      disabled={disabled}
+      value={String(value ?? "")}
+      style={{ ...styles.input, paddingRight: 48 }}
+      onChange={event => onChange(event.target.value)}
+    >
+      {String(value ?? "") === "" && !normalizedOptions.some(item => item.value === "") && <option value="" disabled>{placeholder}</option>}
+      {value && !hasSelection && <option value={String(value)}>{String(value)}</option>}
+      {orderedOptions.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
+    </select>
+    <span aria-hidden="true" style={{ ...styles.searchSelectArrow, pointerEvents: "none" }}>▾</span>
+  </div>;
+
   return <div className="platform-search-select" ref={wrapRef} style={styles.searchSelectWrap}>
     <input
       ref={inputRef}
@@ -178,7 +196,7 @@ function SearchableSelect({ value, onChange, options = [], placeholder = "搜索
         style={{ ...styles.searchSelectOption, ...((item.value === String(value ?? "") || index === activeIndex) ? styles.searchSelectOptionActive : {}) }}
         onMouseDown={(e) => e.preventDefault()}
         onClick={event => { event.preventDefault(); event.stopPropagation(); choose(item); }}
-      ><span>{item.label}</span>{matchingTerm(item) && <small style={{ display: "block", fontSize: "var(--text-caption)", fontWeight: 400, color: "#64748b", marginTop: 3, lineHeight: 1.5, overflowWrap: "anywhere" }}>匹配：{matchingTerm(item)}</small>}</button>)}
+      ><span>{item.label}</span>{matchingTerm(item) && <small style={{ display: "block", fontSize: "var(--text-caption)", fontWeight: 400, color: "var(--muted)", marginTop: 3, lineHeight: 1.5, overflowWrap: "anywhere" }}>匹配：{matchingTerm(item)}</small>}</button>)}
     </div>}
   </div>;
 }
@@ -193,15 +211,15 @@ const numberedValue = (label, value) => /编号|^批次$|批次号|流水号/.te
 function Info({ label, value, strong, danger }) {
   strong = strong || identityLabel(label);
   const amount = /(?:费|费用|金额)$/.test(label), longAmount = amount && typeof value === 'string' && value.replace(/\s/gu, '').length > 8;
-  return <div className={`platform-info${amount ? ' is-amount' : ''}${longAmount ? ' is-long-amount' : ''}`} data-label={label} style={styles.info}><div style={styles.infoLabel}>{label}</div><div style={{ ...styles.infoValue, fontWeight: strong ? 800 : 500, color: danger ? "#dc2626" : identityLabel(label) ? "#1e40af" : "#0f172a" }}>{numberedValue(label, value) || "-"}</div></div>;
+  return <div className={`platform-info${amount ? ' is-amount' : ''}${longAmount ? ' is-long-amount' : ''}`} data-label={label} style={styles.info}><div style={styles.infoLabel}>{label}</div><div style={{ ...styles.infoValue, fontWeight: strong ? 800 : 500, color: danger ? "var(--danger-ink)" : identityLabel(label) ? "var(--accent-ink)" : "var(--ink)" }}>{numberedValue(label, value) || "-"}</div></div>;
 }
 function Badge({ text }) {
   let style = styles.badge;
   const s = String(text || "");
-  if (s.includes("待") || s.includes("未")) style = { ...style, background: "#fef3c7", color: "#92400e" };
-  if (s.includes("通过") || s.includes("确认") || s.includes("完成") || s.includes("已实施")) style = { ...style, background: "#dcfce7", color: "#166534" };
-  if (s.includes("驳回") || s.includes("高风险")) style = { ...style, background: "#fee2e2", color: "#991b1b" };
-  if (s.includes("需修改") || s.includes("中风险")) style = { ...style, background: "#ffedd5", color: "#9a3412" };
+  if (s.includes("待") || s.includes("未")) style = { ...style, background: "var(--warning-soft)", color: "var(--warning-ink)" };
+  if (s.includes("通过") || s.includes("确认") || s.includes("完成") || s.includes("已实施")) style = { ...style, background: "var(--success-soft)", color: "var(--success-ink)" };
+  if (s.includes("驳回") || s.includes("高风险")) style = { ...style, background: "var(--danger-soft)", color: "var(--danger-ink)" };
+  if (s.includes("需修改") || s.includes("中风险")) style = { ...style, background: "var(--warning-soft)", color: "var(--warning-ink)" };
   return <span className="platform-badge" style={style}>{text}</span>;
 }
 function DataTable({ columns, rows, mobileColumns, desktopColumns }) {
