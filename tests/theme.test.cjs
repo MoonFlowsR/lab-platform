@@ -50,6 +50,24 @@ test('an explicit choice ignores system changes until follow-system is selected'
   store.dispose();
 });
 
+test('mixed preserves its visual preference while using light native controls and browser chrome', async () => {
+  const { createThemeController } = await loadTheme(), f = fixture({ saved: 'mixed', dark: true });
+  const store = createThemeController(f);
+  assert.equal(store.getSnapshot(), 'mixed');
+  assert.equal(f.root.dataset.theme, 'mixed');
+  assert.equal(f.root.style.colorScheme, 'light');
+  assert.equal(f.meta.content, '#f4f6fa');
+  f.system(false); f.system(true);
+  assert.equal(f.root.dataset.theme, 'mixed');
+  store.setPreference('dark');
+  assert.equal(f.meta.content, '#0b1220');
+  store.setPreference('light');
+  assert.equal(f.meta.content, '#f4f6fa');
+  store.setPreference('mixed');
+  assert.equal(f.values.get('platform:theme'), 'mixed');
+  store.dispose();
+});
+
 test('the selected mode is reused on another page without touching account data', async () => {
   const { createThemeController } = await loadTheme(), first = fixture();
   first.values.set('platform-session', 'unchanged');
@@ -109,17 +127,17 @@ test('the HTML bootstrap applies every preference before app resources are loade
   const script = html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
   assert.ok(script);
   assert.ok(html.indexOf('<script>') < html.indexOf('type="module"'));
-  for (const saved of [null, 'light', 'dark', 'system', 'invalid']) for (const dark of [false, true]) {
+  for (const saved of [null, 'light', 'dark', 'mixed', 'system', 'invalid']) for (const dark of [false, true]) {
     const root = { dataset: {}, style: {} }, meta = {};
     vm.runInNewContext(script, {
       localStorage: { getItem: () => saved }, matchMedia: () => ({ matches: dark }),
       document: { documentElement: root, querySelector: () => meta },
     });
-    const preference = ['light', 'dark', 'system'].includes(saved) ? saved : 'system';
+    const preference = ['light', 'dark', 'mixed', 'system'].includes(saved) ? saved : 'system';
     const expected = preference === 'system' ? (dark ? 'dark' : 'light') : preference;
     assert.equal(root.dataset.theme, expected);
     assert.equal(root.dataset.themePreference, preference);
-    assert.equal(root.style.colorScheme, expected);
+    assert.equal(root.style.colorScheme, expected === 'dark' ? 'dark' : 'light');
   }
   const root = { dataset: {}, style: {} };
   assert.doesNotThrow(() => vm.runInNewContext(script, {

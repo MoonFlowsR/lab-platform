@@ -11,14 +11,14 @@
         let preference = "system";
         try {
           const saved = localStorage.getItem("platform:theme");
-          if (["light", "dark", "system"].includes(saved)) preference = saved;
+          if (["light", "dark", "mixed", "system"].includes(saved)) preference = saved;
         } catch { /* Use the system preference when browser storage is unavailable. */ }
         const theme = preference === "system"
           ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
           : preference;
         document.documentElement.dataset.theme = theme;
         document.documentElement.dataset.themePreference = preference;
-        document.documentElement.style.colorScheme = theme;
+        document.documentElement.style.colorScheme = theme === "dark" ? "dark" : "light";
         document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#0b1220" : "#f4f6fa";
       })();
     </script>

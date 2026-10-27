@@ -1,5 +1,5 @@
 export const THEME_STORAGE_KEY = "platform:theme";
-export const THEME_CHOICES = ["light", "dark", "system"];
+export const THEME_CHOICES = ["light", "dark", "mixed", "system"];
 
 const normalize = value => THEME_CHOICES.includes(value) ? value : "system";
 
@@ -16,7 +16,7 @@ export function createThemeController({ root, storage, media, events, meta }) {
     const theme = preference === "system" ? (media.matches ? "dark" : "light") : preference;
     root.dataset.theme = theme;
     root.dataset.themePreference = preference;
-    root.style.colorScheme = theme;
+    root.style.colorScheme = theme === "dark" ? "dark" : "light";
     meta?.setAttribute("content", theme === "dark" ? "#0b1220" : "#f4f6fa");
   }
   function update(value, persist) {

@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import { inflateSync } from 'node:zlib';
 import { openNavigation } from './navigation.mjs';
 import { showModuleRecords } from './module-records.mjs';
 
 // Only the isolated UI harness calls this suite. API data is always synthetic.
 export async function checkThemes(browser, origin, out, snapshot, users) {
-  const results = [], themes = ['light', 'dark'];
+  const results = [], themes = ['light', 'dark', 'mixed'];
   const finance = { id: 94, _id: 94, username: 'qa-theme-finance', display_name: '示例财务', account_type: 'finance', status: 'active' };
   const roles = [...users, finance];
   async function makePage({ width = 390, user = null, theme = null, colorScheme = 'light', blockedStorage = false, context } = {}) {
@@ -36,7 +37,8 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
   }
   async function assertTheme(page, expected, preference = expected) {
     await page.waitForFunction(({ expected, preference }) => document.documentElement.dataset.theme === expected && document.documentElement.dataset.themePreference === preference, { expected, preference });
-    assert.equal(await page.locator('html').evaluate(node => getComputedStyle(node).colorScheme), expected);
+    assert.equal(await page.locator('html').evaluate(node => getComputedStyle(node).colorScheme), expected === 'dark' ? 'dark' : 'light');
+    assert.equal(await page.locator('meta[name="theme-color"]').getAttribute('content'), expected === 'dark' ? '#0b1220' : '#f4f6fa');
   }
   async function contrast(page, selector) {
     return page.locator(selector).evaluateAll(nodes => {
@@ -70,7 +72,7 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
     await page.locator('.platform-theme-trigger').click();
     const menu = page.getByRole('menu', { name: '显示方式', exact: true });
     await menu.waitFor();
-    assert.equal(await menu.getByRole('menuitemradio').count(), 3);
+    assert.equal(await menu.getByRole('menuitemradio').count(), 4);
     assert.equal(await menu.locator('[aria-checked="true"]').count(), 1);
     const box = await menu.boundingBox();
     assert(box.x >= 0 && box.x + box.width <= page.viewportSize().width + 1, `Theme menu fits the viewport: ${label}, ${JSON.stringify(box)}`);
@@ -93,6 +95,14 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
         if (user) await page.getByTestId('task-total').waitFor();
         await assertTheme(page, theme);
         const geometry = await checkGeometry(page, `${view}/${theme}/${width}`);
+        if (user) {
+          const colors = await page.evaluate(() => ({
+            topbar: getComputedStyle(document.querySelector('.workspace-topbar')).backgroundColor,
+            sidebar: getComputedStyle(document.querySelector('.workspace-sidebar')).backgroundColor,
+          }));
+          assert.equal(colors.topbar, theme === 'dark' ? 'rgb(20, 32, 51)' : 'rgb(255, 255, 255)');
+          assert.equal(colors.sidebar, theme === 'dark' ? 'rgb(14, 25, 43)' : theme === 'mixed' ? 'rgb(20, 38, 62)' : 'rgb(255, 255, 255)');
+        }
         const readings = await inspectMenu(page, `${view}/${theme}/${width}`);
         const representative = await contrast(page, '.platform-login-form-heading h2,.platform-login-form-heading p,.help-header h1,.help-subtitle,.workspace-sync-state,.platform-sync-guidance,.workspace-context');
         const lowContrast = representative.filter(row => row.ratio < 4.5);
@@ -151,6 +161,59 @@ export async function checkThemes(browser, origin, out, snapshot, users) {
     assert.deepEqual(errors, []);
     results.push({ themeBehavior: 'keyboard-persistence-help-system', errors });
   } finally { await page.close(); }
+
+  // A one-pixel PNG has one scanline and no preceding pixel/row, so PNG filters
+  // leave its RGB bytes unchanged. This samples rendered output without a dependency.
+  function singlePixelRgb(png) {
+    assert.equal(png.readUInt32BE(16), 1); assert.equal(png.readUInt32BE(20), 1);
+    assert.equal(png[24], 8); assert([2, 6].includes(png[25]));
+    const parts = [];
+    for (let offset = 8; offset < png.length;) {
+      const length = png.readUInt32BE(offset), name = png.toString('ascii', offset + 4, offset + 8);
+      if (name === 'IDAT') parts.push(png.subarray(offset + 8, offset + 8 + length));
+      offset += length + 12;
+    }
+    return [...inflateSync(Buffer.concat(parts)).subarray(1, 4)];
+  }
+  // Verify each mobile repaint in the same mounted workspace, with no refresh or
+  // navigation-drawer interaction. Browser-chrome support is checked through meta;
+  // desktop headless browsers do not expose the phone's native address bar.
+  for (const width of [320, 390]) {
+    const live = await makePage({ width, theme: 'light', user: users.find(user => user.account_type === 'student') });
+    try {
+      await live.page.goto(origin); await live.page.locator('.workspace-topbar').waitFor();
+      await live.page.evaluate(() => { window.qaThemeWorkspace = document.querySelector('.platform-workspace'); });
+      let navigations = 0;
+      live.page.on('framenavigated', frame => { if (frame === live.page.mainFrame()) navigations++; });
+      const frames = [];
+      for (const mode of ['dark', 'light', 'mixed', 'dark', 'mixed', 'light']) {
+        await live.page.locator('.platform-theme-trigger').click();
+        await live.page.getByRole('menuitemradio', { name: ({ light: '浅色模式', dark: '深色模式', mixed: '混合模式' })[mode], exact: true }).click();
+        await live.page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        await assertTheme(live.page, mode);
+        const state = await live.page.evaluate(() => ({
+          background: getComputedStyle(document.querySelector('.workspace-topbar')).backgroundColor,
+          sameWorkspace: window.qaThemeWorkspace === document.querySelector('.platform-workspace'),
+          drawerClosed: document.querySelector('.workspace-menu-button').getAttribute('aria-expanded') === 'false',
+          filter: getComputedStyle(document.querySelector('.workspace-topbar')).backdropFilter,
+        }));
+        const expected = mode === 'dark' ? [20, 32, 51] : [255, 255, 255];
+        assert.equal(state.background, `rgb(${expected.join(', ')})`);
+        assert.equal(state.sameWorkspace, true, 'Theme switching never remounts the workspace');
+        assert.equal(state.drawerClosed, true, 'The repaint must not depend on opening navigation');
+        assert.equal(state.filter, 'none', 'The mobile topbar uses an opaque surface, avoiding stale blur compositing');
+        const box = await live.page.locator('.workspace-topbar').boundingBox();
+        const png = await live.page.screenshot({ clip: { x: Math.round(box.x + 2), y: Math.round(box.y + 2), width: 1, height: 1 }, scale: 'css', animations: 'disabled' });
+        const pixel = singlePixelRgb(png);
+        assert.deepEqual(pixel, expected, `The topbar is visibly repainted after choosing ${mode} at ${width}px`);
+        frames.push({ mode, background: state.background, pixel });
+        if (width === 390 && frames.length <= 3) await live.page.screenshot({ path: path.join(out, `theme-mobile-immediate-${mode}.png`) });
+      }
+      assert.equal(navigations, 0, 'Theme changes do not reload the page');
+      assert.deepEqual(live.errors, []);
+      results.push({ themeImmediateMobileRepaint: true, width, frames, nativeBrowserChrome: 'meta-contract-only', errors: live.errors });
+    } finally { await live.page.close(); }
+  }
 
   // Browser-local changes synchronize across open tabs; account state stays separate.
   const context = await browser.newContext({ viewport: { width: 390, height: 900 }, colorScheme: 'light' });

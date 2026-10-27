@@ -796,14 +796,14 @@
 }
 .platform-login-intro {
   padding: 40px 38px;
-  background: #162b46;
-  color: #fff;
+  background: var(--intro-bg);
+  color: var(--intro-ink);
 }
 .platform-login-brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #a0bce7;
+  color: var(--intro-accent);
   font-size: var(--text-caption);
   letter-spacing: 1px;
   margin-bottom: 34px;
@@ -817,7 +817,7 @@
 .platform-login-lead {
   font-size: var(--text-label);
   line-height: 1.9;
-  color: #adbfda;
+  color: var(--intro-muted);
   margin-top: 12px;
 }
 .platform-login-roles {
@@ -831,7 +831,7 @@
   align-items: flex-start;
 }
 .platform-login-roles .platform-icon {
-  color: #7aa4dd;
+  color: var(--intro-accent);
   margin-top: 3px;
 }
 .platform-login-roles strong {
@@ -840,15 +840,15 @@
 }
 .platform-login-roles p {
   font-size: var(--text-caption);
-  color: #adbfda;
+  color: var(--intro-muted);
   line-height: 1.75;
   margin-top: 3px;
 }
 .platform-login-shared {
   margin-top: 30px;
   padding-top: 20px;
-  border-top: 1px solid #ffffff15;
-  color: #9fb3d0;
+  border-top: 1px solid var(--intro-border);
+  color: var(--intro-muted);
   font-size: var(--text-caption);
   line-height: 1.7;
 }

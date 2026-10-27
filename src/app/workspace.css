@@ -13,7 +13,8 @@
   display: flex;
   flex-direction: column;
   background: var(--sidebar-bg);
-  color: #d4dfef;
+  color: var(--sidebar-ink);
+  border-right: 1px solid var(--sidebar-border);
   z-index: 80;
   padding: 26px 16px 18px;
 }
@@ -25,17 +26,17 @@
   font-weight: 700;
   font-size: var(--text-body);
   line-height: 1.5;
-  color: #fff;
+  color: var(--sidebar-strong);
 }
 .workspace-brand-mark {
   display: grid;
   place-items: center;
   width: 40px;
   height: 44px;
-  border: 1px solid #ffffff27;
+  border: 1px solid var(--sidebar-mark-border);
   border-radius: 12px;
-  background: #ffffff0b;
-  color: #8ab6ff;
+  background: var(--sidebar-mark-bg);
+  color: var(--sidebar-accent);
   flex-shrink: 0;
 }
 .workspace-brand-name { flex: 1; min-width: 0; }
@@ -43,7 +44,7 @@
   display: block;
   font-weight: 400;
   font-size: var(--text-caption);
-  color: #8da3c1;
+  color: var(--sidebar-muted);
   letter-spacing: 1.3px;
   margin-top: 5px;
 }
@@ -52,7 +53,7 @@
   justify-content: space-between;
   font-size: var(--text-caption);
   letter-spacing: 1px;
-  color: #91a6c3;
+  color: var(--sidebar-muted);
   padding: 0 12px 12px;
 }
 .platform-workspace .platform-nav {
@@ -72,7 +73,7 @@
   padding: 11px 13px !important;
   border: 1px solid transparent;
   border-radius: 9px !important;
-  color: #bdcce0;
+  color: var(--sidebar-ink);
   background: transparent;
   text-align: left;
   font-size: var(--text-body) !important;
@@ -80,8 +81,8 @@
   cursor: pointer;
 }
 .platform-workspace .platform-nav button:hover {
-  background: #ffffff0a;
-  color: #fff;
+  background: var(--sidebar-hover);
+  color: var(--sidebar-strong);
 }
 .platform-workspace .platform-nav button[aria-current="page"] {
   background: #2c60cd;
@@ -92,13 +93,18 @@
 }
 .platform-workspace .platform-nav .platform-nav-task-count {
   margin-left: auto;
-  color: #fff;
-  background: #ffffff19;
-  border: 1px solid #ffffff25;
+  color: var(--sidebar-badge-ink);
+  background: var(--sidebar-badge-bg);
+  border: 1px solid var(--sidebar-badge-border);
   font-size: var(--text-caption);
   min-width: 22px;
   line-height: 19px;
   padding: 0 5px;
+}
+.platform-workspace .platform-nav button[aria-current="page"] .platform-nav-task-count {
+  color: #fff;
+  background: #ffffff19;
+  border-color: #ffffff25;
 }
 .workspace-sidebar-footer {
   display: flex;
@@ -107,18 +113,18 @@
   gap: 11px;
   margin-top: auto;
   padding: 18px 4px 0;
-  border-top: 1px solid #ffffff12;
+  border-top: 1px solid var(--sidebar-border);
   font-size: var(--text-label);
 }
 .workspace-sidebar-footer > div {
   min-width: 0;
   overflow-wrap: anywhere;
 }
-.workspace-sidebar-footer .platform-person-name { --person-detail-color: #a6bad4; }
+.workspace-sidebar-footer .platform-person-name { --person-detail-color: var(--sidebar-muted); }
 .workspace-sidebar-footer .platform-person-mentors { font-size: var(--text-caption); }
 .workspace-brand, .workspace-nav-caption { flex-shrink: 0; }
 .workspace-sidebar-footer .platform-person-suffix {
-  color: #91a6c3;
+  color: var(--sidebar-muted);
   font-size: var(--text-caption);
   font-weight: 500;
   white-space: nowrap;
@@ -127,9 +133,9 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: #314866;
-  border: 1px solid #526784;
-  color: #e5efff;
+  background: var(--sidebar-avatar-bg);
+  border: 1px solid var(--sidebar-avatar-border);
+  color: var(--sidebar-avatar-ink);
   width: 36px;
   height: 36px;
   flex-shrink: 0;
@@ -149,8 +155,9 @@
   justify-content: space-between;
   gap: 16px;
   padding: 10px var(--workspace-gutter);
-  background: var(--topbar-bg);
-  backdrop-filter: blur(16px);
+  background-color: var(--topbar-bg);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   border-bottom: 1px solid var(--line);
 }
 .workspace-topbar-primary {
@@ -435,9 +442,12 @@
   }
   .workspace-nav-close {
     margin-left: auto;
-    color: #d1def1;
+    color: var(--sidebar-strong);
   }
   .workspace-topbar {
+    background-color: var(--surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     padding: 8px 20px;
