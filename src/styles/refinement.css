@@ -1,15 +1,15 @@
 /* Shared layout: compact controls, readable records, consistent detail disclosure. */
-.platform-action-notice{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:1000;max-width:min(640px,calc(100% - 24px));display:flex;align-items:center;gap:16px;padding:12px 16px;border:1px solid #93c5fd;border-radius:12px;background:#eff6ff;color:#1e3a8a;box-shadow:0 8px 26px #0f172a20;font-size: var(--text-body);line-height:1.6}
+.platform-action-notice{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:1000;max-width:min(640px,calc(100% - 24px));display:flex;align-items:center;gap:16px;padding:12px 16px;border:1px solid var(--accent-border);border-radius:12px;background:var(--accent-soft);color:var(--accent-ink);box-shadow:0 8px 26px #00000012;font-size: var(--text-body);line-height:1.6}
 .platform-action-notice button{border:0;background:transparent;color:inherit;font-size:24px;min-width:32px;min-height:32px;cursor:pointer}
-.platform-filter-panel{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:14px 18px;margin-bottom:16px;min-width:0}
-.platform-filter-panel-heading{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.platform-filter-panel-heading h2{margin:0;font-size: var(--text-body)}.platform-filter-reset{margin-left:auto;border:0;background:transparent;color:#2563eb;padding:6px 0;cursor:pointer;font-size: var(--text-label)}.platform-filter-toggle{display:none}.platform-filter-summary{margin:4px 0 12px;font-size: var(--text-caption);line-height:1.6;color:#64748b;overflow-wrap:anywhere}
-.platform-filter-panel .platform-filter-caption{font-size: var(--text-caption);color:#64748b;margin:10px 0 0}
-.platform-table-details summary{color:#2563eb;cursor:pointer;white-space:nowrap;min-height:30px;display:flex;align-items:center;gap:6px}.platform-table-details summary::after{content:'＋'}.platform-table-details[open] summary::after{content:'−'}
-.platform-table-details dl{display:grid;grid-template-columns:minmax(120px,1fr);min-width:180px;max-width:280px;gap:10px;margin:10px 0;white-space:normal}.platform-table-details dt{color:#64748b;font-size: var(--text-caption)}.platform-table-details dd{margin:3px 0 0;overflow-wrap:anywhere;line-height:1.6}
+.platform-filter-panel{background:var(--surface);border:1px solid var(--line-strong);border-radius:14px;padding:14px 18px;margin-bottom:16px;min-width:0}
+.platform-filter-panel-heading{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.platform-filter-panel-heading h2{margin:0;font-size: var(--text-body)}.platform-filter-reset{margin-left:auto;border:0;background:transparent;color:var(--accent-ink);padding:6px 0;cursor:pointer;font-size: var(--text-label)}.platform-filter-toggle{display:none}.platform-filter-summary{margin:4px 0 12px;font-size: var(--text-caption);line-height:1.6;color:var(--muted);overflow-wrap:anywhere}
+.platform-filter-panel .platform-filter-caption{font-size: var(--text-caption);color:var(--muted);margin:10px 0 0}
+.platform-table-details summary{color:var(--accent-ink);cursor:pointer;white-space:nowrap;min-height:30px;display:flex;align-items:center;gap:6px}.platform-table-details summary::after{content:'＋'}.platform-table-details[open] summary::after{content:'−'}
+.platform-table-details dl{display:grid;grid-template-columns:minmax(120px,1fr);min-width:180px;max-width:280px;gap:10px;margin:10px 0;white-space:normal}.platform-table-details dt{color:var(--muted);font-size: var(--text-caption)}.platform-table-details dd{margin:3px 0 0;overflow-wrap:anywhere;line-height:1.6}
 .platform-data-table td{vertical-align:middle}.platform-table-desktop .platform-data-table{min-width:600px!important}.platform-table-desktop td[data-label="材料"],.platform-table-desktop td[data-label="物品"],.platform-table-desktop td[data-label="名称"],.platform-table-desktop td[data-label="对象"],.platform-table-desktop td[data-label="位置"]{white-space:normal!important;min-width:100px;max-width:240px;overflow-wrap:anywhere}
 @media(max-width:640px){
  .platform-filter-bar{padding:10px!important;margin-bottom:10px!important;gap:8px!important}
- .platform-filter-panel{padding:10px 12px;margin-bottom:12px;border-radius:12px}.platform-filter-panel-heading h2{font-size: var(--text-body)}.platform-filter-toggle{display:block;margin-left:auto;border:0;background:transparent;color:#334155;padding:6px 0;font-size: var(--text-label);cursor:pointer}.platform-filter-reset{margin-left:0}.platform-filter-summary{margin:2px 0 0}.platform-filter-panel-body{display:none;padding-top:10px}.platform-filter-panel-body.is-open{display:block}
+ .platform-filter-panel{padding:10px 12px;margin-bottom:12px;border-radius:12px}.platform-filter-panel-heading h2{font-size: var(--text-body)}.platform-filter-toggle{display:block;margin-left:auto;border:0;background:transparent;color:var(--ink-secondary);padding:6px 0;font-size: var(--text-label);cursor:pointer}.platform-filter-reset{margin-left:0}.platform-filter-summary{margin:2px 0 0}.platform-filter-panel-body{display:none;padding-top:10px}.platform-filter-panel-body.is-open{display:block}
  .platform-action-notice{bottom:10px;padding:10px 12px;font-size: var(--text-label)}
 }
 
@@ -20,10 +20,10 @@
 .platform-login .platform-action-notice{position:static;transform:none;max-width:none;margin-top:16px;box-shadow:none}
 
 .platform-supplier-history { margin-top: 10px; min-width: 0; font-size: var(--text-body); overflow-wrap: anywhere; }
-.platform-supplier-history > summary { cursor: pointer; color: #315a85; font-weight: 600; padding: 6px 0; }
-.platform-supplier-change { border-left: 3px solid #a9bed4; margin: 8px 0; padding: 2px 0 2px 12px; }
+.platform-supplier-history > summary { cursor: pointer; color: var(--accent-ink); font-weight: 600; padding: 6px 0; }
+.platform-supplier-change { border-left: 3px solid var(--accent-border); margin: 8px 0; padding: 2px 0 2px 12px; }
 .platform-supplier-change p { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 5px 0; }
-.platform-supplier-change time, .platform-supplier-sync-note { color: #5b6878; font-size: var(--text-label); }
+.platform-supplier-change time, .platform-supplier-sync-note { color: var(--muted); font-size: var(--text-label); }
 
 
 

@@ -43,9 +43,9 @@
 }
 .platform-request-scope .platform-search-select { width: 118px !important; min-width: 0; }
 .platform-request-scope input {
-  color: var(--accent);
+  color: var(--accent-ink);
   background: var(--accent-soft) !important;
-  border-color: #b4cafa !important;
+  border-color:var(--accent-border) !important;
   font-weight: 750;
 }
 .platform-request-scope > small {

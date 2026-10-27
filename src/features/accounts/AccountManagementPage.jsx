@@ -58,7 +58,7 @@ function AccountManagementPage({ task, accounts = [], allAccounts = [], teachers
           a.display_name || a.username,
           accountTypeLabels[a.account_type] || a.account_type,
           <Badge key="status" text={accountStatusLabels[a.status] || a.status || "启用中"} />,
-          a.account_type === "student" ? a.student_profile ? `${a.student_profile.graduation_year}年毕业 / 合作结束` : <strong key="profile" style={{color:"#b91c1c"}}>待完善</strong> : "—",
+          a.account_type === "student" ? a.student_profile ? `${a.student_profile.graduation_year}年毕业 / 合作结束` : <strong key="profile" style={{color:"var(--danger-ink)"}}>待完善</strong> : "—",
           formatDate(a.created_at),
           <div key="actions" style={styles.buttonRowCompact}>
             {["teacher","finance"].includes(a.account_type) && <button style={styles.lightButton} onClick={()=>changeRole(a)}>{a.account_type === "finance" ? "设为教师" : "设为财务"}</button>}

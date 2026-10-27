@@ -66,7 +66,7 @@ export default function ReportsPage({ currentUser, onReimbursementChange, data, 
         <Field label="时间范围"><SearchableSelect value={range} onChange={setRange} clearOnInput={false} options={[{ value: 'all', label: '全部时间' }, { value: 'custom', label: '自定义日期范围' }]} placeholder="搜索或选择时间范围" fixedOptions={['all']} /></Field>
         {range === 'custom' && <><Field label="开始日期"><DateInput value={startDate} onChange={setStartDate} /></Field><Field label="结束日期"><DateInput value={endDate} onChange={setEndDate} /></Field></>}
       </div>
-      {invalidRange && <p role="alert" style={{ ...styles.note, color: '#b91c1c', fontWeight: 700 }}>开始日期不能晚于结束日期，请调整时间范围。</p>}
+      {invalidRange && <p role="alert" style={{ ...styles.note, color: 'var(--danger-ink)', fontWeight: 700 }}>开始日期不能晚于结束日期，请调整时间范围。</p>}
       <details className="platform-report-basis"><summary>统计口径</summary><ul><li>测试、加工、维修：按已完成工单最终金额统计。</li><li>采购：已入库按确认的最终金额，未入库及未确认最终金额的旧记录按预计金额统计。</li><li>日期范围包含起止当天。</li></ul><a href={`/help#${({ admin: 'admin-reports', teacher: 'teacher-reports', finance: 'finance-reimbursement' })[currentUser?.account_type] || 'student-exports'}`}>完整统计说明</a></details>
 
     </FilterPanel>

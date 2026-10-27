@@ -31,6 +31,80 @@ business styling stays with features. */
   --radius-control: 8px;
   --shadow: 0 2px 5px #1c365707, 0 8px 24px #1c365704;
   --focus-ring: 0 0 0 3px #245bdd25;
+  color-scheme: light;
+  --ink-strong: #10223b;
+  --ink-secondary: #475569;
+  --placeholder: #607089;
+  --field-bg: #ffffff;
+  --surface-hover: #edf3ff;
+  --accent-ink: #245bdd;
+  --accent-border: #adc4ef;
+  --on-accent: #ffffff;
+  --success-ink: #166a4b;
+  --success-soft: #ecfdf5;
+  --success-border: #a5d9c2;
+  --warning-ink: #8c500b;
+  --warning-soft: #fff5df;
+  --warning-border: #dfb56d;
+  --danger-ink: #b91c35;
+  --danger-soft: #fef2f2;
+  --danger-border: #edb8bf;
+  --purple: #7144b7;
+  --purple-ink: #6d28b5;
+  --purple-soft: #f5f0ff;
+  --purple-border: #cdb5ec;
+  --cyan-ink: #0e7490;
+  --mark-bg: #ffdf75;
+  --mark-ink: #493400;
+  --overlay: #10223c66;
+  --sidebar-bg: #14263e;
+  --topbar-bg: #ffffffed;
+}
+@media screen {
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #0b1220;
+  --surface: #142033;
+  --surface-muted: #19283c;
+  --surface-hover: #223751;
+  --field-bg: #101b2c;
+  --ink: #e3ebf6;
+  --ink-strong: #f3f6fc;
+  --ink-secondary: #b9c7da;
+  --muted: #a6b5ca;
+  --placeholder: #93a5c0;
+  --line: #34475f;
+  --line-strong: #4c6483;
+  --accent: #386edc;
+  --accent-hover: #2b5dc5;
+  --accent-ink: #9bbfff;
+  --accent-soft: #1b3357;
+  --accent-border: #4b75ac;
+  --success: #167650;
+  --success-ink: #85dfba;
+  --success-soft: #14362f;
+  --success-border: #387f69;
+  --warning: #a5660c;
+  --warning-ink: #ffd08b;
+  --warning-soft: #3c2d1b;
+  --warning-border: #9c7239;
+  --danger: #be3544;
+  --danger-ink: #ffacb9;
+  --danger-soft: #3c202b;
+  --danger-border: #955063;
+  --purple: #7144b7;
+  --purple-ink: #d0b8ff;
+  --purple-soft: #2d2546;
+  --purple-border: #75618e;
+  --cyan-ink: #88d8ec;
+  --mark-bg: #695219;
+  --mark-ink: #fff1b0;
+  --overlay: #000000a6;
+  --sidebar-bg: #0e192b;
+  --topbar-bg: #142033f2;
+  --shadow: 0 2px 6px #00000020, 0 12px 30px #00000028;
+  --focus-ring: 0 0 0 3px #9bbfff55;
+}
 }
 @media (min-width: 1800px) {
   :root {
@@ -93,7 +167,7 @@ textarea {
 }
 .platform-shell input::placeholder,
 .platform-shell textarea::placeholder {
-  color: #778398;
+  color: var(--placeholder);
 }
 .platform-shell button:not(:disabled):active {
   transform: translateY(1px);
@@ -107,6 +181,7 @@ textarea {
   }
 }
 @media print {
+  :root { color-scheme: light !important; }
   .workspace-sidebar,
   .workspace-topbar,
   .workspace-statusbar,

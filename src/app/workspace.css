@@ -12,7 +12,7 @@
   width: var(--sidebar-width);
   display: flex;
   flex-direction: column;
-  background: #14263e;
+  background: var(--sidebar-bg);
   color: #d4dfef;
   z-index: 80;
   padding: 26px 16px 18px;
@@ -149,7 +149,7 @@
   justify-content: space-between;
   gap: 16px;
   padding: 10px var(--workspace-gutter);
-  background: #ffffffed;
+  background: var(--topbar-bg);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--line);
 }
@@ -191,14 +191,14 @@
   cursor: pointer;
   font-size: var(--text-label);
   white-space: nowrap;
-  color: #4c5f78;
+  color: var(--ink-secondary);
 }
 .workspace-topbar-actions > :hover {
   background: var(--surface-muted);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 .workspace-topbar-actions > .workspace-tasks {
-  color: var(--accent);
+  color: var(--accent-ink);
   background: var(--accent-soft);
   margin-right: 8px;
 }
@@ -208,7 +208,7 @@
   min-width: 22px;
   height: 22px;
   padding: 0 4px;
-  background: #245bdd;
+  background: var(--accent);
   color: #fff;
   border-radius: 6px;
   font-size: var(--text-caption);
@@ -242,8 +242,8 @@
   width: 30px;
   height: 30px;
   background: var(--accent-soft);
-  border-color: #c8d8f7;
-  color: var(--accent);
+  border-color: var(--accent-border);
+  color: var(--accent-ink);
   font-size: var(--text-caption);
 }
 .workspace-topbar-actions > .workspace-current-account:hover {
@@ -276,11 +276,11 @@
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 6px;
-  color: #4c5f78;
+  color: var(--ink-secondary);
   background: var(--surface);
   cursor: pointer;
 }
-.workspace-sync-control:hover { color: var(--accent); background: var(--accent-soft); }
+.workspace-sync-control:hover { color: var(--accent-ink); background: var(--accent-soft); }
 .workspace-sync-control .platform-icon { width: 18px; height: 18px; }
 .workspace-sync-state {
   display: inline-flex;
@@ -298,18 +298,18 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #16805b;
+  background: var(--success-ink);
   flex-shrink: 0;
 }
 .workspace-sync-dot.is-busy {
-  background: #ca870c;
+  background: var(--warning-ink);
 }
 .workspace-sync-dot.is-warning {
-  background: #c83d44;
+  background: var(--danger-ink);
 }
 .workspace-statusbar .platform-sync-guidance {
   font-size: inherit;
-  color: #b91c1c;
+  color: var(--danger-ink);
   font-weight: 750;
   line-height: inherit;
   margin-left: 4px;
@@ -351,11 +351,11 @@
   margin-top: 28px;
   border-top: 1px solid var(--line);
   padding-top: 18px;
-  color: #6b7c93;
+  color: var(--muted);
   font-size: var(--text-caption);
 }
 .workspace-footer a:hover {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 .workspace-menu-button,
 .workspace-nav-close {
@@ -364,7 +364,7 @@
 .workspace-scrim {
   position: fixed;
   inset: 0;
-  background: #10203980;
+  background: var(--overlay);
   backdrop-filter: blur(3px);
   z-index: 85;
 }

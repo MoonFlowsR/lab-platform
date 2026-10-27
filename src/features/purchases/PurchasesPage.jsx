@@ -213,7 +213,7 @@ function PurchaseForm({ teacherAccounts = [], materialCatalog = [], onSubmit, pu
 
     {show && <>
       <p style={styles.requiredHint}><span style={styles.requiredStar}>*</span> 为必填项</p>
-      <p role="note" style={{ color: "#b91c1c", fontSize: "var(--text-label)", lineHeight: 1.6, margin: "6px 0 12px" }}>若物品名称不存在，请先切换采购类别或尝试其他表示方法；仍未找到时选择“其它”填写，保存后自动加入列表。</p>
+      <p role="note" style={{ color: "var(--danger-ink)", fontSize: "var(--text-label)", lineHeight: 1.6, margin: "6px 0 12px" }}>若物品名称不存在，请先切换采购类别或尝试其他表示方法；仍未找到时选择“其它”填写，保存后自动加入列表。</p>
 
       {latestSame && <div style={styles.warningBox}>
         <b>检测到历史同名采购：</b>{formatPublicNumber(latestSame.public_id)}，最近数量 {latestSame.quantity} {latestSame.unit}，状态“{latestSame.status}”；当前库存：{currentStock}。请确认历史采购已用完或现有库存不足后再提交。

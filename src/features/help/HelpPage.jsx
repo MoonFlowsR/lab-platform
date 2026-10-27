@@ -9,6 +9,7 @@ import { CommentAudit, CommentComposer, CommentThread, HelpDialog, commentReques
 import { liveCommentRoots, sectionAnnotations } from './help-annotations.js';
 import { createStudentNameIndex, displayStudentAccount, displayStudentComment } from '../accounts/student-name-display.js';
 import { HELP_VIEWS, helpRoleForAccount, findHelpSection, helpSectionsForView, legacyCommentSections } from './help-role-sections.js';
+import ThemeSwitcher from '../../shared/components/ThemeSwitcher.jsx';
 
 function initialHelpView(currentUser) {
   const role = helpRoleForAccount(currentUser?.account_type);
@@ -239,7 +240,7 @@ export default function HelpPage({ currentUser }) {
   return <div className="help-page" id="help-top">
     <header className="help-header">
       <div><p className="help-brand">{platformSettings.title}</p><h1>平台使用帮助</h1><p className="help-subtitle">更新于 {content.updated}</p></div>
-      <a className="help-return" href="/">返回平台</a>
+      <div className="help-header-actions"><ThemeSwitcher /><a className="help-return" href="/">返回平台</a></div>
     </header>
     <main className="help-main">
       <section className="help-role-switch" aria-label="选择帮助类别">

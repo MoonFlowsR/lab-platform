@@ -42,7 +42,7 @@ function RequestHistorySection({ title, rows, renderCard, emptyText, className =
   </section>;
 }
 function ReviewTeacherField({ teachers, value, onChange }) {
-  return <Field required label="审核教师"><SearchableSelect required value={value || ""} onChange={onChange} options={teachers.map(teacher => ({ value: teacher.username, label: teacher.display_name && teacher.display_name !== teacher.username ? `${teacher.display_name}（${teacher.username}）` : teacher.display_name || teacher.username }))} placeholder="搜索或选择审核教师" />{teachers.length === 0 && <small style={{ ...styles.muted, color: "#b91c1c" }}>暂无可选教师，请联系管理员启用教师账号。</small>}</Field>;
+  return <Field required label="审核教师"><SearchableSelect required value={value || ""} onChange={onChange} options={teachers.map(teacher => ({ value: teacher.username, label: teacher.display_name && teacher.display_name !== teacher.username ? `${teacher.display_name}（${teacher.username}）` : teacher.display_name || teacher.username }))} placeholder="搜索或选择审核教师" />{teachers.length === 0 && <small style={{ ...styles.muted, color: "var(--danger-ink)" }}>暂无可选教师，请联系管理员启用教师账号。</small>}</Field>;
 }
 function RequestViewScope({ scope, onChange, label, moduleName, recordLabel = "进度" }) {
   return <section aria-label={label} className="platform-request-scope">

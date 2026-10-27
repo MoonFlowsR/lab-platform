@@ -5,7 +5,7 @@
   gap: 11px;
   min-height: 42px;
   min-width: 0;
-  color: #687c96;
+  color: var(--muted);
 }
 .platform-page-search input {
   width: 100%;
@@ -35,7 +35,7 @@
 }
 .platform-page-search button:hover {
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 .platform-workspace :is(.platform-filter-bar, .platform-module-filters) {
   padding: 7px 16px !important;
@@ -126,14 +126,14 @@
   justify-content: center;
   gap: 7px;
   border: 1px solid var(--line-strong) !important;
-  color: #35506e !important;
+  color: var(--ink-secondary) !important;
   font-size: var(--text-label);
   min-height: 38px !important;
   background: var(--surface) !important;
 }
 .platform-export-button:hover {
-  color: var(--accent) !important;
-  border-color: #adc4ef !important;
+  color: var(--accent-ink) !important;
+  border-color: var(--accent-border) !important;
   background: var(--accent-soft) !important;
 }
 .platform-filter-panel {
@@ -161,7 +161,7 @@
   white-space: nowrap;
 }
 .platform-filter-panel-heading h2 svg {
-  color: #6b809d;
+  color: var(--muted);
 }
 .platform-filter-reset {
   font-size: var(--text-caption);
@@ -224,7 +224,7 @@
   .platform-form-notes { grid-template-columns: minmax(0, 1fr); }
 }
 .platform-field:focus-within > div:first-child {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 .platform-field input[type="number"] {
   font-variant-numeric: tabular-nums;
@@ -268,16 +268,16 @@
   font-weight: 680;
 }
 .platform-request-record {
-  box-shadow: 0 2px 4px #19385504;
+  box-shadow: 0 2px 4px #00000012;
 }
 .platform-request-record h3 {
   font-weight: 700;
-  color: #183452;
+  color: var(--ink-strong);
 }
 .platform-heading-count { display: inline-block; white-space: nowrap; }
 .platform-request-record > div:first-child {
   padding-bottom: 10px;
-  border-bottom: 1px solid #edf0f5;
+  border-bottom: 1px solid var(--line-strong);
 }
 .platform-request-record .platform-detail-grid {
   margin: 12px 0 !important;
@@ -286,7 +286,7 @@
   grid-column: span 2;
 }
 .platform-info.is-amount > div:last-child {
-  color: #2158bd !important;
+  color: var(--accent-ink) !important;
   font-size: var(--text-key) !important;
   font-weight: 750 !important;
   white-space: nowrap;
@@ -297,7 +297,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  border: 1px solid #eef2f7;
+  border: 1px solid var(--line-strong);
 }
 .platform-info .platform-reimbursement-state {
   display: flex;
@@ -314,7 +314,7 @@
 }
 .platform-record-actions {
   padding-top: 12px;
-  border-top: 1px solid #e8edf4;
+  border-top: 1px solid var(--line-strong);
 }
 .platform-record-actions.is-compact {
   padding-top: 0;
@@ -348,7 +348,7 @@
   padding-block: 12px !important;
 }
 .platform-data-table tbody tr:hover {
-  background: #f5f8fe;
+  background: var(--accent-soft);
 }
 .platform-table-details summary {
   font-size: var(--text-caption);
@@ -357,7 +357,7 @@
   border-radius: 8px;
   background: var(--surface-muted);
   padding: 9px 12px;
-  color: #5b6b81;
+  color: var(--muted);
   font-size: var(--text-caption);
 }
 .platform-record-limit strong {
@@ -379,13 +379,13 @@
   align-items: center;
   gap: 12px;
   border: 0 !important;
-  background: #f8fafc;
+  background: var(--surface-muted);
   border-radius: 8px !important;
   padding: 18px !important;
   font-size: var(--text-label);
 }
 .platform-empty-state svg {
-  color: #8c9eb4;
+  color: var(--muted);
 }
 .platform-business-metrics:not(.is-single) {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
@@ -405,7 +405,7 @@
 }
 .platform-business-statuses dt {
   font-size: var(--text-label);
-  color: #435770;
+  color: var(--ink-secondary);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -416,24 +416,24 @@
   border: 0;
   padding: 3px 0;
   font-size: 23px;
-  color: #203d65;
+  color: var(--ink-strong);
   font-weight: 650;
   cursor: pointer;
 }
 .platform-status-jump span {
   font-size: var(--text-caption);
-  color: #8b9db6;
+  color: var(--muted);
 }
 .platform-status-jump:hover {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 .platform-status-jump:hover span {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 .platform-business-footer {
   padding-top: 12px;
   font-size: var(--text-label);
-  color: #435770;
+  color: var(--ink-secondary);
 }
 .platform-business-statuses dd { font-size: 24px; }
 .platform-business-footer b { font-size: var(--text-body); font-variant-numeric: tabular-nums; }
@@ -477,7 +477,7 @@
 .platform-business-amount b {
   font-size: var(--text-key);
   font-weight: 750;
-  color: #2158bd;
+  color: var(--accent-ink);
   white-space: nowrap;
 }
 .platform-business-amount dd { line-height: 1.5; }
@@ -526,7 +526,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px 16px;
-  border-bottom: 1px solid #edf1f7;
+  border-bottom: 1px solid var(--line-strong);
   padding-bottom: 14px;
   margin-bottom: 14px;
 }
@@ -552,7 +552,7 @@
 .platform-task-report-link {
   font-size: var(--text-caption);
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-ink);
   border: 0;
   min-height: 38px;
 }
@@ -561,16 +561,16 @@
   gap: 12px;
 }
 .platform-task-link {
-  background: #f8faff;
-  border: 1px solid #dfe8f7;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
   border-radius: 10px;
   padding: 16px;
   gap: 10px 16px;
 }
 .platform-task-link:hover {
-  background: #f0f5ff;
-  border-color: #a3bde9;
-  box-shadow: 0 4px 14px #214b8a0b;
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+  box-shadow: 0 4px 14px #00000012;
 }
 .platform-task-name {
   display: flex;
@@ -581,7 +581,7 @@
   text-wrap: pretty;
 }
 .platform-task-name .platform-icon {
-  color: #7797c0;
+  color: var(--accent-ink);
   flex-shrink: 0;
 }
 .platform-task-link > strong {
@@ -597,7 +597,7 @@
   container-type: inline-size;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px 12px;
-  border-color: #bacdeb;
+  border-color: var(--accent-border);
 }
 .platform-task-link.has-amount .platform-task-name { grid-column: 1 / -1; grid-row: 1; }
 .platform-task-link.has-amount > strong { grid-column: 1; grid-row: 3; font-size: 22px; }
@@ -609,17 +609,17 @@
   font-weight: 750;
   line-height: 1.3;
   letter-spacing: -0.5px;
-  color: #174ca6;
+  color: var(--accent-ink);
   white-space: nowrap;
   padding-bottom: 10px;
-  border-bottom: 1px solid #dfe8f7;
+  border-bottom: 1px solid var(--accent-border);
 }
 .platform-reimbursement-figures {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
 }
 .platform-reimbursement-figures > div { container-type: inline-size; }
 .platform-reimbursement-figures dt { font-size: var(--text-body); }
-.platform-reimbursement-figures dt span { font-size: var(--text-label); font-weight: 600; color: #435770; }
+.platform-reimbursement-figures dt span { font-size: var(--text-label); font-weight: 600; color: var(--ink-secondary); }
 .platform-reimbursement-figures dd:not(.platform-reimbursement-breakdown) {
   font-size: clamp(24px, 9cqi, var(--text-metric));
   line-height: 1.35;
@@ -631,26 +631,26 @@
 .platform-reimbursement-breakdown li > span { justify-content: space-between; }
 .platform-reimbursement-breakdown strong { font-size: var(--text-key); white-space: nowrap; color: var(--reimbursement-color); }
 .platform-reimbursement-state { font-size: var(--text-body); font-weight: 650; }
-.platform-reimbursement-check { min-height: 44px; color: #92400e; }
+.platform-reimbursement-check { min-height: 44px; color: var(--warning-ink); }
 .platform-reimbursement-check input { width: 20px; height: 20px; }
-.platform-reimbursement-state .is-unreimbursed { color: #92400e; font-weight: 700; }
+.platform-reimbursement-state .is-unreimbursed { color: var(--warning-ink); font-weight: 700; }
 .platform-reimbursement-state[data-reimbursed="false"] > :is(.platform-reimbursement-check, .is-unreimbursed) {
-  background: #fff5df;
+  background: var(--warning-soft);
   border-radius: 6px;
   padding: 3px 8px;
 }
-.platform-inventory-metrics dt, .platform-flow-metrics dt { font-size: var(--text-label); font-weight: 600; color: #435770; }
+.platform-inventory-metrics dt, .platform-flow-metrics dt { font-size: var(--text-label); font-weight: 600; color: var(--ink-secondary); }
 .platform-inventory-metrics dd, .platform-flow-metrics dd { font-size: 26px; font-variant-numeric: tabular-nums; }
 .platform-warning-tags strong { font-size: var(--text-label); }
 .platform-info:is([data-label="工作量"], [data-label$="数量"], [data-label$="状态"]) > div:last-child { font-weight: 700 !important; }
 .platform-data-table td:is([data-label$="金额"], [data-label="金额（元）"], [data-label*="费用"], [data-label*="总测试费"], [data-label*="总加工费"], [data-label*="总维修费"]) {
   font-weight: 750;
   font-size: var(--text-key);
-  color: #2158bd;
+  color: var(--accent-ink);
   white-space: nowrap;
 }
 .platform-mobile-record :is([data-label$="金额"], [data-label="金额（元）"], [data-label*="费用"]) { grid-column: 1 / -1; }
-.platform-mobile-record :is([data-label$="金额"], [data-label="金额（元）"], [data-label*="费用"]) dd { font-size: var(--text-key); font-weight: 750; color: #2158bd; white-space: nowrap; }
+.platform-mobile-record :is([data-label$="金额"], [data-label="金额（元）"], [data-label*="费用"]) dd { font-size: var(--text-key); font-weight: 750; color: var(--accent-ink); white-space: nowrap; }
 .platform-data-table td[data-label="当前库存"], .platform-mobile-record [data-label="当前库存"] dd { font-size: var(--text-heading); font-weight: 750; }
 
 .platform-task-empty {
@@ -663,12 +663,12 @@
 .platform-task-empty > span {
   display: grid;
   place-items: center;
-  border: 1px solid #cfe5d9;
+  border: 1px solid var(--success-border);
   border-radius: 50%;
-  color: #27855b;
+  color: var(--success-ink);
   width: 45px;
   height: 45px;
-  background: #f0f9f4;
+  background: var(--success-soft);
 }
 .platform-task-empty p {
   margin: 0;
@@ -685,11 +685,11 @@
   font-size: var(--text-caption);
 }
 .platform-overview-warnings .platform-task-link {
-  background: #fff;
-  border-color: #e4e9f1;
+  background: var(--surface);
+  border-color: var(--line-strong);
 }
 .platform-overview-warnings .platform-task-name .platform-icon {
-  color: #b38b4c;
+  color: var(--warning-ink);
 }
 .platform-overview-shortcuts {
   border-top: 1px solid var(--line);
@@ -698,7 +698,7 @@
 }
 .platform-overview-shortcuts button {
   font-size: var(--text-caption);
-  background: #f7f9fd;
+  background: var(--surface-muted);
   border: 0;
   min-height: 36px;
   padding: 8px 10px;
@@ -707,9 +707,9 @@
   background: var(--accent-soft);
 }
 .platform-task-filter {
-  border: 1px solid #abc5ef;
+  border: 1px solid var(--accent-border);
   border-left: 4px solid var(--accent);
-  background: #f5f9ff;
+  background: var(--accent-soft);
   border-radius: 10px;
 }
 .platform-task-filter h2 {
@@ -718,11 +718,11 @@
 }
 .platform-task-filter button {
   font-size: var(--text-caption);
-  background: #fff;
+  background: var(--surface);
   min-height: 38px;
 }
 .platform-task-filter button:last-child {
-  border-color: #8fafe1;
+  border-color: var(--accent-border);
 }
 .platform-loading {
   padding: 40px;
@@ -747,8 +747,8 @@
   place-items: center;
   border: 1px solid var(--line);
   border-radius: 18px;
-  background: #fff;
-  color: var(--accent);
+  background: var(--surface);
+  color: var(--accent-ink);
   box-shadow: var(--shadow);
 }
 .platform-loading-lines {
@@ -759,7 +759,7 @@
 .platform-loading-lines i {
   height: 8px;
   border-radius: 8px;
-  background: #e2e9f4;
+  background: var(--surface-muted);
   animation: platform-loading-pulse 1.3s ease-in-out infinite alternate;
 }
 .platform-loading-lines i:nth-child(2) {
@@ -780,7 +780,7 @@
   place-items: center;
   min-height: 100dvh !important;
   background:
-    radial-gradient(ellipse at 14% 20%, #dfeaff70, transparent 45%),
+    radial-gradient(ellipse at 14% 20%, var(--accent-soft), transparent 45%),
     var(--canvas) !important;
   padding: 36px !important;
 }
@@ -788,10 +788,10 @@
   display: grid;
   grid-template-columns: 1.1fr 1fr;
   width: min(100%, 960px);
-  border: 1px solid #dbe3ef;
+  border: 1px solid var(--line-strong);
   border-radius: 20px;
-  background: #fff;
-  box-shadow: 0 24px 70px #213b6710;
+  background: var(--surface);
+  box-shadow: 0 24px 70px #00000012;
   overflow: hidden;
 }
 .platform-login-intro {
@@ -882,9 +882,9 @@
   color: var(--muted) !important;
 }
 .platform-login-form > div:nth-child(2) button[aria-pressed="true"] {
-  background: #fff !important;
-  color: var(--accent) !important;
-  box-shadow: 0 1px 4px #12335914;
+  background: var(--surface) !important;
+  color: var(--accent-ink) !important;
+  box-shadow: 0 1px 4px #00000012;
 }
 .platform-login-form form {
   gap: 18px !important;
@@ -1152,8 +1152,8 @@
   align-items: start;
 }
 .platform-task-module {
-  background: #f7faff;
-  border: 1px solid #dfe8f7;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
   padding: 14px;
   border-radius: 10px;
 }
@@ -1166,7 +1166,7 @@
   margin: 0 0 8px;
 }
 .platform-task-module h3 svg {
-  color: #708fb7;
+  color: var(--muted);
 }
 .platform-task-module .platform-task-link {
   min-height: 46px !important;
@@ -1179,7 +1179,7 @@
   box-shadow: none;
 }
 .platform-task-module .platform-task-link + .platform-task-link {
-  border-top: 1px solid #e4ebf7;
+  border-top: 1px solid var(--line-strong);
 }
 .platform-task-module .platform-task-name {
   font-size: var(--text-body);
@@ -1207,7 +1207,7 @@
   font-variant-numeric: tabular-nums;
 }
 .platform-request-reference > span {
-  color: #506783;
+  color: var(--ink-secondary);
   font-size: var(--text-caption);
   letter-spacing: 0.2px;
 }
@@ -1245,10 +1245,10 @@
   display: grid;
   justify-items: center;
   gap: 12px;
-  border: 1px solid #eed3d5;
+  border: 1px solid var(--danger-border);
   padding: 40px 20px;
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface);
   text-align: center;
 }
 .platform-page-error > svg {
@@ -1266,7 +1266,7 @@
   padding: 10px 18px;
   border-radius: 8px;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   cursor: pointer;
 }
 .platform-dialog {
@@ -1344,7 +1344,7 @@
   .platform-login-mobile-roles summary {
     padding: 6px 0;
     cursor: pointer;
-    color: var(--accent);
+    color: var(--accent-ink);
   }
   .platform-login-mobile-roles p {
     margin-top: 8px;

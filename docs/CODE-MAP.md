@@ -12,6 +12,9 @@
 | 出库、退库、采购人审批 | `src/features/stock` | `server/features/stock`、`server/services/operations/stock.cjs` |
 | 总览与报表 | `src/features/dashboard`、`src/features/reports` | 共用业务记录与筛选规则 |
 | 帮助、留言 | `src/features/help` | `server/features/help` |
+| 外观主题 | `src/shared/components/ThemeSwitcher.jsx`、`src/shared/lib/theme.js` | 浏览器本地偏好，无服务端数据 |
+
+浅色与深色的颜色统一在 `src/styles/tokens.css` 定义；`index.html` 在加载页面前应用已保存的主题。登录页、工作台与帮助页共用切换控件。
 
 帮助正文在 `src/features/help/content.json`，按账号角色组织。改写正文时保留旧块编号，将原文归入 `history` 供评论回溯；新内容追加为当前块。报表帮助入口指向对应角色章节。正文同时用于服务端评论校验，更新后需重载服务，并检查 `help-export.test.cjs` 与 `tests/ui/help.mjs`。
 

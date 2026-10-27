@@ -1,15 +1,15 @@
-.platform-record-limit{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:0 0 12px;font-size: var(--text-body);color:#475569}
+.platform-record-limit{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:0 0 12px;font-size: var(--text-body);color:var(--ink-secondary)}
 .platform-record-limit>span{line-height:1.6}
-.platform-record-limit strong{color:#0f172a;font-size: var(--text-body);font-weight:800;font-variant-numeric:tabular-nums}
-.platform-record-limit button,.platform-record-more button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 16px;border:1px solid #1d4ed8;border-radius:10px;background:#2563eb;color:#fff;font:inherit;font-weight:700;line-height:1.4;cursor:pointer;transition:background .15s,border-color .15s}
-.platform-record-limit button:hover{background:#1d4ed8;border-color:#1e40af}
-.platform-record-limit button.is-expanded{background:#fff;border-color:#cbd5e1;color:#334155;font-weight:600}
-.platform-record-limit button.is-expanded:hover{background:#f8fafc;border-color:#94a3b8}
+.platform-record-limit strong{color:var(--ink-strong);font-size: var(--text-body);font-weight:800;font-variant-numeric:tabular-nums}
+.platform-record-limit button,.platform-record-more button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 16px;border:1px solid var(--accent-border);border-radius:10px;background:var(--accent);color:var(--on-accent);font:inherit;font-weight:700;line-height:1.4;cursor:pointer;transition:background .15s,border-color .15s}
+.platform-record-limit button:hover{background:var(--accent-hover);border-color:var(--accent-border)}
+.platform-record-limit button.is-expanded{background:var(--surface);border-color:var(--line-strong);color:var(--ink-secondary);font-weight:600}
+.platform-record-limit button.is-expanded:hover{background:var(--surface-muted);border-color:var(--line-strong)}
 .platform-record-limit svg,.platform-record-more svg{flex-shrink:0}
 .platform-record-limit svg.is-expanded{transform:rotate(180deg)}
-.platform-record-limit button:focus-visible,.platform-record-more button:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
-.platform-record-more{margin-top:12px;border-top:1px solid #dbe3ef;padding-top:10px;text-align:center;font-size: var(--text-body)}
-.platform-record-more button{width:100%;background:#fff;border-color:#bfdbfe;color:#1d4ed8}
-.platform-record-more button:hover{background:#eff6ff;border-color:#60a5fa}
+.platform-record-limit button:focus-visible,.platform-record-more button:focus-visible{outline:3px solid var(--accent-ink);outline-offset:3px}
+.platform-record-more{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;text-align:center;font-size: var(--text-body)}
+.platform-record-more button{width:100%;background:var(--surface);border-color:var(--accent-border);color:var(--accent-ink)}
+.platform-record-more button:hover{background:var(--accent-soft);border-color:var(--accent-border)}
 @media(max-width:640px){.platform-record-limit{align-items:stretch;gap:8px}.platform-record-limit>span{width:100%}.platform-record-limit button{width:100%}.platform-record-more button{padding-inline:10px}}
 

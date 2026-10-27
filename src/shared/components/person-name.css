@@ -1,5 +1,5 @@
 .platform-person-name { display: inline-flex; flex-wrap: wrap; align-items: baseline; max-width: 100%; min-width: 0; vertical-align: baseline; line-height: 1.5; gap: 0 .25em; white-space: normal; }
 .platform-person-primary { display: inline-block; max-width: 100%; overflow-wrap: anywhere; }
-.platform-person-mentors { display: inline-flex; flex-wrap: wrap; max-width: 100%; color: var(--person-detail-color, #64748b); font-size: .86em; font-weight: 500; }
+.platform-person-mentors { display: inline-flex; flex-wrap: wrap; max-width: 100%; color:var(--person-detail-color, var(--muted)); font-size: .86em; font-weight: 500; }
 .platform-person-mentors > span { max-width: 100%; overflow-wrap: anywhere; }
 .platform-person-name.is-stacked { flex-direction: column; align-items: flex-start; gap: 2px; }

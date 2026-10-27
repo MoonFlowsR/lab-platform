@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Icon from "../shared/components/Icon.jsx";
 import PlatformTitle from "../shared/components/PlatformTitle.jsx";
+import ThemeSwitcher from "../shared/components/ThemeSwitcher.jsx";
 import PersonName from "../shared/components/PersonName.jsx";
 import { splitPersonName } from "../shared/lib/person-name.js";
 import { accountTypeLabels, PLATFORM_TITLE } from "./config.js";
@@ -178,6 +179,7 @@ export default function Workspace({
           <WorkspaceSync className="is-in-topbar" />
           </div>
           <div className="workspace-topbar-actions">
+            <ThemeSwitcher />
             <button
               type="button"
               className="workspace-tasks platform-task-entry"

@@ -81,7 +81,7 @@ function StockForm({ currentUser, purchaseRequests = [], materialCatalog = [], b
   const batchSearchTerms = new Map(matchingBatches.map(batch => [String(batch._id), [batch.batch_code, formatPublicNumber(batch.batch_code)]]));
   const set = (key,value) => setForm(prev=>({...prev,[key]:value}));
   return <section className="platform-section-create" style={styles.card}>
-    <div style={styles.cardHeader}><div><h2 style={styles.h2}>新增出/退库记录</h2><p style={styles.muted}>出库：领用库存；退库：归还剩余材料。到货入库在采购工单完成。</p>{form.transaction_type === '出库' && <p role="note" style={{ color: "#b91c1c", fontSize: 15, fontWeight: 700, lineHeight: 1.6, margin: "8px 0 0" }}>私用/项目用物品：采购人本人可直接登记；其他人须经采购人审批，通过后方可使用！</p>}</div><button type="button" style={styles.primaryButton} onClick={()=>setShow(!show)}>{show ? '收起表单' : '新增记录'}</button></div>
+    <div style={styles.cardHeader}><div><h2 style={styles.h2}>新增出/退库记录</h2><p style={styles.muted}>出库：领用库存；退库：归还剩余材料。到货入库在采购工单完成。</p>{form.transaction_type === '出库' && <p role="note" style={{ color: "var(--danger-ink)", fontSize: 15, fontWeight: 700, lineHeight: 1.6, margin: "8px 0 0" }}>私用/项目用物品：采购人本人可直接登记；其他人须经采购人审批，通过后方可使用！</p>}</div><button type="button" style={styles.primaryButton} onClick={()=>setShow(!show)}>{show ? '收起表单' : '新增记录'}</button></div>
     {show && <><p style={styles.requiredHint}><span style={styles.requiredStar}>*</span> 为必填项</p><form style={styles.formGrid} onSubmit={async event=>{
       event.preventDefault(); if(busy)return;
       if(!form.storage_detail.trim()) return showAlert('请填写具体位置简述。');

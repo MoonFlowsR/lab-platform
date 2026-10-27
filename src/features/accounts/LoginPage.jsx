@@ -9,6 +9,7 @@ import { accountTypes } from "../../app/config.js";
 import PlatformTitle from "../../shared/components/PlatformTitle.jsx";
 import { Field, SearchableSelect } from "../../shared/components/ui.jsx";
 import Icon from "../../shared/components/Icon.jsx";
+import ThemeSwitcher from "../../shared/components/ThemeSwitcher.jsx";
 
 const roleDescriptions = [
   ["test", "学生", "申请与进度跟进，采购入库、材料建库、出退库与物品信息维护"],
@@ -64,12 +65,15 @@ function LoginPage({ onLogin, onRegister, message }) {
         </div>
         <div className="platform-login-form">
           <div className="platform-login-form-heading">
+            <div>
             <h2>{mode === "login" ? "欢迎回来" : "创建账号"}</h2>
             <p>
               {mode === "login"
                 ? "登录后进入你的工作台"
                 : "选择身份，填写管理员提供的注册码"}
             </p>
+            </div>
+            <ThemeSwitcher />
           </div>
           <div style={styles.loginSwitch}>
             <button

@@ -22,6 +22,7 @@ import { checkAccountViewScope } from './account-view-scope.mjs';
 import { checkPurchaseInbound } from './purchase-inbound.mjs';
 import { checkPurchaseChannels } from './purchase-channels.mjs';
 import { checkWorkReview } from './work-review.mjs';
+import { checkThemes } from './themes.mjs';
 import fs from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
@@ -100,7 +101,8 @@ async function checkOperations() {
  ];
 }
 try {
- if (process.env.UI_SUITE === 'help-interactions') { results.push(...await checkHelpInteractions(browser,origin,studentA)); }
+ if (process.env.UI_SUITE === 'themes') { results.push(...await checkThemes(browser,origin,out,snapshot,[admin,teachers[0],studentA])); }
+ else if (process.env.UI_SUITE === 'help-interactions') { results.push(...await checkHelpInteractions(browser,origin,studentA)); }
  else if (process.env.UI_SUITE === 'inventory-permissions') { results.push(...await checkInventoryPermissions(browser,origin,snapshot,[admin,teachers[0],studentA])); }
  else if (process.env.UI_SUITE === 'wrapping') { results.push(...await checkWrapping(browser,origin,snapshot,[admin,teachers[0],studentA])); }
  else if (process.env.UI_SUITE === 'typography') { results.push(...await checkTypography(browser,origin,snapshot,[admin,teachers[0],studentA])); }
@@ -216,6 +218,7 @@ try {
  results.push(...await checkExcelExports(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkAuditClients(browser,origin,out,snapshot,admin));
  results.push(...await checkRegistration(browser,origin,out));
+ results.push(...await checkThemes(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  if (process.env.UI_SUITE !== 'interface') results.push(...await checkOperations());
  const anonymous=await browser.newPage({viewport:{width:390,height:850}});let deniedReads=0;
  await anonymous.route('**/*',route=>{const u=new URL(route.request().url());if(u.origin!==origin)return route.abort();if(!u.pathname.startsWith('/api/'))return route.continue();if(u.pathname==='/api/help-comments'){deniedReads++;return route.fulfill({status:401,json:{ok:false,message:'请先登录。'}});}return route.fulfill({json:{ok:true,comments:[]}});});

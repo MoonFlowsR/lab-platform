@@ -7,7 +7,7 @@ export default function ExpiryDateField({ value, onChange, Field, DateInput, sty
       : <DateInput required value={value} onChange={onChange} />}</Field>
     <label style={{ ...styles.checkboxRow, alignItems: 'center', minHeight: 30, cursor: 'pointer' }}>
       <input type="checkbox" checked={value === longTermValue}
-        style={{ width: 16, height: 16, minHeight: 16, margin: 0, accentColor: '#2563eb', flexShrink: 0 }}
+        style={{ width: 16, height: 16, minHeight: 16, margin: 0, accentColor: 'var(--accent)', flexShrink: 0 }}
         onChange={event => onChange(event.target.checked ? longTermValue : '')} />
       <span>长期有效</span>
     </label>
