@@ -1,5 +1,6 @@
 import { createTeacherContext, recordMatchesTeacher, recordTeacherNames, recordMatchesSearch, inventorySearchFlags } from '../../shared/lib/teacher-filter.js';
 import { requestRecordVisible } from '../../shared/lib/review-scope.js';
+import { matchesSettlementStatus } from '../finance/settlement-filter.js';
 const chineseDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' });
 const enrichedRows = new WeakMap();
 export function chinaDate(value = new Date()) {
@@ -18,7 +19,7 @@ export function expiryWarnings(batches, today = chinaDate(), days = 30) {
     .sort((a, b) => a.daysRemaining - b.daysRemaining);
 }
 
-export function selectReportData(data, { student = '', teacher = '', query = '', startDate = '', endDate = '' } = {}) {
+export function selectReportData(data, { student = '', teacher = '', query = '', startDate = '', endDate = '', settlementStatus = '' } = {}) {
   const work = data.workRequests || [], purchases = data.purchases || [], stock = data.stockTransactions || [];
   const teacherContext = createTeacherContext(data);
   const teacherMatches = (row, module) => recordMatchesTeacher(row, teacher, module, teacherContext);
@@ -39,15 +40,17 @@ export function selectReportData(data, { student = '', teacher = '', query = '',
     return Boolean(day) && (!startDate || day >= startDate) && (!endDate || day <= endDate);
   };
   const ownRequest = row => (!student || row.applicant_username === student) && teacherMatches(row, 'requests');
-  const workRequests = work.filter(row => requestRecordVisible(row) && ownRequest(row) && searchMatches(row) && dateMatches(row.created_at));
-  const selectedPurchases = purchases.filter(row => requestRecordVisible(row) && ownRequest(row) && searchMatches(row) && dateMatches(row.created_at));
+  const workRequests = work.filter(row => requestRecordVisible(row) && ownRequest(row) && searchMatches(row) && dateMatches(row.created_at) && matchesSettlementStatus(row, settlementStatus));
+  const scopedPurchases = purchases.filter(row => requestRecordVisible(row) && ownRequest(row) && searchMatches(row) && dateMatches(row.created_at));
+  const selectedPurchases = scopedPurchases.filter(row => matchesSettlementStatus(row, settlementStatus));
   const stockTransactions = stock.map(row => enrich(row, 'stock')).filter(row => (!student || row.operator_username === student) && teacherMatches(row, 'stock') && searchMatches(row) && dateMatches(row.created_at));
   const outRequests = data.stockOutRequests || [];
   const stockOutRequests = outRequests.filter(requestRecordVisible).map(row=>enrich(row,'stock')).filter(row=>(!student || row.applicant_username===student) && teacherMatches(row,'stock') && searchMatches(row) && dateMatches(row.created_at));
   const requestKeys = new Set([...work.filter(ownRequest), ...purchases.filter(ownRequest),...outRequests.filter(row=>(!student || row.applicant_username===student) && teacherMatches(row,'stock'))].flatMap(row => [String(row._id ?? ''), row.public_id]).filter(Boolean));
   const reviewLogs = (data.reviewLogs || []).filter(log => dateMatches(log.created_at) && (!(student || teacher) || requestKeys.has(String(log.target_id)) || requestKeys.has(log.target_public_id)) && (!query.trim() || searchMatches(log)));
-  const batchIds = new Set([...stockTransactions.map(row => String(row.batch_id)), ...selectedPurchases.map(row => String(row.inbound_batch_id))]);
-  const purchaseKeys = new Set(selectedPurchases.flatMap(row => [String(row._id), row.public_id]));
+  // Accounting state belongs to orders; it must not alter the inventory association scope.
+  const batchIds = new Set([...stockTransactions.map(row => String(row.batch_id)), ...scopedPurchases.map(row => String(row.inbound_batch_id))]);
+  const purchaseKeys = new Set(scopedPurchases.flatMap(row => [String(row._id), row.public_id]));
   const batches = (data.batches || []).map(row => enrich(row, 'materials')).filter(batch => {
     if (!teacherMatches(batch, 'materials') || !searchMatches(batch)) return false;
     const associated = batchIds.has(String(batch._id)) || purchaseKeys.has(String(batch.related_purchase_record_id)) || purchaseKeys.has(batch.related_purchase_id);

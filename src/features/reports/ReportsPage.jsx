@@ -15,6 +15,7 @@ import { studentFilterOptions } from '../../shared/lib/student-filter.js';
 import { reviewTeacherName } from '../../shared/lib/review-scope.js';
 import { inventoryMetrics } from '../dashboard/dashboard-metrics.js';
 import DashboardMetrics, { InventoryMetrics } from '../dashboard/DashboardMetrics.jsx';
+import SettlementStatusFilter from '../finance/SettlementStatusFilter.jsx';
 
 export default function ReportsPage({ currentUser, onReimbursementChange, data, onMessage, onQueryChange, query = "", canFilterTeacher = false, teachers = [], students = [] }) {
   const [student, setStudent] = useState('');
@@ -24,21 +25,24 @@ export default function ReportsPage({ currentUser, onReimbursementChange, data, 
   const [endDate, setEndDate] = useState('');
   const [detail, setDetail] = useState('tests');
   const [showAllDetails, setShowAllDetails] = useState(false);
+  const [settlementStatus, setSettlementStatus] = useState('');
+  const isFinance = currentUser?.account_type === 'finance';
+  const selectedSettlementStatus = isFinance ? settlementStatus : '';
 
   const studentOptions = studentFilterOptions(students);
   const selectedTeacher = teachers.find(account => account.username === teacher);
   const selectedStudent = studentOptions.find(account => account.username === student);
   const studentLabel = selectedStudent?.label || '全部学生';
 
-  useEffect(() => { setShowAllDetails(false); }, [student, teacher, query, range, startDate, endDate, detail]);
+  useEffect(() => { setShowAllDetails(false); }, [student, teacher, query, range, startDate, endDate, detail, selectedSettlementStatus]);
   const invalidRange = range === 'custom' && startDate && endDate && startDate > endDate;
   const selected = invalidRange ? { workRequests: [], purchases: [], stockTransactions: [], stockOutRequests: [], reviewLogs: [], batches: [] }
-    : selectReportData(data, { student, teacher: canFilterTeacher ? teacher : "", query, startDate: range === 'custom' ? startDate : '', endDate: range === 'custom' ? endDate : '' });
+    : selectReportData(data, { student, teacher: canFilterTeacher ? teacher : "", query, startDate: range === 'custom' ? startDate : '', endDate: range === 'custom' ? endDate : '', settlementStatus: selectedSettlementStatus });
   const { workRequests, purchases, stockTransactions, stockOutRequests, reviewLogs, batches } = selected;
   const tests = workRequests.filter(row => row.request_type === '测试');
   const repairs = workRequests.filter(row => row.request_type === '维修');
   const processing = workRequests.filter(row => row.request_type === '加工');
-  const scope = `${studentLabel}${teacher ? ` · ${selectedTeacher?.display_name || teacher}` : ""}${query.trim() ? ` · 搜索：${query.trim()}` : ""} · ${range === 'all' ? '全部时间' : `${startDate || '不限开始'} 至 ${endDate || '不限结束'}`}`;
+  const scope = `${studentLabel}${teacher ? ` · ${selectedTeacher?.display_name || teacher}` : ""}${query.trim() ? ` · 搜索：${query.trim()}` : ""} · ${range === 'all' ? '全部时间' : `${startDate || '不限开始'} 至 ${endDate || '不限结束'}`}${isFinance ? ` · 工单状态：${selectedSettlementStatus || '全部'}` : ''}`;
   const tabs = [
     ['tests', '测试', tests], ['processing', '加工', processing], ['repair', '维修', repairs], ['purchases', '采购', purchases],
     ['stock', '出入退库', stockTransactions], ['stockRequests','私用/项目用物品出库申请',stockOutRequests], ['batches', '库存批次', batches], ['reviews', '审批记录', reviewLogs],
@@ -53,19 +57,21 @@ export default function ReportsPage({ currentUser, onReimbursementChange, data, 
     isCompletedWork(row) ? money(completedWorkFee(row)) : '—', row.completion_modified ? '有修改' : '—', isCompletedWork(row) ? <ReimbursementStatus row={row} currentUser={currentUser} onChange={onReimbursementChange} /> : '—', formatDate(row.created_at), ...closureCells(row)]);
   function exportReport() {
     try {
-      const result = downloadReport(data, { student, teacher: canFilterTeacher ? teacher : "", teacherName: selectedTeacher?.display_name || teacher, query, studentName: selectedStudent?.display_name || student, startDate: range === 'custom' ? startDate : '', endDate: range === 'custom' ? endDate : '' });
+      const result = downloadReport(data, { student, teacher: canFilterTeacher ? teacher : "", teacherName: selectedTeacher?.display_name || teacher, query, studentName: selectedStudent?.display_name || student, startDate: range === 'custom' ? startDate : '', endDate: range === 'custom' ? endDate : '', ...(isFinance ? { settlementStatus: selectedSettlementStatus } : {}) });
       onMessage?.(`已导出当前筛选下的全部数据，共 ${result.tables.length} 个工作表，表头可直接筛选。`);
     } catch (error) { onMessage?.(error.message || '导出失败，请重试。', { persistent: true }); }
   }
   return <main>
     <Toolbar title="数据报表" description="按人员和日期统计业务、核对最终金额，导出完整明细。" onExport={exportReport} />
-    <FilterPanel title="报表筛选" summary={scope} onReset={() => { setStudent(''); setTeacher(''); setRange('all'); setStartDate(''); setEndDate(''); onQueryChange?.(''); }}>
+    <FilterPanel title="报表筛选" summary={scope} onReset={() => { setStudent(''); setTeacher(''); setRange('all'); setStartDate(''); setEndDate(''); setSettlementStatus(''); onQueryChange?.(''); }}>
       <div className={`platform-student-filter-grid${canFilterTeacher ? " has-teacher" : ""}`} style={styles.formGrid}>
         <Field label="学生姓名"><SearchableSelect value={student} onChange={setStudent} clearOnInput={false} options={[{ value: '', label: '全部' }, ...studentOptions.map(account => ({ value: account.username, label: account.label }))]} placeholder="搜索或选择学生姓名" fixedOptions={['']} /></Field>
         {canFilterTeacher && <Field label="教师姓名"><SearchableSelect value={teacher} onChange={setTeacher} clearOnInput={false} options={[{ value: "", label: "全部" }, ...studentFilterOptions(teachers).map(account => ({ value: account.username, label: account.label }))]} placeholder="搜索或选择教师姓名" fixedOptions={[""]} /></Field>}
         <Field label="时间范围"><SearchableSelect searchable={false} value={range} onChange={setRange} clearOnInput={false} options={[{ value: 'all', label: '全部时间' }, { value: 'custom', label: '自定义日期范围' }]} placeholder="选择时间范围" fixedOptions={['all']} /></Field>
+        {isFinance && <SettlementStatusFilter value={selectedSettlementStatus} onChange={setSettlementStatus} />}
         {range === 'custom' && <><Field label="开始日期"><DateInput value={startDate} onChange={setStartDate} /></Field><Field label="结束日期"><DateInput value={endDate} onChange={setEndDate} /></Field></>}
       </div>
+      {isFinance && <p className="platform-filter-caption">工单状态筛选测试、加工、维修及采购。</p>}
       {invalidRange && <p role="alert" style={{ ...styles.note, color: 'var(--danger-ink)', fontWeight: 700 }}>开始日期不能晚于结束日期，请调整时间范围。</p>}
       <details className="platform-report-basis"><summary>统计口径</summary><ul><li>测试、加工、维修：按已完成工单最终金额统计。</li><li>采购：已入库按确认的最终金额，未入库及未确认最终金额的旧记录按预计金额统计。</li><li>日期范围包含起止当天。</li></ul><a href={`/help#${({ admin: 'admin-reports', teacher: 'teacher-reports', finance: 'finance-reimbursement' })[currentUser?.account_type] || 'student-exports'}`}>完整统计说明</a></details>
 

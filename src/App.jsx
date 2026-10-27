@@ -4,12 +4,16 @@ import Workspace from './app/Workspace.jsx';
 import PageSearch from './shared/components/PageSearch.jsx';
 import PageLoading from './shared/components/PageLoading.jsx';
 import { purchaseSupplierOptions, matchesPurchaseSupplier } from "./features/purchases/purchase-filter.js";
+import { matchesSettlementStatus } from "./features/finance/settlement-filter.js";
+import SettlementStatusFilter from "./features/finance/SettlementStatusFilter.jsx";
 import { useCallback, useEffect, useEffectEvent, useMemo, useState, lazy, Suspense } from "react";
 import { apiPost, clearStoredAccount, getStoredAccount, saveStoredAccount } from "./app/api.js";
 import { usePageSearchHighlight } from "./shared/hooks/page-search-highlight.js";
 import { recordMatchesStudent, studentFilterModules } from "./shared/lib/student-filter.js";
 import { createTeacherContext, inventorySearchFlags, recordMatchesTeacher, recordTeacherNames, requestSearchIndex } from "./shared/lib/teacher-filter.js";
 import { createSyncController } from "./shared/api/sync-controller.js";
+import { savedOptions } from "./shared/lib/saved-options.js";
+import { SavedOptionsContext } from "./shared/lib/saved-options-context.js";
 import { createStudentNameDisplay, displayStudentAccount, sameRows } from "./features/accounts/student-name-display.js";
 import { containsQuery, sortByCreatedAt } from "./app/formatters.js";
 import { AUTO_LOGOUT_MS } from "./app/config.js";
@@ -70,6 +74,7 @@ function App() {
   const [moduleStudents, setModuleStudents] = useState({});
   const [moduleTeachers, setModuleTeachers] = useState({});
   const [moduleInstitutions, setModuleInstitutions] = useState({});
+  const [moduleSettlementStatuses, setModuleSettlementStatuses] = useState({});
   const [moduleReviewScopes, setModuleReviewScopes] = useState({});
   const reviewScope = moduleReviewScopes[activeTab] || defaultViewScope(currentUser);
   const setReviewScope = scope => setModuleReviewScopes(prev => ({ ...prev, [activeTab]: scope }));
@@ -98,6 +103,8 @@ function App() {
   const [fundSummary, setFundSummary] = useState({ material_balance: null, material_committed: 0, test_balance: null, test_committed: 0 });
   const [purchaseCatalog, setPurchaseCatalog] = useState([]);
   const [materialCatalog, setMaterialCatalog] = useState([]);
+  const sharedOptions = useMemo(() => savedOptions({ purchases: purchaseRequests, batches: materialBatches, stockTransactions, stockOutRequests, materials, materialCatalog, units }),
+    [purchaseRequests, materialBatches, stockTransactions, stockOutRequests, materials, materialCatalog, units]);
 
   const sessionToken = currentUser?.session_token || '';
   const accountUsername = currentUser?.username || '';
@@ -110,13 +117,15 @@ function App() {
   const canReview = isTeacher;
   const showInstitutionFilter = isRecordViewer && (WORK_MODULES.includes(activeTab) || activeTab === "purchases");
   const selectedInstitution = showInstitutionFilter ? moduleInstitutions[activeTab] || "" : "";
+  const showSettlementFilter = isFinance && (WORK_MODULES.includes(activeTab) || activeTab === "purchases");
+  const selectedSettlementStatus = showSettlementFilter ? moduleSettlementStatuses[activeTab] || "" : "";
   const institutionType = WORK_DEFINITIONS.find(item => item.module === activeTab)?.name || '测试';
   const institutionLabel = activeTab === 'purchases' ? '采购单位' : institutionType === '维修' ? '维修人员单位' : institutionType + '机构';
   const visibleWorkRequests = useMemo(() => workRequests.filter(requestRecordVisible), [workRequests]);
   const visiblePurchases = useMemo(() => purchaseRequests.filter(requestRecordVisible), [purchaseRequests]);
   const visibleStockOutRequests = useMemo(() => stockOutRequests.filter(requestRecordVisible), [stockOutRequests]);
   const institutionOptions = useMemo(() => activeTab === "purchases" ? purchaseSupplierOptions(visiblePurchases) : workInstitutionOptions(visibleWorkRequests, institutionType), [activeTab, visiblePurchases, visibleWorkRequests, institutionType]);
-  useEffect(() => { setModuleInstitutions({}); }, [accountUsername]);
+  useEffect(() => { setModuleInstitutions({}); setModuleSettlementStatuses({}); }, [accountUsername]);
   const showStudentFilter = isRecordViewer && (studentFilterModules.includes(activeTab) || (isAdmin && activeTab === "admin"));
   const selectedModuleStudent = showStudentFilter ? moduleStudents[activeTab] || '' : '';
   const selectedModuleTeacher = isAdmin && showStudentFilter ? moduleTeachers[activeTab] || '' : '';
@@ -286,6 +295,7 @@ function App() {
     setModuleStudents(previous => ({ ...previous, [module]: "" }));
     setModuleTeachers(previous => ({ ...previous, [module]: "" }));
     setModuleInstitutions(previous => ({ ...previous, [module]: "" }));
+    setModuleSettlementStatuses(previous => ({ ...previous, [module]: "" }));
     setModuleReviewScopes(previous => ({ ...previous, [module]: defaultViewScope(currentUser) }));
     if (module === "purchases") setPurchaseViewScope("mine");
     if (module === "stock") { setStockViewScope("mine"); setStockMovementType(""); }
@@ -316,7 +326,7 @@ function App() {
   function leaveTask() { setTaskId(""); setQuery(""); if (activeTab === "stock") setStockViewScope("all"); if (activeTab === "purchases") setPurchaseViewScope("all"); if (WORK_MODULES.includes(activeTab) || activeTab === "purchases") setReviewScope("all"); }
 
   const filteredAccounts = activeTab !== "admin" ? [] : accounts.filter(row => inTask("admin", row) && (!selectedModuleStudent || row.username === selectedModuleStudent) && (!selectedModuleTeacher || row.username === selectedModuleTeacher) && recordInDateRange(row,dateRange) && containsQuery(row,query));
-  const filteredWorkRequests = !WORK_MODULES.includes(activeTab) ? [] : visibleWorkRequests.filter((item) => dashboardRecordVisible(item) && inTask(workModule(item.request_type), item) && (activeTask || isAdmin || !isHiddenForMe("lab_work_requests", item)) && searchRequest(item, "lab_work_requests", query) && (!WORK_MODULES.includes(activeTab) || (requestDateMatches(item) && matchesWorkInstitution(item, selectedInstitution) && recordMatchesStudent(item, selectedModuleStudent, activeTab) && moduleTeacherMatches(item, activeTab) && workScopeMatches(item, currentUser, reviewScope))));
+  const filteredWorkRequests = !WORK_MODULES.includes(activeTab) ? [] : visibleWorkRequests.filter((item) => dashboardRecordVisible(item) && inTask(workModule(item.request_type), item) && (activeTask || isAdmin || !isHiddenForMe("lab_work_requests", item)) && searchRequest(item, "lab_work_requests", query) && matchesSettlementStatus(item, selectedSettlementStatus) && (!WORK_MODULES.includes(activeTab) || (requestDateMatches(item) && matchesWorkInstitution(item, selectedInstitution) && recordMatchesStudent(item, selectedModuleStudent, activeTab) && moduleTeacherMatches(item, activeTab) && workScopeMatches(item, currentUser, reviewScope))));
   const inventoryMatches = useCallback(item => taskContains(activeTask?.module === "materials" ? activeTask : null, item) && recordInDateRange(item, dateRange) && recordMatchesStudent(item, selectedModuleStudent, "materials") && moduleTeacherMatches(item, "materials"), [dateRange, selectedModuleStudent, moduleTeacherMatches, activeTask]);
   const categoryInventory = useMemo(() => filterInventoryCategory(materials, materialBatches, activeTab === "materials" ? inventoryCategory : ""), [materials, materialBatches, activeTab, inventoryCategory]);
   const summaryBatches = useMemo(() => categoryInventory.batches.filter(item => activeTab !== "materials" || inventoryMatches(item)), [categoryInventory.batches, activeTab, inventoryMatches]);
@@ -324,7 +334,7 @@ function App() {
   const filteredMaterials = activeTab !== "materials" ? [] : materialSummaryIndex.filter(({item, searchRecord}) => containsQuery(searchRecord, query) && (activeTab !== "materials" || item.batches.length || (!activeTask && !selectedModuleStudent && !selectedModuleTeacher && item.material_records.some(row => recordInDateRange(row, dateRange))))).map(({item}) => item);
   const scopedBatches = useMemo(() => categoryInventory.batches.map(item => ({ ...item, associated_teacher_names: recordTeacherNames(item, "materials", teacherContext), _search_text: inventorySearchFlags(item,todayForSearch) })).filter(item => activeTab !== "materials" || inventoryMatches(item)), [categoryInventory.batches, teacherContext, todayForSearch, activeTab, inventoryMatches]);
   const filteredBatches = activeTab !== "materials" ? [] : searchMaterialBatches(scopedBatches, query, containsQuery);
-  const filteredPurchases = activeTab !== "purchases" ? [] : visiblePurchases.filter((item) => dashboardRecordVisible(item) && inTask("purchases", item) && (activeTask || isAdmin || !isHiddenForMe("lab_purchase_requests", item)) && searchRequest(item, "lab_purchase_requests", query) && (activeTab !== "purchases" || (matchesPurchaseSupplier(item, selectedInstitution) && recordInDateRange(item, dateRange) && recordMatchesStudent(item, selectedModuleStudent, activeTab) && moduleTeacherMatches(item, activeTab) && (!isStudent || purchaseViewScope === "all" || item.applicant_username === currentUser.username) && teacherScopeMatches(item, currentUser, reviewScope))));
+  const filteredPurchases = activeTab !== "purchases" ? [] : visiblePurchases.filter((item) => dashboardRecordVisible(item) && inTask("purchases", item) && (activeTask || isAdmin || !isHiddenForMe("lab_purchase_requests", item)) && searchRequest(item, "lab_purchase_requests", query) && matchesSettlementStatus(item, selectedSettlementStatus) && (activeTab !== "purchases" || (matchesPurchaseSupplier(item, selectedInstitution) && recordInDateRange(item, dateRange) && recordMatchesStudent(item, selectedModuleStudent, activeTab) && moduleTeacherMatches(item, activeTab) && (!isStudent || purchaseViewScope === "all" || item.applicant_username === currentUser.username) && teacherScopeMatches(item, currentUser, reviewScope))));
   const searchableStocks = useMemo(() => stockTransactions.map(item => ({ ...item, associated_teacher_names: recordTeacherNames(item, "stock", teacherContext) })), [stockTransactions, teacherContext]);
   const searchableStockOutRequests = useMemo(() => visibleStockOutRequests.map(item => ({ ...item, associated_teacher_names: recordTeacherNames(item, "stock", teacherContext) })), [visibleStockOutRequests, teacherContext]);
   const filteredStocks = activeTab !== "stock" ? [] : searchableStocks.filter((item) => containsQuery(item, query) && (activeTab !== "stock" || (recordInDateRange(item, dateRange) && recordMatchesStudent(item, selectedModuleStudent, activeTab) && moduleTeacherMatches(item, "stock") && (!isStudent || stockViewScope === "all" || item.operator_username === currentUser.username))));
@@ -370,8 +380,10 @@ function App() {
 
   const workRows = filteredWorkRequests.filter(row => row.request_type === institutionType);
   const inventoryCategoryField = <Field label="材料类别"><SearchableSelect searchable={false} value={inventoryCategory} onChange={setInventoryCategory} clearOnInput={false} options={inventoryCategoryOptions} placeholder="选择材料类别" fixedOptions={[""]} /></Field>;
+  const institutionFilterField = showInstitutionFilter && <><Field label={institutionLabel}><SearchableSelect key={activeTab} value={selectedInstitution} onChange={value => setModuleInstitutions(prev => ({ ...prev, [activeTab]: value }))} clearOnInput={false} options={[{value:"",label:"全部"}, ...institutionOptions.map(value => ({value,label:value}))]} fixedOptions={[""]} placeholder={"搜索或选择" + institutionLabel} /></Field>{showSettlementFilter && <SettlementStatusFilter value={selectedSettlementStatus} onChange={value => setModuleSettlementStatuses(prev => ({ ...prev, [activeTab]: value }))} />}</>;
 
   return (
+    <SavedOptionsContext.Provider value={sharedOptions}>
     <Workspace account={currentUser} tabs={tabs} activeTab={activeTab} taskCenter={taskCenter} syncing={syncing} syncStatus={syncStatus} onNavigate={openModule} onOverview={openOverview} onSync={loadAll} onSettings={() => setAccountSettingsOpen(true)} onLogout={logoutAccount}>
       {message}
       <div className={`platform-query-tools${isStudent ? " is-student" : ""}`}>
@@ -383,12 +395,12 @@ function App() {
         {datedModules.includes(activeTab) && <ModuleDateFilter SearchableSelect={SearchableSelect} DateInput={DateInput} module={activeTab} range={dateRange} onChange={range => setModuleRanges(prev => ({ ...prev, [activeTab]: range }))} />}
       </section>}
       </div>
-      {showStudentFilter && !activeTask && <RecordFilters module={activeTab} extraSummary={activeTab === "stock" ? stockMovementType : selectedInstitution} onResetSearch={() => { setQuery(""); setModuleInstitutions(prev => ({ ...prev, [activeTab]: "" })); setStockMovementType(''); if (activeTab === "materials") setInventoryCategory(""); }} extraFields={activeTab === "materials" ? inventoryCategoryField : activeTab === "stock" ? <Field label="出入退库类型"><SearchableSelect searchable={false} value={stockMovementType} onChange={setStockMovementType} clearOnInput={false} options={[{value:"",label:"全部"},...["出库","入库","退库"].map(value=>({value,label:value}))]} fixedOptions={[""]} placeholder="选择出入退库类型" /></Field> : showInstitutionFilter ? <Field label={institutionLabel}><SearchableSelect key={activeTab} value={selectedInstitution} onChange={value => setModuleInstitutions(prev => ({ ...prev, [activeTab]: value }))} clearOnInput={false} options={[{value:"",label:"全部"}, ...institutionOptions.map(value => ({value,label:value}))]} fixedOptions={[""]} placeholder={"搜索或选择" + institutionLabel} /></Field> : null} showTeacherFilter={isAdmin} teachers={filterTeacherAccounts} teacher={selectedModuleTeacher} onTeacherChange={teacher => setModuleTeachers(prev => ({ ...prev, [activeTab]: teacher }))} students={studentAccounts} student={selectedModuleStudent} onStudentChange={student => setModuleStudents(prev => ({ ...prev, [activeTab]: student }))} range={dateRange} onRangeChange={range => setModuleRanges(prev => ({ ...prev, [activeTab]: range }))} styles={styles} Field={Field} SearchableSelect={SearchableSelect} DateInput={DateInput} />}
+      {showStudentFilter && !activeTask && <RecordFilters module={activeTab} extraSummary={activeTab === "stock" ? stockMovementType : [selectedInstitution, selectedSettlementStatus && `工单状态：${selectedSettlementStatus}`].filter(Boolean).join(' · ')} onResetSearch={() => { setQuery(""); setModuleInstitutions(prev => ({ ...prev, [activeTab]: "" })); setModuleSettlementStatuses(prev => ({ ...prev, [activeTab]: "" })); setStockMovementType(''); if (activeTab === "materials") setInventoryCategory(""); }} extraFields={activeTab === "materials" ? inventoryCategoryField : activeTab === "stock" ? <Field label="出入退库类型"><SearchableSelect searchable={false} value={stockMovementType} onChange={setStockMovementType} clearOnInput={false} options={[{value:"",label:"全部"},...["出库","入库","退库"].map(value=>({value,label:value}))]} fixedOptions={[""]} placeholder="选择出入退库类型" /></Field> : institutionFilterField} showTeacherFilter={isAdmin} teachers={filterTeacherAccounts} teacher={selectedModuleTeacher} onTeacherChange={teacher => setModuleTeachers(prev => ({ ...prev, [activeTab]: teacher }))} students={studentAccounts} student={selectedModuleStudent} onStudentChange={student => setModuleStudents(prev => ({ ...prev, [activeTab]: student }))} range={dateRange} onRangeChange={range => setModuleRanges(prev => ({ ...prev, [activeTab]: range }))} styles={styles} Field={Field} SearchableSelect={SearchableSelect} DateInput={DateInput} />}
 
       <PageBoundary key={activeTab}><Suspense fallback={<PageLoading message="正在打开模块…" />}>
       {activeTask && <TaskFilterBanner task={activeTask} query={query} onBack={openOverview} onClear={leaveTask} />}
       {activeTab === "dashboard" && <Dashboard currentUser={currentUser} center={taskCenter} query={query} batchCount={materialBatches.length} onOpenTask={openTask} setActiveTab={openDashboardModule} />}
-      {WORK_MODULES.includes(activeTab) && <WorkRequestsPage key={activeTab + ":" + (activeTask?.id || "records")} task={activeTask} onReimbursementChange={setReimbursementStatus} workHistory={visibleWorkRequests} teacherAccounts={teacherAccounts} reviewScope={reviewScope} onReviewScopeChange={setReviewScope} fixedType={institutionType} rows={workRows} logs={reviewLogs} attachments={attachments} currentUser={currentUser} units={units} canSubmit={isStudent} canReview={canReview} isAdmin={isAdmin} onAdd={addWorkRequest} onResubmit={resubmitWorkRequest} onWithdraw={withdrawWorkRequest} onReview={reviewWorkRequest} onComplete={completeWorkRequest} onCloseRejected={closeRejectedOrder} onDeleteRecord={deleteRecordPermanently} onHideRecord={hideRecordForMe} onUploadAttachment={uploadAttachment} onDownloadAttachment={downloadAttachment} onDeleteAttachment={deleteAttachment} onExport={() => exportModule(activeTab, workRows)} />}
+      {WORK_MODULES.includes(activeTab) && <WorkRequestsPage key={activeTab + ":" + (activeTask?.id || "records")} task={activeTask} onReimbursementChange={setReimbursementStatus} workHistory={visibleWorkRequests} optionHistory={workRequests} teacherAccounts={teacherAccounts} reviewScope={reviewScope} onReviewScopeChange={setReviewScope} fixedType={institutionType} rows={workRows} logs={reviewLogs} attachments={attachments} currentUser={currentUser} units={units} canSubmit={isStudent} canReview={canReview} isAdmin={isAdmin} onAdd={addWorkRequest} onResubmit={resubmitWorkRequest} onWithdraw={withdrawWorkRequest} onReview={reviewWorkRequest} onComplete={completeWorkRequest} onCloseRejected={closeRejectedOrder} onDeleteRecord={deleteRecordPermanently} onHideRecord={hideRecordForMe} onUploadAttachment={uploadAttachment} onDownloadAttachment={downloadAttachment} onDeleteAttachment={deleteAttachment} onExport={() => exportModule(activeTab, workRows)} />}
       {activeTab === "purchases" && <PurchasesPage key={activeTab + ":" + (activeTask?.id || "records")} task={activeTask} onReimbursementChange={setReimbursementStatus} registeredTeacherAccounts={registeredTeacherAccounts} teacherAccounts={teacherAccounts} reviewScope={reviewScope} onReviewScopeChange={setReviewScope} viewScope={purchaseViewScope} onViewScopeChange={setPurchaseViewScope} materialCatalog={materialCatalog} logs={reviewLogs} rows={filteredPurchases} attachments={attachments} batches={materialBatches} purchaseHistory={purchaseRequests} purchaseCatalog={purchaseCatalog} fundSummary={fundSummary} currentUser={currentUser} units={units} canSubmit={isStudent} canReview={canReview} isAdmin={isAdmin} onAdd={addPurchaseRequest} onResubmit={resubmitPurchaseRequest} onWithdraw={withdrawPurchaseRequest} onReview={reviewPurchase} onCompleteInbound={completePurchaseInbound} onCloseRejected={closeRejectedOrder} onDeleteRecord={deleteRecordPermanently} onHideRecord={hideRecordForMe} onUploadAttachment={uploadAttachment} onDownloadAttachment={downloadAttachment} onDeleteAttachment={deleteAttachment} onExport={() => exportModule("purchases", filteredPurchases)} />}
       {activeTab === "stock" && <StockPage key={activeTab + ":" + (activeTask?.id || "records")} task={activeTask} movementType={isStudent ? "" : stockMovementType} currentUser={currentUser} purchaseRequests={purchaseRequests} teacherAccounts={registeredTeacherAccounts} requests={filteredStockOutRequests} onReviewRequest={reviewStockOutRequest} onCompleteRequest={completeStockOutRequest} onWithdrawRequest={withdrawStockOutRequest} onExportRequests={rows => exportModule("stockRequests", rows)} viewScope={stockViewScope} onViewScopeChange={setStockViewScope} canSubmit={isStudent} materialCatalog={materialCatalog} rows={filteredStocks} batches={materialBatches} attachments={attachments} isAdmin={isAdmin} onDeleteRecord={deleteRecordPermanently} isManager={isRecordViewer} onAdd={addStockTransaction} onDownloadAttachment={downloadAttachment} onExport={rows => exportModule("stock", rows)} />}
       {activeTab === "materials" && (canInboundStock || isFinance) && <InventoryPage key={activeTab + ":" + (activeTask?.id || "records")} task={activeTask} searchQuery={query} canInitialize={isStudent} materialCatalog={materialCatalog} onInitialize={initializeMaterialStock} initializationMaterials={materials} initializationBatches={materialBatches} initializationUnits={units} materials={filteredMaterials} batches={filteredBatches} isAdmin={isAdmin} onDeleteRecord={deleteRecordPermanently} attachments={attachments} onDownloadAttachment={downloadAttachment} canManageStock={canManageStock} canEditBatchInformation={canEditBatchInformation} onUpdateBatch={updateMaterialBatch} onExportBatches={() => exportModule("batches", filteredBatches)} />}
@@ -398,6 +410,7 @@ function App() {
       {activeTab === "admin" && isAdmin && <AccountManagementPage key={activeTab + ":" + (activeTask?.id || "records")} task={activeTask} allAccounts={accounts} teachers={registeredTeacherAccounts} onReload={loadAll} accounts={filteredAccounts} auditProps={{account:currentUser,student:selectedModuleStudent,teacher:selectedModuleTeacher,range:dateRange,query,revision:auditRevision}} onSetAccountStatus={adminSetAccountStatus} onResetPassword={adminResetPassword} onExportAccounts={() => exportModule("accounts", filteredAccounts)} />}
       </Suspense></PageBoundary>
     </Workspace>
+    </SavedOptionsContext.Provider>
   );
 }
 function UpdateHistoryRedirect() {
