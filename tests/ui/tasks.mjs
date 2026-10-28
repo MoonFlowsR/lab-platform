@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { readWorkbookText } from './workbook.mjs';
+import { createStudentNameDisplay } from '../../src/features/accounts/student-name-display.js';
+import { studentFilterOptions } from '../../src/shared/lib/student-filter.js';
 
 async function taskFilters(page, role, { expand = false, checkEntry = false } = {}) {
   const panel = page.locator(role === 'student' ? '.platform-module-filters' : '.platform-filter-panel');
@@ -28,13 +30,58 @@ async function taskFilters(page, role, { expand = false, checkEntry = false } = 
   return panel;
 }
 
+async function selectDiagnostic(page, label) {
+  return page.evaluate(placeholder => {
+    const input = [...document.querySelectorAll('input[role="combobox"]')].find(node => node.placeholder === placeholder);
+    const menu = input && document.getElementById(input.getAttribute('aria-controls'));
+    const active = document.activeElement;
+    return {
+      input: input && { value: input.value, expanded: input.getAttribute('aria-expanded'), controls: input.getAttribute('aria-controls') },
+      menu: menu && { id: menu.id, visible: Boolean(menu.getClientRects().length), options: [...menu.querySelectorAll('[role="option"]')].map(node => ({ label: node.textContent, selected: node.getAttribute('aria-selected') })) },
+      focus: active && { tag: active.tagName, role: active.getAttribute('role'), placeholder: active.getAttribute('placeholder'), text: active.textContent?.slice(0, 160) },
+    };
+  }, '搜索或选择' + label);
+}
+
+function personFilterLabel(options, account) {
+  const matches = options.filter(option => option.username === account.username);
+  assert.equal(matches.length, 1, 'The requested filter identity must map to exactly one account: ' + account.username);
+  assert.equal(options.filter(option => option.label === matches[0].label).length, 1, 'The displayed account option must be unambiguous');
+  return matches[0].label;
+}
+
+async function waitForResetPeople(page, panel) {
+  for (const label of ['学生姓名', '教师姓名']) {
+    const input = panel.getByPlaceholder('搜索或选择' + label, { exact: true });
+    if (!await input.count()) continue;
+    const handle = await input.elementHandle();
+    try {
+      await page.waitForFunction(node => node.value === '全部' && node.getAttribute('aria-expanded') === 'false', handle);
+      const menu = page.locator('[id="' + await input.getAttribute('aria-controls') + '"]');
+      await menu.waitFor({ state: 'hidden' });
+    } catch (error) {
+      error.message += '\nReset select state: ' + JSON.stringify({ label, ...await selectDiagnostic(page, label) });
+      throw error;
+    } finally {
+      await handle?.dispose();
+    }
+  }
+}
+
 async function chooseSearchable(page, panel, label, text) {
   const input = panel.getByPlaceholder('搜索或选择' + label, { exact: true });
-  await input.fill(text);
-  const menu = page.locator('[id="' + await input.getAttribute('aria-controls') + '"]');
-  const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  await menu.getByRole('option', { name: new RegExp('^' + escaped + '(?:$|[（(])') }).click();
-  await menu.waitFor({ state: 'hidden' });
+  try {
+    await input.fill(text);
+    const menu = page.locator('[id="' + await input.getAttribute('aria-controls') + '"]');
+    await menu.waitFor({ state: 'visible' });
+    await menu.getByRole('option', { name: text, exact: true }).click();
+    await menu.waitFor({ state: 'hidden' });
+    assert.equal(await input.inputValue(), text, 'The selected filter displays the exact account or institution label');
+    assert.equal(await input.getAttribute('aria-expanded'), 'false', 'Selection closes the dropdown');
+  } catch (error) {
+    error.message += '\nSelect state: ' + JSON.stringify({ label, expected: text, ...await selectDiagnostic(page, label) });
+    throw error;
+  }
 }
 
 async function exportTask(page) {
@@ -43,7 +90,7 @@ async function exportTask(page) {
   return readWorkbookText(await (await download).path());
 }
 
-async function detailFilters(page, role, rows, count, student, otherStudent, teacher) {
+async function detailFilters(page, role, rows, count, studentLabel, otherStudentLabel, teacherLabel) {
   const panel = await taskFilters(page, role, { expand: true });
   const queue = page.getByRole('region', { name: '当前待办筛选', exact: true });
   const title = await queue.innerText();
@@ -52,6 +99,7 @@ async function detailFilters(page, role, rows, count, student, otherStudent, tea
     await rows.first().waitFor({ state: 'attached' });
     assert.equal(await rows.count(), count, 'Reset restores only the current task set');
     assert.equal(await queue.innerText(), title, 'Reset does not exit or broaden the task category');
+    await waitForResetPeople(page, panel);
   };
   await panel.getByRole('combobox', { name: /^(申请日期|登记日期|建库日期|创建 \/ 操作日期)$/ }).selectOption('custom');
   await panel.locator('label').filter({ hasText: /^开始日期/ }).locator('input[type="date"]').fill('2050-01-01');
@@ -59,15 +107,15 @@ async function detailFilters(page, role, rows, count, student, otherStudent, tea
   assert.equal(await rows.count(), 0, 'Date filters intersect the task records');
   await reset();
   if (role !== 'student') {
-    await chooseSearchable(page, panel, '学生姓名', otherStudent.display_name);
+    await chooseSearchable(page, panel, '学生姓名', otherStudentLabel);
     assert.equal(await rows.count(), 0, 'Student filters do not expose records outside this task');
     await reset();
-    await chooseSearchable(page, panel, '学生姓名', student.display_name);
+    await chooseSearchable(page, panel, '学生姓名', studentLabel);
     assert.equal(await rows.count(), role === 'admin' ? 0 : count, 'Student filtering matches the record owner');
     await reset();
   }
   if (role === 'admin') {
-    await chooseSearchable(page, panel, '教师姓名', teacher.display_name);
+    await chooseSearchable(page, panel, '教师姓名', teacherLabel);
     assert.equal(await rows.count(), 0, 'Teacher filtering cannot reveal an active account outside the pending task');
     await reset();
   }
@@ -96,6 +144,12 @@ async function detailFilters(page, role, rows, count, student, otherStudent, tea
 
 export async function checkTasks(browser, origin, out, base, users) {
   const [admin, teacher, student] = users, finance = { username:'example-finance',display_name:'示例财务',account_type:'finance' };
+  const displayed = createStudentNameDisplay()(base);
+  const studentOptions = studentFilterOptions(displayed.lab_student_accounts || []);
+  const teacherOptions = studentFilterOptions(displayed.lab_teacher_accounts || []);
+  const studentLabel = personFilterLabel(studentOptions, student);
+  const otherStudentLabel = personFilterLabel(studentOptions, base.lab_student_accounts.find(row => row.username !== student.username));
+  const teacherLabel = personFilterLabel(teacherOptions, teacher);
   const results = [];
   for (const width of [1440,390,320]) for (const user of [student,teacher,finance,admin]) {
     const role=user.account_type,account={...user,default_view_scope:role==='teacher'?'all':undefined,profile_required:false,session_token:'task-fixture'};
@@ -193,7 +247,7 @@ export async function checkTasks(browser, origin, out, base, users) {
     await taskFilters(page, role, { checkEntry: true });
     const rows=role==='admin'?page.locator('#account-list-rows tbody tr'):page.locator('main > section .platform-request-record');
     assert.equal(await rows.count(),count,'Task mode opens all corresponding records');
-    await detailFilters(page, role, rows, count, student, base.lab_student_accounts.find(row => row.username !== student.username), teacher);
+    await detailFilters(page, role, rows, count, studentLabel, otherStudentLabel, teacherLabel);
     assert.equal(await page.locator('main > .platform-section-create').count(),0);
     if(role==='teacher')assert.equal(await page.getByRole('button',{name:'同意',exact:true}).count(),2,'Hidden pending records stay reachable from tasks');
     const downloading=page.waitForEvent('download');await page.getByRole('button',{name:/导出.*Excel/}).first().click();const xlsx=await readWorkbookText(await(await downloading).path());
@@ -242,7 +296,7 @@ export async function checkTasks(browser, origin, out, base, users) {
       await page.locator('[data-task="stock-team-review"]').click();
       const panel = await taskFilters(page, role, { expand: true, checkEntry: true });
       assert.equal(await page.locator('.platform-stock-request').count(),3);
-      await chooseSearchable(page, panel, '学生姓名', student.display_name);
+      await chooseSearchable(page, panel, '学生姓名', studentLabel);
       assert.equal(await page.locator('.platform-stock-request').count(),1,'Stock-request student filter uses the applicant, not the movement operator');
       const matching = await exportTask(page);
       assert(matching.includes('QA-STOCK-3') && !matching.includes('QA-STOCK-1') && !matching.includes('QA-STOCK-4'));
