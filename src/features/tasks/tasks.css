@@ -1,3 +1,4 @@
+#platform-record-tools{scroll-margin-top:var(--workspace-anchor-offset,94px)}
 .platform-task-center,.platform-overview-section{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:18px;min-width:0}
 .platform-task-center{border-top:4px solid var(--accent-border)}
 .platform-task-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}

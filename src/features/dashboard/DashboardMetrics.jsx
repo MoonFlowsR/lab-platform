@@ -53,7 +53,7 @@ export default function DashboardMetrics({ workRequests, purchases, mode = 'revi
 export function InventoryMetrics({ inventory, label = '团队库存', onOpen }) {
   return <section className="platform-inventory-metrics" aria-label={label}>
     <div className="platform-inventory-heading"><strong>{label}</strong><small>{inventory.total} 个批次</small></div>
-    <dl><div><dt>低库存</dt><dd className={inventory.low ? 'is-danger' : ''}>{inventory.low}<small> 批</small></dd></div><div><dt>临期 · 30天内</dt><dd className={inventory.expiring ? 'is-warning' : ''}>{inventory.expiring}<small> 批</small></dd></div><div><dt>已过期</dt><dd className={inventory.expired ? 'is-danger' : ''}>{inventory.expired}<small> 批</small></dd></div></dl>
+    <dl><div><dt>低库存</dt><dd className={inventory.low ? 'is-danger' : ''}>{inventory.low}<small> 组</small></dd></div><div><dt>临期 · 30天内</dt><dd className={inventory.expiring ? 'is-warning' : ''}>{inventory.expiring}<small> 批</small></dd></div><div><dt>已过期</dt><dd className={inventory.expired ? 'is-danger' : ''}>{inventory.expired}<small> 批</small></dd></div></dl>
     {onOpen && <button type="button" className="platform-navigation-link" onClick={onOpen}>查看库存<Icon name="arrowUpRight" size={16} /></button>}
   </section>;
 }

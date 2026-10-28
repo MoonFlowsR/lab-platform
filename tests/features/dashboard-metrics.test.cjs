@@ -62,8 +62,8 @@ test('empty and filtered inputs do not retain counts from previously selected re
   assert.equal(businessMetrics(rows.slice(0, 1))[0].total, 1);
 });
 
-test('inventory counts batches rather than grouped materials; expiry excludes empty and long-term batches', () => {
+test('inventory aggregates low stock while expiry still counts individual nonempty batches', () => {
   const batch = (current_qty, expiry_date, min_qty = 0) => ({ material_name: '示例材料', spec: '示例规格', storage_room: 'A101', current_qty, expiry_date, min_qty });
   const batches = [batch(5, '长期'), batch(0, '2026-01-01'), batch(1, '2026-10-18', 2), batch(5, '2026-10-19'), batch(5, '2026-11-18'), batch(5, '2026-11-19')];
-  assert.deepEqual(inventoryMetrics(batches, '2026-10-19'), { total: 6, low: 2, expiring: 2, expired: 1 });
+  assert.deepEqual(inventoryMetrics(batches, '2026-10-19'), { total: 6, low: 0, expiring: 2, expired: 1 });
 });

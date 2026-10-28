@@ -1,5 +1,6 @@
 import { materialModelTerms } from '../../features/inventory/material-model-search.js';
 import { publicNumberSearchText } from './public-number.js';
+import { inventoryStockIndex, stockGroupFor } from '../../features/inventory/low-stock.js';
 
 // Resolve existing procurement links; no extra user-entered ownership fields.
 export function createTeacherContext({ purchases = [], batches = [], teachers = [] } = {}) {
@@ -93,8 +94,8 @@ export function recordMatchesSearch(row, query = '') {
   return !term || recordSearchText(row).includes(term);
 }
 
-export function inventorySearchFlags(row, today) {
-  const flags = Number(row.current_qty || 0) <= Number(row.min_qty || 0) ? ['低库存'] : [];
+export function inventorySearchFlags(row, today, stockIndex = inventoryStockIndex([row])) {
+  const flags = stockGroupFor(stockIndex, row)?.low ? ['低库存'] : [];
   if (Number(row.current_qty) > 0 && /^\d{4}-\d{2}-\d{2}$/.test(row.expiry_date || '')) {
     const days = (Date.parse(row.expiry_date) - Date.parse(today)) / 86400000;
     if (days < 0) flags.push('已过期');
