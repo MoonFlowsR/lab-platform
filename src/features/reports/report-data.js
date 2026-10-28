@@ -1,6 +1,7 @@
 import { createTeacherContext, recordMatchesTeacher, recordTeacherNames, recordMatchesSearch, inventorySearchFlags } from '../../shared/lib/teacher-filter.js';
 import { requestRecordVisible } from '../../shared/lib/review-scope.js';
 import { matchesSettlementStatus } from '../finance/settlement-filter.js';
+import { inventoryStockIndex } from '../inventory/low-stock.js';
 const chineseDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' });
 const enrichedRows = new WeakMap();
 export function chinaDate(value = new Date()) {
@@ -22,11 +23,12 @@ export function expiryWarnings(batches, today = chinaDate(), days = 30) {
 export function selectReportData(data, { student = '', teacher = '', query = '', startDate = '', endDate = '', settlementStatus = '' } = {}) {
   const work = data.workRequests || [], purchases = data.purchases || [], stock = data.stockTransactions || [];
   const teacherContext = createTeacherContext(data);
+  const inventoryStock = inventoryStockIndex(data.batches || []);
   const teacherMatches = (row, module) => recordMatchesTeacher(row, teacher, module, teacherContext);
   const searchMatches = row => recordMatchesSearch(row, query);
   const today = chinaDate();
   const enrich = (row, module) => {
-    const names = recordTeacherNames(row, module, teacherContext), flags = module === 'materials' ? inventorySearchFlags(row,today) : '';
+    const names = recordTeacherNames(row, module, teacherContext), flags = module === 'materials' ? inventorySearchFlags(row,today,inventoryStock) : '';
     const cached = enrichedRows.get(row);
     if (cached?.module === module && cached.names === names && cached.flags === flags) return cached.value;
     const value = { ...row, associated_teacher_names: names, ...(module === 'materials' ? {_search_text: flags} : {}) };
@@ -58,5 +60,5 @@ export function selectReportData(data, { student = '', teacher = '', query = '',
   });
   const materialIds = new Set([...batches, ...stockTransactions].map(row => String(row.material_id)));
   const materials = (data.materials || []).filter(material => searchMatches(material) && (materialIds.has(String(material._id)) || (!teacher && dateMatches(material.created_at) && (!student || material.created_by_username === student))));
-  return { workRequests, purchases: selectedPurchases, stockTransactions, stockOutRequests, reviewLogs, batches, materials };
+  return { workRequests, purchases: selectedPurchases, stockTransactions, stockOutRequests, reviewLogs, batches, materials, inventoryStock };
 }

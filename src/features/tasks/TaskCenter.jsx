@@ -26,7 +26,7 @@ export function TaskLink({
       </span>
       <strong>
         {group.count}
-        <small>{group.kind === "warning" ? " 批" : " 条"}</small>
+        <small> {group.unit || (group.kind === "warning" ? "批" : "条")}</small>
       </strong>
       {showAmount && group.amount != null && (
         <span className="platform-task-amount">{money(group.amount)}</span>
@@ -138,7 +138,8 @@ export function TaskFilterBanner({ task, onClear, onBack, query }) {
     const frame = requestAnimationFrame(() => {
       const target = document.getElementById("platform-task-results");
       target?.focus({ preventScroll: true });
-      target?.scrollIntoView({ block: "start" });
+      const tools = document.getElementById("platform-record-tools");
+      (tools || target)?.scrollIntoView({ block: "start" });
     });
     return () => cancelAnimationFrame(frame);
   }, [task.id]);
@@ -160,7 +161,7 @@ export function TaskFilterBanner({ task, onClear, onBack, query }) {
         <h2>
           {task.title}{" "}
           <span>
-            {task.count} {task.kind === "warning" ? "批" : "条"}
+            {task.count} {task.unit || (task.kind === "warning" ? "批" : "条")}
           </span>
         </h2>
         {detail && <p>{detail}</p>}

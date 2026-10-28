@@ -5,6 +5,7 @@ import { isReceivedPurchase, purchaseAmount } from '../purchases/purchase-values
 import { isReimbursementEligible } from '../finance/reimbursement.js';
 import { canCompleteStockRequest } from '../stock/stock-out-policy.js';
 import { expiryWarnings } from '../reports/report-data.js';
+import { lowStockGroups } from '../inventory/low-stock.js';
 
 const taskRecordId = row => String(row._id ?? row.id ?? row.public_id ?? '');
 export const taskContains = (group, row) => !group || group.ids.has(taskRecordId(row));
@@ -66,7 +67,8 @@ export function buildTaskCenter({ account, workRequests = [], purchases = [], st
   const warnings = expiryWarnings(batches, today);
   add('inventory-expired', 'materials', '已过期', warnings.filter(row => row.daysRemaining < 0), { kind: 'warning', action: '查看库存' });
   add('inventory-expiring', 'materials', '30天内到期', warnings.filter(row => row.daysRemaining >= 0), { kind: 'warning', action: '查看库存' });
-  add('inventory-low', 'materials', '低库存', batches.filter(row => Number(row.current_qty || 0) <= Number(row.min_qty || 0)), { kind: 'warning', action: '查看库存' });
+  const low = lowStockGroups(batches);
+  add('inventory-low', 'materials', '低库存', low.flatMap(group => group.batches), { count: low.length, unit: '组', kind: 'warning', action: '查看库存' });
   const actions = groups.filter(group => group.kind === 'action'), byModule = {};
   for (const group of actions) byModule[group.module] = (byModule[group.module] || 0) + group.count;
   return { groups, total: actions.reduce((sum, group) => sum + group.count, 0), byModule };

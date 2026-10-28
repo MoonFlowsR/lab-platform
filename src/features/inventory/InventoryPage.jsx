@@ -22,7 +22,7 @@ function StockPhotoLinks({ row, attachments, onDownload, batch = false }) {
     {item && <button style={styles.lightButton} onClick={() => onDownload?.(item)}>物品特写</button>}
   </div>;
 }
-function InventoryPage({ task, canInitialize = false, materialCatalog = [], isAdmin = false, onDeleteRecord, attachments = [], onDownloadAttachment, onInitialize, initializationMaterials, initializationBatches, initializationUnits, materials, batches, canManageStock, canEditBatchInformation = () => false, onUpdateBatch, onExportBatches, searchQuery = "" }) {
+function InventoryPage({ task, canInitialize = false, materialCatalog = [], isAdmin = false, onDeleteRecord, attachments = [], onDownloadAttachment, onInitialize, initializationMaterials, initializationBatches, initializationUnits, materials, batches, inventoryStock, canManageStock, canEditBatchInformation = () => false, onUpdateBatch, onExportBatches, searchQuery = "" }) {
   const showActions = canManageStock || batches.some(canEditBatchInformation);
   const showSafetyNotes = batches.some(batch => batch.safety_notes);
   const showRemarks = batches.some(batch => batch.remark);
@@ -54,7 +54,7 @@ function InventoryPage({ task, canInitialize = false, materialCatalog = [], isAd
   ];
   return <main>
     <Toolbar title="库存" description={canInitialize ? "查看库存、有效期和入库证明；现存材料可在此建库。" : "查看和筛选库存、有效期及入库证明。"} />
-    <InventoryWarnings batches={batches} Table={DataTable} cardStyle={styles.card} renderPhoto={row => <StockPhotoLinks batch row={row} attachments={attachments} onDownload={onDownloadAttachment} />} />
+    <InventoryWarnings batches={batches} inventoryStock={inventoryStock} Table={DataTable} cardStyle={styles.card} renderPhoto={row => <StockPhotoLinks batch row={row} attachments={attachments} onDownload={onDownloadAttachment} />} />
     {canInitialize && !task && <MaterialInitialization materialCatalog={materialCatalog} materials={initializationMaterials} batches={initializationBatches} units={initializationUnits} onSave={onInitialize}       />}
     <section style={styles.card}>
       <div className="platform-inventory-section-header" style={styles.cardHeader}><h2 style={styles.h2}>材料汇总</h2><ExportButton onExport={exportSummary} /></div>

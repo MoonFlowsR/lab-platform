@@ -1,7 +1,8 @@
 import { canonicalMaterialName, materialKey } from '../../shared/lib/dropdown-normalize.js';
 
 const clean = value => String(value ?? '').normalize('NFKC').trim().replace(/\s+/gu, ' ');
-const specification = value => (clean(value) || '无').replace(/^Mn\s*[-‐‑‒–—−]?\s*(\d+(?:\.\d+)?)(?=$|\s|[，,;；])/iu, 'Mn-$1');
+export const materialSpecification = value => (clean(value) || '无').replace(/^Mn\s*[-‐‑‒–—−]?\s*(\d+(?:\.\d+)?)(?=$|\s|[，,;；])/iu, 'Mn-$1');
+const specification = materialSpecification;
 const specificationKey = value => specification(value);
 const roomKey = batch => clean(batch.storage_room) || `unknown:${clean(batch.storage_location) || batch._id || batch.id || batch.batch_code || batch.public_id}`;
 const timestamp = value => Number.isFinite(Date.parse(value)) ? Date.parse(value) : 0;

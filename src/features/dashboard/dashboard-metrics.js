@@ -3,6 +3,7 @@ import { splitReviewedWorkSections, splitReviewedPurchaseSections } from '../../
 import { completedWorkFee, isCompletedWork, workFee } from '../work/work-values.js';
 import { expiryWarnings } from '../reports/report-data.js';
 import { reimbursementMetrics } from '../finance/reimbursement.js';
+import { inventoryStockIndex, lowStockGroups } from '../inventory/low-stock.js';
 
 const number = value => Number.isFinite(Number(value)) ? Number(value) : 0;
 const sum = (rows, get) => rows.reduce((total, row) => total + number(get(row)), 0);
@@ -34,11 +35,11 @@ export function businessMetrics(workRequests = [], purchases = []) {
   });
 }
 
-export function inventoryMetrics(batches = [], today) {
+export function inventoryMetrics(batches = [], today, stockIndex = inventoryStockIndex(batches)) {
   const warnings = expiryWarnings(batches, today);
   return {
     total: batches.length,
-    low: batches.filter(row => number(row.current_qty) <= number(row.min_qty)).length,
+    low: lowStockGroups(batches, stockIndex).length,
     expiring: warnings.filter(row => row.daysRemaining >= 0).length,
     expired: warnings.filter(row => row.daysRemaining < 0).length,
   };
@@ -71,7 +72,7 @@ export function reportSummaryRows(data, today) {
   summary.push(['出入退库记录数', stock.length, '条']);
   for (const type of ['入库', '出库', '退库']) summary.push([type + '记录数', stock.filter(row => row.transaction_type === type).length, '条']);
   summary.push(['库存修正记录数', stock.filter(row => !['入库', '出库', '退库'].includes(row.transaction_type)).length, '条']);
-  const inventory = inventoryMetrics(data.batches, today);
-  summary.push(['相关库存批次', inventory.total, '批'], ['低库存批次', inventory.low, '批'], ['临期批次（30天内）', inventory.expiring, '批'], ['已过期批次', inventory.expired, '批'], ['审批记录数', (data.reviewLogs || []).length, '条']);
+  const inventory = inventoryMetrics(data.batches, today, data.inventoryStock);
+  summary.push(['相关库存批次', inventory.total, '批'], ['低库存材料规格单位组', inventory.low, '组'], ['临期批次（30天内）', inventory.expiring, '批'], ['已过期批次', inventory.expired, '批'], ['审批记录数', (data.reviewLogs || []).length, '条']);
   return summary.map(([label, value, unit]) => [label, unit === '元' ? Number(value.toFixed(2)) : value, unit]);
 }

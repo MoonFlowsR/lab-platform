@@ -73,14 +73,14 @@ export default function ReportsPage({ currentUser, onReimbursementChange, data, 
       </div>
       {isFinance && <p className="platform-filter-caption">工单状态筛选测试、加工、维修及采购。</p>}
       {invalidRange && <p role="alert" style={{ ...styles.note, color: 'var(--danger-ink)', fontWeight: 700 }}>开始日期不能晚于结束日期，请调整时间范围。</p>}
-      <details className="platform-report-basis"><summary>统计口径</summary><ul><li>测试、加工、维修：按已完成工单最终金额统计。</li><li>采购：已入库按确认的最终金额，未入库及未确认最终金额的旧记录按预计金额统计。</li><li>日期范围包含起止当天。</li></ul><a href={`/help#${({ admin: 'admin-reports', teacher: 'teacher-reports', finance: 'finance-reimbursement' })[currentUser?.account_type] || 'student-exports'}`}>完整统计说明</a></details>
+      <details className="platform-report-basis"><summary>统计口径</summary><ul><li>测试、加工、维修：按已完成工单最终金额统计。</li><li>采购：已入库按确认的最终金额，未入库及未确认最终金额的旧记录按预计金额统计。</li><li>低库存：同材料、规格、单位的全部可访问批次跨房间合计，与组内最高预警值比较；筛选只选取相关组。</li><li>日期范围包含起止当天。</li></ul><a href={`/help#${({ admin: 'admin-reports', teacher: 'teacher-reports', finance: 'finance-reimbursement' })[currentUser?.account_type] || 'student-exports'}`}>完整统计说明</a></details>
 
     </FilterPanel>
     {currentUser?.account_type === 'finance' && <ReimbursementSummary workRequests={workRequests} purchases={purchases} money={money} />}
     <DashboardMetrics mode="report" workRequests={workRequests} purchases={purchases} money={money} showReimbursement={currentUser?.account_type === 'finance'} />
     <div className="platform-report-operations">
       <section className="platform-flow-metrics" aria-label="出入退库与审批统计"><h2>操作记录</h2><dl>{['入库', '出库', '退库'].map(type => <div key={type}><dt>{type}</dt><dd>{stockTransactions.filter(row => row.transaction_type === type).length}<small> 条</small></dd></div>)}<div><dt>库存修正</dt><dd>{stockTransactions.filter(row => !['入库', '出库', '退库'].includes(row.transaction_type)).length}<small> 条</small></dd></div><div><dt>待采购人审批</dt><dd>{stockOutRequests.filter(row=>row.status==='待采购人审批').length}<small> 条</small></dd></div><div><dt>待完成出库</dt><dd>{stockOutRequests.filter(row=>row.status==='已同意待出库').length}<small> 条</small></dd></div><div><dt>审批</dt><dd>{reviewLogs.length}<small> 条</small></dd></div></dl></section>
-      <InventoryMetrics inventory={inventoryMetrics(batches)} label="相关库存" />
+      <InventoryMetrics inventory={inventoryMetrics(batches, undefined, selected.inventoryStock)} label="相关库存" />
     </div>
     <section style={styles.card}>
       <div className="platform-report-filter-heading"><h2 style={styles.h2}>业务明细</h2><small style={styles.muted}>导出包含全部分类，不受当前明细页签限制。</small></div>
