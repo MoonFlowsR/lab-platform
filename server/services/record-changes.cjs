@@ -1,3 +1,4 @@
+const { canViewReceipts } = require('../features/inventory/login-reminder.cjs');
 module.exports = function createRecordChanges() {
   const clients = new Map();
   function connect(req, res) {
@@ -5,7 +6,7 @@ module.exports = function createRecordChanges() {
     res.flushHeaders(); res.write(': connected\n\n');
     const heartbeat = setInterval(() => res.write(': keepalive\n\n'), 25000);
     const cleanup = () => { clients.delete(res); clearInterval(heartbeat); };
-    clients.set(res, { accountId:String(req.account?._id || req.account?.id || ''), cleanup });
+    clients.set(res, { accountId:String(req.account?._id || req.account?.id || ''), role:req.account?.account_type, cleanup });
     res.once('close', cleanup); res.once('error', cleanup);
   }
   function disconnectAccount(id) {
@@ -15,5 +16,10 @@ module.exports = function createRecordChanges() {
       if (!res.destroyed && !res.writableEnded) res.end('event: records-changed\ndata: {}\n\nevent: session-expired\ndata: {}\n\n');
     }
   }
-  return { connect, disconnectAccount, notify:() => { for (const res of clients.keys()) if (!res.destroyed && !res.writableEnded) res.write('event: records-changed\ndata: {}\n\n'); } };
+  function notifyReminderRead() {
+    for (const [res, client] of clients) {
+      if (canViewReceipts(client.role) && !res.destroyed && !res.writableEnded) res.write('event: inventory-reminder-read\ndata: {}\n\n');
+    }
+  }
+  return { connect, disconnectAccount, notifyReminderRead, notify:() => { for (const res of clients.keys()) if (!res.destroyed && !res.writableEnded) res.write('event: records-changed\ndata: {}\n\n'); } };
 };

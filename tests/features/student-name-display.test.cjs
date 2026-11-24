@@ -214,6 +214,7 @@ test('HTTP snapshots refresh mentor display metadata and anonymous help never re
       const response = await fetch(`http://127.0.0.1:${server.address().port}${url}`, { method: body ? 'POST' : 'GET', headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(authorized ? { Authorization: `Bearer ${token}` } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(5000) });
       assert.equal(response.status, 200); return response.json();
     };
+    await request('/api/inventory-reminder/ack', { authorized: true, body: {} });
     const first = await request('/api/ops/listAll', { authorized: true, body: {} });
     assert.ok(first.data.lab_student_name_labels.some(row => row.username === 'owner' && row.responsible_teacher_name === 'teacher-a'));
     assert.equal(first.data.lab_work_requests.find(row => row._id === saved._id).applicant_name, 'owner');

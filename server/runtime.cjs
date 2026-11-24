@@ -144,6 +144,7 @@ const accountSessions = require('./security/account-sessions.cjs')({ db, nowISO 
 const { nextPublicId, insertRecord, getRecord, updateRecord, listRecords, addAudit } = require("./db/records.cjs")({ db, nowISO, dateStampCN, padSerial });
 
 const studentProfiles = require("./features/accounts/student-profiles.cjs")({ db, nowISO, addAudit });
+const inventoryReminder = require('./features/inventory/login-reminder.cjs').createInventoryReminder({ db, nowISO, addAudit });
 
 const graduationExpiry = require('./security/student-graduation-expiry.cjs')({ db, nowISO, accountSessions, addAudit, recordChanges });
 graduationExpiry.start();
@@ -342,7 +343,7 @@ function signToken(account, clientVersionValue) {
   return jwt.sign(
     { account_id: account.id, username: account.username, account_type: account.account_type, auth_version: studentProfiles.authVersion(), session_version: accountSessions.version(account), ...(clientVersionValue ? { client_version: clientVersionValue } : {}) },
     JWT_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: "7d", ...(account.account_type === 'student' ? { jwtid: require('node:crypto').randomUUID() } : {}) }
   );
 }
 
@@ -386,7 +387,17 @@ function authMiddleware(req, res, next) {
     if (!accountSessions.matches(decoded, account)) throw new Error("登录状态已失效，请重新登录。");
 
     req.account = publicAccount(account);
-    if (req.account.profile_required && !["/api/auth/me", "/api/profile/get", "/api/profile/save"].includes(req.path)) return res.status(403).json({ ok: false, code: "PROFILE_REQUIRED", message: "请先完善系统责任教师、实际指导教师和毕业年份。" });
+    const route = req.path.toLowerCase().replace(/\/+$/, '');
+    const sessionCheck = req.method === 'POST' && route === '/api/auth/me';
+    const acknowledging = req.method === 'POST' && route === '/api/inventory-reminder/ack';
+    if (req.account.account_type === 'student') {
+      req.studentLoginId = decoded.jti;
+      req.account.inventory_reminder_required = inventoryReminder.required(req.account, req.studentLoginId);
+      if (req.account.inventory_reminder_required && !sessionCheck && !acknowledging) {
+        return res.status(403).json({ ok: false, code: 'INVENTORY_REMINDER_REQUIRED', message: '请先点击出入库提醒中的“已读”。' });
+      }
+    }
+    if (req.account.profile_required && !sessionCheck && !acknowledging && !['/api/profile/get', '/api/profile/save'].includes(route)) return res.status(403).json({ ok: false, code: "PROFILE_REQUIRED", message: "请先完善系统责任教师、实际指导教师和毕业年份。" });
     next();
   } catch (error) {
     res.status(401).json({ ok: false, code: error.code === 'CLIENT_UPDATE_REQUIRED' ? error.code : "SESSION_EXPIRED", message: error.message || "登录状态无效，请重新登录。" });
@@ -607,5 +618,5 @@ const syncResponse = require("./services/sync-response.cjs")({ db, listAll });
 const deletionService = createDeletionService({ db, uploadDir: UPLOAD_DIR, nowISO, addAudit });
 
 const stockOutService = createStockOutService({ db, getRecord, listRecords, insertRecord, updateRecord, nextPublicId, addAudit, nowISO, storageDetails, requireItemPhoto, bindStockEvidence, batchPurchasePurpose, selectedStockTeachers });
-return { graduationExpiry, accountSessions, authAttempts, clientVersion, ADMIN_INVITE_CODE, FINANCE_INVITE_CODE, BACKUP_DIR, DB_PATH, DIST_DIR, HOST, PORT, PURCHASE_EDIT_FIELDS, STUDENT_INVITE_CODE, TEACHER_INVITE_CODE, UPLOAD_DIR, WORK_REQUEST_EDIT_FIELDS, addAudit, addReviewLog, app, asyncHandler, authMiddleware, batchPurchasePurpose, bcrypt, bindStockEvidence, closeRejectedRequest, completeWorkValues, db, deletionService, ensureCanAccessAttachmentTarget, ensureCanDownloadAttachment, express, fs, getInitialAccountStatus, getMonthFolder, getPreviousPurchases, getRecord, getRegisteredTeacherAccountsForDropdown, initializeMaterialStock, insertRecord, isValidLoginId, isImageAttachmentRecord, listRecords, nextPublicId, normalizeItemName, nowISO, num, path, pickFields, publicAccount, publicAccountForAdmin, purchaseCategory, purchasePurpose, recordChanges, requestJson, requireAdmin, requireAssignedReviewer, requireItemPhoto, requireOwner, requireStockEvidence, requireStudentSubmission, requireTeacherOrAdmin, requiredPurchaseExpiryDate, retiredLocationPhotoIds, safeCollectionName, safeFileName, saveWorkWithAttachments, selectedReviewTeacher, selectedStockTeachers, signToken, stockOutService, storageDetails, studentProfiles, syncResponse, updateBatchInformation, updateRecord, upload, validatePersonalHiddenCollection, workRequestCosts };
+return { inventoryReminder, graduationExpiry, accountSessions, authAttempts, clientVersion, ADMIN_INVITE_CODE, FINANCE_INVITE_CODE, BACKUP_DIR, DB_PATH, DIST_DIR, HOST, PORT, PURCHASE_EDIT_FIELDS, STUDENT_INVITE_CODE, TEACHER_INVITE_CODE, UPLOAD_DIR, WORK_REQUEST_EDIT_FIELDS, addAudit, addReviewLog, app, asyncHandler, authMiddleware, batchPurchasePurpose, bcrypt, bindStockEvidence, closeRejectedRequest, completeWorkValues, db, deletionService, ensureCanAccessAttachmentTarget, ensureCanDownloadAttachment, express, fs, getInitialAccountStatus, getMonthFolder, getPreviousPurchases, getRecord, getRegisteredTeacherAccountsForDropdown, initializeMaterialStock, insertRecord, isValidLoginId, isImageAttachmentRecord, listRecords, nextPublicId, normalizeItemName, nowISO, num, path, pickFields, publicAccount, publicAccountForAdmin, purchaseCategory, purchasePurpose, recordChanges, requestJson, requireAdmin, requireAssignedReviewer, requireItemPhoto, requireOwner, requireStockEvidence, requireStudentSubmission, requireTeacherOrAdmin, requiredPurchaseExpiryDate, retiredLocationPhotoIds, safeCollectionName, safeFileName, saveWorkWithAttachments, selectedReviewTeacher, selectedStockTeachers, signToken, stockOutService, storageDetails, studentProfiles, syncResponse, updateBatchInformation, updateRecord, upload, validatePersonalHiddenCollection, workRequestCosts };
 };

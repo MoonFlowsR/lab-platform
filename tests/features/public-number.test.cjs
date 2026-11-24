@@ -119,6 +119,7 @@ function runtimeFixture() {
     fs.copyFileSync(path.join(projectRoot, 'src/config/dropdown-options.json'), path.join(temporaryRoot, 'src/config/dropdown-options.json'));
     runtime = require(path.join(temporaryRoot, 'server/runtime.cjs'))();
     require(path.join(temporaryRoot, 'server/routes/ops.cjs'))(runtime);
+    require(path.join(temporaryRoot, 'server/routes/auth.cjs'))(runtime);
     require(path.join(temporaryRoot, 'server/routes/attachments.cjs'))(runtime);
     return { ...runtime, close() {
       runtime.db.close();
@@ -195,6 +196,7 @@ test('actual HTTP snapshots, approvals and attachment downloads preserve origina
       method: body ? 'POST' : 'GET', headers: { Authorization: `Bearer ${tokens[role]}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(5000),
     });
+    assert.equal((await request('/api/inventory-reminder/ack', 'owner', {})).status, 200);
     for (const { row, attachment } of records) {
       const response = await request('/api/ops/reviewWorkRequest', 'teacher', { id: row._id, next_status: '已通过', review_note: '' });
       assert.equal(response.status, 200); const approved = await response.json();

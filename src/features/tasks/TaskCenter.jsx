@@ -1,5 +1,6 @@
 import { money, containsQuery } from "../../app/formatters.js";
 import "./tasks.css";
+import { inventoryReminderTitle } from "../inventory/InventoryLoginReminder.jsx";
 import Icon from "../../shared/components/Icon.jsx";
 import { useEffect } from "react";
 
@@ -64,7 +65,6 @@ export function TaskCenter({
   };
   const grouped = currentUser.account_type === "student" && visible.length > 6;
   const description = {
-    student: "确认工单、到货入库，处理需要修改的申请。",
     teacher: "优先处理指定你审核的申请。",
     finance: "核对已完成工单的最终金额，登记报销。",
     admin: "处理账号事务，跟进团队业务进度。",
@@ -76,7 +76,9 @@ export function TaskCenter({
           <h2>
             我的待办 <span data-testid="task-total">{center.total}</span>
           </h2>
-          <p>{description}</p>
+          <p>{currentUser.account_type === 'student'
+            ? <strong className="inventory-reminder-label">{inventoryReminderTitle}</strong>
+            : description}</p>
         </div>
         {onReports && (
           <button

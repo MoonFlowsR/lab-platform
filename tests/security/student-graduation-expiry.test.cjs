@@ -207,6 +207,7 @@ async function httpFixture() {
       headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(body) });
     return { status: response.status, body: await response.json() };
   }
+  for (const name of ['示例学生', '登录学生', '资料学生']) assert.equal((await request('/api/inventory-reminder/ack', {}, tokens[name])).status, 200);
   return { ...runtime, clock, get, tokens, request, password, temporaryRoot,
     async close() {
       server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); runtime.db.close();

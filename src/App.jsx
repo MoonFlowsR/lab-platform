@@ -26,6 +26,7 @@ import { filterInventoryCategory, inventoryCategoryOptions } from "./features/in
 import { styles } from "./app/styles.js";
 import { DateInput, Field, SearchableSelect } from "./shared/components/ui.jsx";
 import AccountSettingsDialog from "./features/accounts/AccountSettingsDialog.jsx";
+import InventoryLoginReminder from "./features/inventory/InventoryLoginReminder.jsx";
 const HelpPage = lazy(() => import("./features/help/HelpPage.jsx"));
 import { LoginPage } from "./features/accounts/LoginPage.jsx";
 import ModuleDateFilter from "./shared/components/ModuleDateFilter.jsx";
@@ -115,6 +116,7 @@ function App() {
   const isAdmin = currentUser?.account_type === "admin";
   const isRecordViewer = isTeacher || isFinance || isAdmin;
   const profileRequired = isStudent && currentUser?.profile_required !== false;
+  const reminderRequired = isStudent && currentUser.inventory_reminder_required === true;
   const canReview = isTeacher;
   const showInstitutionFilter = isRecordViewer && (WORK_MODULES.includes(activeTab) || activeTab === "purchases");
   const selectedInstitution = showInstitutionFilter ? moduleInstitutions[activeTab] || "" : "";
@@ -190,16 +192,16 @@ function App() {
   }, [setMessage]);
 
   useEffect(() => {
-    if (!loginReady || !sessionToken || !sessionChecked || profileRequired) return;
+    if (!loginReady || !sessionToken || !sessionChecked || profileRequired || reminderRequired) return;
     syncController.request();
     const refresh = () => { if (document.visibilityState !== "hidden") syncController.request({ background: true, force: false }); };
     const interval = setInterval(refresh, 30000);
     document.addEventListener("visibilitychange", refresh);
     return () => { clearInterval(interval); document.removeEventListener("visibilitychange", refresh); syncController.dispose(); };
-  }, [loginReady, syncController, sessionToken, sessionChecked, profileRequired]);
+  }, [loginReady, syncController, sessionToken, sessionChecked, profileRequired, reminderRequired]);
 
   useEffect(() => {
-    if (!sessionToken || !sessionChecked || profileRequired) return;
+    if (!sessionToken || !sessionChecked || profileRequired || reminderRequired) return;
     const controller = new AbortController();
     let changeTimer = null;
     const queueRefresh = () => {
@@ -227,6 +229,7 @@ function App() {
             const events = pending.split("\n\n"); pending = events.pop();
             if (events.some(event => event.includes("event: session-expired"))) { expireSession("登录状态已失效，请重新登录。"); return; }
             if (events.some(event => event.includes("event: records-changed"))) queueRefresh();
+            if (events.some(event => event.startsWith("event: inventory-reminder-read\n"))) window.dispatchEvent(new Event("inventory-reminder-read"));
           }
         } catch { /* Background polling preserves data while the stream reconnects. */ }
         if (!controller.signal.aborted) await retryDelay();
@@ -234,7 +237,7 @@ function App() {
     }
     listenForChanges();
     return () => { controller.abort(); if (changeTimer) clearTimeout(changeTimer); };
-  }, [sessionToken, syncController, sessionChecked, profileRequired]);
+  }, [sessionToken, syncController, sessionChecked, profileRequired, reminderRequired]);
 
   useEffect(() => {
     if (!accountUsername) return;
@@ -365,6 +368,13 @@ function App() {
   </div>;
   const accountSettings = <AccountSettingsDialog key={currentUser?.username} account={currentUser || {}} teachers={registeredTeacherAccounts} required={profileRequired} onSaveProfile={saveMyStudentProfile} onSavePassword={saveMyPassword} onLogout={logoutAccount} onClose={() => setAccountSettingsOpen(false)}    />;
   if (currentUser && !sessionChecked) return <PageLoading full message="正在核对登录信息…" />;
+  if (reminderRequired) return <InventoryLoginReminder key={sessionToken} token={sessionToken} hasProfile={!profileRequired} onRead={() => {
+    if (getStoredAccount()?.session_token !== sessionToken) return;
+    const updated = { ...currentUser, inventory_reminder_required: false };
+    saveStoredAccount(updated); setCurrentUser(updated);
+    setActiveTab('dashboard'); setTaskId(''); setQuery('');
+    if (window.location.pathname !== '/') window.location.replace('/');
+  }} />;
   if (currentUser && profileRequired) return <div className="platform-shell" style={styles.page}>{accountSettings}</div>;
   if (["/help", "/help/"].includes(window.location.pathname)) return <Suspense fallback={<PageLoading full message="正在打开帮助文档…" />}><HelpPage currentUser={currentUser} /></Suspense>;
   if (loading) return <PageLoading full message="正在连接平台…" />;
@@ -401,7 +411,7 @@ function App() {
 
       <PageBoundary key={activeTab}><Suspense fallback={<PageLoading message="正在打开模块…" />}>
       {activeTask && <TaskFilterBanner task={activeTask} query={query} onBack={openOverview} onClear={leaveTask} />}
-      {activeTab === "dashboard" && <Dashboard currentUser={currentUser} center={taskCenter} query={query} batchCount={materialBatches.length} onOpenTask={openTask} setActiveTab={openDashboardModule} />}
+      {activeTab === "dashboard" && <Dashboard students={studentAccounts} currentUser={currentUser} center={taskCenter} query={query} batchCount={materialBatches.length} onOpenTask={openTask} setActiveTab={openDashboardModule} />}
       {WORK_MODULES.includes(activeTab) && <WorkRequestsPage key={activeTab + ":" + (activeTask?.id || "records")} task={activeTask} onReimbursementChange={setReimbursementStatus} workHistory={visibleWorkRequests} optionHistory={workRequests} teacherAccounts={teacherAccounts} reviewScope={reviewScope} onReviewScopeChange={setReviewScope} fixedType={institutionType} rows={workRows} logs={reviewLogs} attachments={attachments} currentUser={currentUser} units={units} canSubmit={isStudent} canReview={canReview} isAdmin={isAdmin} onAdd={addWorkRequest} onResubmit={resubmitWorkRequest} onWithdraw={withdrawWorkRequest} onReview={reviewWorkRequest} onComplete={completeWorkRequest} onCloseRejected={closeRejectedOrder} onDeleteRecord={deleteRecordPermanently} onHideRecord={hideRecordForMe} onUploadAttachment={uploadAttachment} onDownloadAttachment={downloadAttachment} onDeleteAttachment={deleteAttachment} onExport={() => exportModule(activeTab, workRows)} />}
       {activeTab === "purchases" && <PurchasesPage key={activeTab + ":" + (activeTask?.id || "records")} task={activeTask} onReimbursementChange={setReimbursementStatus} registeredTeacherAccounts={registeredTeacherAccounts} teacherAccounts={teacherAccounts} reviewScope={reviewScope} onReviewScopeChange={setReviewScope} viewScope={purchaseViewScope} onViewScopeChange={setPurchaseViewScope} materialCatalog={materialCatalog} logs={reviewLogs} rows={filteredPurchases} attachments={attachments} batches={materialBatches} purchaseHistory={purchaseRequests} purchaseCatalog={purchaseCatalog} fundSummary={fundSummary} currentUser={currentUser} units={units} canSubmit={isStudent} canReview={canReview} isAdmin={isAdmin} onAdd={addPurchaseRequest} onResubmit={resubmitPurchaseRequest} onWithdraw={withdrawPurchaseRequest} onReview={reviewPurchase} onCompleteInbound={completePurchaseInbound} onCloseRejected={closeRejectedOrder} onDeleteRecord={deleteRecordPermanently} onHideRecord={hideRecordForMe} onUploadAttachment={uploadAttachment} onDownloadAttachment={downloadAttachment} onDeleteAttachment={deleteAttachment} onExport={() => exportModule("purchases", filteredPurchases)} />}
       {activeTab === "stock" && <StockPage key={activeTab + ":" + (activeTask?.id || "records")} task={activeTask} movementType={isStudent ? "" : stockMovementType} currentUser={currentUser} purchaseRequests={purchaseRequests} teacherAccounts={registeredTeacherAccounts} requests={filteredStockOutRequests} onReviewRequest={reviewStockOutRequest} onCompleteRequest={completeStockOutRequest} onWithdrawRequest={withdrawStockOutRequest} onExportRequests={rows => exportModule("stockRequests", rows)} viewScope={stockViewScope} onViewScopeChange={setStockViewScope} canSubmit={isStudent} materialCatalog={materialCatalog} rows={filteredStocks} batches={materialBatches} attachments={attachments} isAdmin={isAdmin} onDeleteRecord={deleteRecordPermanently} isManager={isRecordViewer} onAdd={addStockTransaction} onDownloadAttachment={downloadAttachment} onExport={rows => exportModule("stock", rows)} />}

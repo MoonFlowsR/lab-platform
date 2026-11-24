@@ -49,6 +49,7 @@ export async function checkLowStock(browser, origin, out, base, users) {
       if (url.origin !== origin) return route.abort();
       if (!url.pathname.startsWith('/api/')) return route.continue();
       if (url.pathname === '/api/auth/me') return route.fulfill({ json: { ok: true, account, teachers: base.lab_teacher_accounts } });
+      if (url.pathname === '/api/inventory-reminder/history' && account.account_type !== 'student') return route.fulfill({ json: { ok: true, rows: [], total: 0, has_more: false } });
       if (url.pathname === '/api/events') return route.fulfill({ contentType: 'text/event-stream', body: ': fixture\n\n' });
       if (url.pathname === '/api/ops/listAll') return route.fulfill({ json: { ok: true, revision: 'low-stock-' + revision, data: {
         ...base, current_account: account, lab_work_requests: [], lab_purchase_requests: [], lab_stock_transactions: [],

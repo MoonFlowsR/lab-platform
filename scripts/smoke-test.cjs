@@ -30,6 +30,8 @@ async function post(route,body={},token,ok=true){const response=await fetch(base
   await post('ops/adminSetAccountStatus',{id:financeRegistration.account._id,status:'active'},admin);
   const finance=(await post('auth/login',{username:'示例财务',password})).session_token;assert.equal((await post('ops/listAll',{},finance)).data.current_account.default_view_scope,'all');
   const student=(await post('auth/register',{username:'示例学生',password,account_type:'student',student_code:configuration.STUDENT_INVITE_CODE})).session_token;
+  assert.equal((await post('ops/listAll',{},student,false)).code,'INVENTORY_REMINDER_REQUIRED');
+  await post('inventory-reminder/ack',{},student);
   assert.equal((await post('ops/listAll',{},student,false)).code,'PROFILE_REQUIRED');
   await post('profile/save',{responsible_teacher_username:'示例教师',guiding_teacher_username:'示例教师',graduation_year:2028},student);
   const work=(await post('ops/submitWorkRequest',{request_type:'测试',work_content:'示例测试',external_unit:'示例渠道',workload_quantity:1,workload_unit:'按组',cost_test:10,review_teacher_username:'示例教师'},student)).record;
@@ -68,6 +70,7 @@ async function post(route,body={},token,ok=true){const response=await fetch(base
   // Status changes revoke only this account, including tokens from older deployments.
   const statusRegistration=await post('auth/register',{username:'示例状态学生',password,account_type:'student',student_code:configuration.STUDENT_INVITE_CODE});
   const statusId=statusRegistration.account.id||statusRegistration.account._id,statusToken=statusRegistration.session_token;
+  await post('inventory-reminder/ack',{},statusToken);
   await post('profile/save',{responsible_teacher_username:'示例教师',guiding_teacher_username:'示例教师',graduation_year:2028},statusToken);
   const statusRow=db.prepare("SELECT * FROM accounts WHERE username='示例状态学生'").get();
   const statusLegacy=jwt.sign({account_id:statusRow.id,username:statusRow.username,account_type:statusRow.account_type,auth_version:db.prepare("SELECT value FROM platform_settings WHERE key='auth_version'").get().value},configuration.JWT_SECRET,{expiresIn:'7d'});
