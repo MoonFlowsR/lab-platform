@@ -1,4 +1,16 @@
 /* Shared component finish. Responsive navigation is owned by app/workspace.css. */
+.platform-option-detail {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: var(--text-caption);
+  font-weight: 400;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.platform-stock-batch-field { min-width: 0; }
+.platform-stock-batch-detail { margin: 4px 0 0; color: var(--ink-secondary); font-size: var(--text-caption); line-height: 1.5; overflow-wrap: anywhere; }
+.platform-stock-batch-detail strong { color: var(--ink-strong); }
 .platform-page-search {
   display: flex;
   align-items: center;

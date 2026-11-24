@@ -14,14 +14,16 @@ export async function checkNewRecordDefaults(browser,origin,out,snapshot,users){
  const [,teacher,student]=users,results=[];
  const history={_id:'default-history',public_id:'QA-DEFAULT-PUR',material_name:'示例历史材料',purchase_category:'试剂原料',specification:'示例已选规格',quantity:4,unit:'瓶',preferred_supplier:'示例历史渠道',purchase_purpose:'公用',estimated_price:50,safety_notes:'示例安全事项',remark:'示例历史备注',applicant_username:student.username,status:'已完成',received_status:'已入库',created_at:'2026-10-20T00:00:00Z'};
  const catalog=[{name:'示例新材料',category:'试剂原料',categories:['试剂原料'],specifications:['唯一示例规格'],suppliers:[],units:[]},{name:history.material_name,category:'试剂原料',categories:['试剂原料'],specifications:[history.specification],suppliers:[],units:[]}];
- const batch={...snapshot.lab_material_batches[0],_id:'default-batch',material_name:'示例新材料',spec:'唯一示例规格',unit:'瓶',storage_room:'A101',storage_detail:'示例柜上层',storage_location:'A101 · 示例柜上层'};
+ const batch={...snapshot.lab_material_batches[0],_id:'default-batch',batch_code:'BATCH-20261020-000071',material_name:'示例新材料',spec:'唯一示例规格',unit:'瓶',storage_room:'A101',storage_detail:'示例柜上层',storage_location:'A101 · 示例柜上层'};
+ const otherBatch={...batch,_id:'other-batch',batch_code:'BATCH-261020-000072',spec:'另一规格',unit:'盒',storage_room:'A102',storage_detail:'下层',storage_location:'A102 · 下层',purchase_purpose:'私用/项目用（出库需采购人审批）',purchaser_username:'other-student',purchaser_name:'示例采购同学'};
+ const batches=[batch, otherBatch, ...Array.from({length:48},(_,index)=>({...batch,_id:'extra-'+index,batch_code:'ZZ-'+index}))];
  for(const theme of ['light','dark','mixed'])for(const width of [1440,390,320]){
   const page=await browser.newPage({viewport:{width,height:960}}),account={...student,profile_required:false,session_token:'synthetic-defaults'},errors=[],writes=[];
   page.on('pageerror',e=>errors.push(e.message));await page.addInitScript(({account,theme})=>{sessionStorage.setItem('surface_lab_account',JSON.stringify(account));localStorage.setItem('platform:theme',theme);},{account,theme});
   await page.route('**/*',route=>{
    const url=new URL(route.request().url());if(url.origin!==origin)return route.abort();if(!url.pathname.startsWith('/api/'))return route.continue();
    if(url.pathname==='/api/auth/me')return route.fulfill({json:{ok:true,account,teachers:[teacher]}});
-   if(url.pathname==='/api/ops/listAll')return route.fulfill({json:{ok:true,revision:'defaults-1',data:{...snapshot,current_account:account,lab_work_requests:[],lab_purchase_requests:[history],lab_material_batches:[batch],lab_materials:[],lab_material_catalog:catalog,lab_student_accounts:[student],lab_registered_teacher_accounts:[teacher],lab_accounts:[teacher],lab_user_hidden_records:[]}}});
+   if(url.pathname==='/api/ops/listAll')return route.fulfill({json:{ok:true,revision:'defaults-1',data:{...snapshot,current_account:account,lab_work_requests:[],lab_purchase_requests:[history],lab_material_batches:batches,lab_materials:[],lab_material_catalog:catalog,lab_student_accounts:[student],lab_registered_teacher_accounts:[teacher],lab_accounts:[teacher],lab_user_hidden_records:[]}}});
    if(url.pathname==='/api/events')return route.fulfill({contentType:'text/event-stream',body:': fixture\n\n'});
    if(route.request().method()!=='GET')writes.push(url.pathname);return route.fulfill({json:{ok:true,rows:[],comments:[]}});
   });
@@ -40,7 +42,35 @@ export async function checkNewRecordDefaults(browser,origin,out,snapshot,users){
    await navigate('库存');await page.getByRole('button',{name:'开始录入现有材料',exact:true}).click();const initialization=page.locator('.platform-section-create form');await assertBlank(initialization);
    await initialization.getByRole('combobox',{name:/材料类别/}).selectOption('试剂原料');await pick(page,initialization.getByPlaceholder('选择材料或搜索“其它”'),'示例新材料');assert.equal(await initialization.getByRole('combobox',{name:/规格 \/ 型号/}).inputValue(),'');
    await navigate('出/退库');await page.getByRole('button',{name:'新增记录',exact:true}).click();const stock=page.locator('.platform-section-create form');await assertBlank(stock);
-   const movement=stock.getByRole('combobox',{name:/类型/});assert.equal(await movement.inputValue(),'');await movement.selectOption('退库');await pick(page,stock.getByPlaceholder('搜索或选择采购材料'),'示例新材料');const batchInput=stock.getByPlaceholder('搜索或选择批次');await batchInput.fill('唯一示例规格');await page.getByRole('listbox').getByRole('option').click();assert.equal(await stock.getByLabel(/^\*?\s*单位$/).inputValue(),'瓶');assert.equal(await stock.getByRole('combobox',{name:/存放房间/}).inputValue(),'A101');
+   const movement=stock.getByRole('combobox',{name:/类型/}), batchInput=stock.getByRole('combobox',{name:/材料批次号/});
+   assert.equal(await stock.getByRole('combobox',{name:/材料名称/}).count(),0);
+   assert.equal(await movement.inputValue(),'');await movement.selectOption('出库');
+   if(theme==='light'&&width===320) {
+    await batchInput.click();
+    const list=stock.getByRole('listbox'), options=list.getByRole('option');
+    assert.equal(await options.count(),40);assert.equal(await options.first().getAttribute('aria-setsize'),'50');
+    await list.evaluate(el=>{el.scrollTop=el.scrollHeight;});
+    await options.nth(49).waitFor({state:'attached'});
+   }
+   await batchInput.fill('261020');const batchOptions=stock.getByRole('listbox').getByRole('option');
+   assert.equal(await batchOptions.count(),2);
+   assert.equal(await stock.getByLabel(/^\*?\s*单位$/).inputValue(),'');
+   await batchOptions.filter({hasText:'000072'}).click();
+   await stock.getByRole('button',{name:'提交采购人审批'}).waitFor();
+   assert.equal(await stock.getByLabel(/^\*?\s*单位$/).inputValue(),'盒');
+   await stock.locator('input[type=file]').setInputFiles({name:'批次证明.png',mimeType:'image/png',buffer:Buffer.from('test')});
+   await stock.getByText('批次证明.png',{exact:true}).waitFor();
+   await batchInput.fill('BATCH-不存在');await page.getByText('无相关内容',{exact:true}).waitFor();
+   await stock.getByText('尚未选择文件',{exact:true}).waitFor();
+   assert.equal(await batchInput.evaluate(el=>el.validity.valid),false);
+   assert.equal(await stock.getByLabel(/^\*?\s*单位$/).inputValue(),'');
+   await movement.selectOption('退库');
+   await batchInput.fill('batch-20261020-000071');await stock.getByRole('status').getByText(batch.material_name,{exact:true}).waitFor();
+   await batchInput.press('Tab');
+   assert.equal(await batchInput.inputValue(),'BATCH-261020-000071');
+   await stock.getByRole('status').getByText(batch.material_name,{exact:true}).waitFor();
+   assert.equal(await stock.getByLabel(/^\*?\s*单位$/).inputValue(),'瓶');
+   assert.equal(await stock.getByRole('combobox',{name:/存放房间/}).inputValue(),'A101');
    await stock.getByLabel(/^\*?\s*数量$/).fill('2');await stock.getByLabel(/^\*?\s*数量$/).fill('');assert.equal(await stock.getByLabel(/^\*?\s*数量$/).inputValue(),'');
    await page.locator('.platform-section-create').screenshot({path:path.join(out,`new-record-defaults-${theme}-${width}.png`)});
    assert.deepEqual(errors,[]);assert.deepEqual(writes,[]);const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);assert.equal(overflow,false);results.push({newRecordDefaults:true,theme,width,newFormsChecked:6,requiredDefaultsEmpty:true,explicitHistoryAutofill:true,explicitBatchAutofill:true,businessWrites:0,overflow,errors});

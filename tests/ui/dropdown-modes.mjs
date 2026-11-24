@@ -75,7 +75,7 @@ export async function checkDropdownModes(browser, origin, snapshot, users) {
     await page.getByRole('button', { name: '新增记录', exact: true }).click();
     form = page.locator('.platform-section-create form');
     await chooseFixed(form.getByRole('combobox', { name: /类型/ }), '退库', { required: true });
-    await verifySearch(page, form.getByPlaceholder('搜索或选择采购材料'), snapshot.lab_material_batches[0].material_name);
+    await verifySearch(page, form.getByRole('combobox', { name: /材料批次号/ }), snapshot.lab_material_batches[0].material_name);
     await chooseFixed(form.getByRole('combobox', { name: /存放房间/ }), '__other_room__', { required: true });
     assert.equal(await form.getByLabel('其它存放房间').count(), 1);
 

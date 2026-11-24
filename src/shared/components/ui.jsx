@@ -58,10 +58,10 @@ function StatCard({ title, value, tone = "gray" }) {
   return <div style={{ ...styles.statCard, ...toneStyle }}><div style={styles.statTitle}>{title}</div><div style={styles.statValue}>{value}</div></div>;
 }
 const normalizeDropdownSearch = text => String(text ?? "").normalize("NFKC").trim().toLowerCase();
-function SearchableSelect({ value, onChange, options = [], searchable = true, placeholder = searchable ? "搜索或选择" : "请选择", required = false, disabled = false, allowCustom = false, clearOnInput = true, emptyText = "无相关内容", fixedOptions = [], lastOptions = [], searchTerms }) {
+function SearchableSelect({ value, onChange, options = [], searchable = true, placeholder = searchable ? "搜索或选择" : "请选择", required = false, disabled = false, allowCustom = false, clearOnInput = true, emptyText = "无相关内容", fixedOptions = [], lastOptions = [], searchTerms, resolveInput, pageSize }) {
   const normalizedOptions = useMemo(() => options.map(item => {
-    const option = typeof item === "object" ? { value: String(item.value), label: String(item.label) } : { value: String(item), label: String(item) };
-    return { ...option, searchLabel: normalizeDropdownSearch(option.label), searchAliases: (searchTerms?.get(option.value) || []).map(term => ({text:term,normalized:normalizeDropdownSearch(term)})) };
+    const option = typeof item === "object" ? { value: String(item.value), label: String(item.label), detail: item.detail } : { value: String(item), label: String(item) };
+    return { ...option, searchLabel: normalizeDropdownSearch([option.label, option.detail].filter(Boolean).join(' ')), searchAliases: (searchTerms?.get(option.value) || []).map(term => ({text:term,normalized:normalizeDropdownSearch(term)})) };
   }), [options, searchTerms]);
   const selectedOption = normalizedOptions.find(item => item.value === String(value ?? ""));
   const valueLabel = selectedOption?.label || String(value || "");
@@ -69,6 +69,7 @@ function SearchableSelect({ value, onChange, options = [], searchable = true, pl
   const [searching, setSearching] = useState(false);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [extraOptions, setExtraOptions] = useState(0);
   const wrapRef = useRef(null);
   const inputRef = useRef(null);
   const typingRef = useRef(false);
@@ -106,11 +107,16 @@ function SearchableSelect({ value, onChange, options = [], searchable = true, pl
   const displayedOptions = keyword
     ? orderedOptions.filter((item) => item.searchLabel.includes(keyword) || matchingTerm(item))
     : orderedOptions;
+  const visibleOptions = pageSize ? displayedOptions.slice(0, Math.max(pageSize + extraOptions, activeIndex + 1)) : displayedOptions;
 
   function handleInput(nextQuery) {
     setQuery(nextQuery);
     setSearching(true); setActiveIndex(-1);
-    if (allowCustom) {
+    if (pageSize) setExtraOptions(0);
+    const exactValue = resolveInput?.(nextQuery);
+    if (exactValue != null) {
+      if (exactValue !== String(value ?? "")) { typingRef.current = true; onChange(exactValue); }
+    } else if (allowCustom) {
       typingRef.current = nextQuery !== String(value ?? "");
       onChange(nextQuery);
     } else if (clearOnInput && String(value ?? "") !== "") {
@@ -123,7 +129,8 @@ function SearchableSelect({ value, onChange, options = [], searchable = true, pl
   function choose(item) {
     typingRef.current = false;
     setQuery(item.label);
-    onChange(item.value);
+    if (!resolveInput || item.value !== String(value ?? "")) onChange(item.value);
+    if (pageSize) setExtraOptions(0);
     setSearching(false); setActiveIndex(-1); setOpen(false);
   }
 
@@ -180,23 +187,30 @@ function SearchableSelect({ value, onChange, options = [], searchable = true, pl
         if (event.key === "Enter" && open) {
           event.preventDefault();
           if (activeIndex >= 0 && displayedOptions[activeIndex]) choose(displayedOptions[activeIndex]);
+          else if (selectedOption && resolveInput?.(query) === selectedOption.value) choose(selectedOption);
           else if (displayedOptions.length === 1) choose(displayedOptions[0]);
           else if (allowCustom) setOpen(false);
         }
       }}
     />
     <button disabled={disabled} type="button" tabIndex={-1} aria-label="展开选项" aria-expanded={open} aria-controls={open ? menuId : undefined} style={styles.searchSelectArrow} onMouseDown={(e) => e.preventDefault()} onClick={event => { event.preventDefault(); event.stopPropagation(); setOpen((prev) => !prev); setActiveIndex(-1); }}><Icon name="chevron" size={22} className="platform-select-chevron" strokeWidth={2.2} /></button>
-    {open && !disabled && <div id={menuId} role="listbox" style={styles.searchSelectMenu}>
-      {displayedOptions.length === 0 ? <div style={styles.searchSelectEmpty}>{keyword ? "无相关内容" : emptyText}</div> : displayedOptions.map((item, index) => <button
+    {open && !disabled && <div id={menuId} role="listbox" style={styles.searchSelectMenu} onScroll={pageSize ? event => {
+      const menu = event.currentTarget;
+      if (visibleOptions.length < displayedOptions.length && menu.scrollTop + menu.clientHeight >= menu.scrollHeight - 12) setExtraOptions(visibleOptions.length);
+    } : undefined}>
+      {displayedOptions.length === 0 ? <div style={styles.searchSelectEmpty}>{keyword ? "无相关内容" : emptyText}</div> : visibleOptions.map((item, index) => <button
         key={item.value}
         id={`${menuId}-${index}`}
         role="option"
+        tabIndex={resolveInput ? -1 : undefined}
+        aria-setsize={pageSize ? displayedOptions.length : undefined}
+        aria-posinset={pageSize ? index + 1 : undefined}
         aria-selected={item.value === String(value ?? "")}
         type="button"
         style={{ ...styles.searchSelectOption, ...((item.value === String(value ?? "") || index === activeIndex) ? styles.searchSelectOptionActive : {}) }}
         onMouseDown={(e) => e.preventDefault()}
         onClick={event => { event.preventDefault(); event.stopPropagation(); choose(item); }}
-      ><span>{item.label}</span>{matchingTerm(item) && <small style={{ display: "block", fontSize: "var(--text-caption)", fontWeight: 400, color: "var(--muted)", marginTop: 3, lineHeight: 1.5, overflowWrap: "anywhere" }}>匹配：{matchingTerm(item)}</small>}</button>)}
+      ><span>{item.label}</span>{item.detail && <small className="platform-option-detail">{item.detail}</small>}{matchingTerm(item) && <small className="platform-option-detail">匹配：{matchingTerm(item)}</small>}</button>)}
     </div>}
   </div>;
 }

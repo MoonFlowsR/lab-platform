@@ -1,35 +1,33 @@
 import PersonName from '../../shared/components/PersonName.jsx';
 import PhraseText from '../../shared/components/PhraseText.jsx';
 import { Badge, DataTable, Field, SearchableSelect, Toolbar } from "../../shared/components/ui.jsx";
-import { materialSearchTerms } from "../inventory/material-model-search.js";
+import { stockBatchChoices } from "./batch-picker.js";
 import { styles } from "../../app/styles.js";
-import { formatDate, normalizeItemName, uniqueNonEmpty } from "../../app/formatters.js";
+import { formatDate } from "../../app/formatters.js";
 import StockOutRequests from "./StockOutRequests.jsx";
 import { MovementMetrics } from "../dashboard/DashboardMetrics.jsx";
 import RecentRecords from "../../shared/components/RecentRecords.jsx";
 import { StockPhotoLinks } from "../inventory/InventoryPage.jsx";
 import RecordActions from "../../shared/components/RecordActions.jsx";
-import { useState } from "react";
-import { canonicalMaterialName } from "../../shared/lib/dropdown-normalize.js";
+import { useMemo, useState } from "react";
 import { showAlert } from "../../shared/components/platform-dialog.jsx";
 import { validatePhotoFile } from "../../app/attachment-validation.js";
 import StorageFields from "../../shared/components/StorageFields.jsx";
 import { FilePicker } from "../../shared/components/attachments.jsx";
 import ItemPhotoFields from "../../shared/components/ItemPhotoFields.jsx";
 import { batchIsPurchaserSelf, batchPurchaser, privateStockPurpose, stockApprovalExemptionText } from "./stock-out-policy.js";
-import { formatPublicNumber } from "../../shared/lib/public-number.js";
 import { RequestViewScope } from "../../shared/components/request-records.jsx";
 import ExportButton from "../../shared/components/ExportButton.jsx";
 import { newStockDraft } from '../../shared/lib/new-record-defaults.js';
 
-function StockPage({ task, movementType = "", currentUser, purchaseRequests = [], teacherAccounts = [], requests = [], onReviewRequest, onCompleteRequest, onWithdrawRequest, onExportRequests, viewScope = "mine", onViewScopeChange, materialCatalog = [], rows, batches, attachments = [], isAdmin = false, onDeleteRecord, isManager, canSubmit, onAdd, onDownloadAttachment, onExport }) {
+function StockPage({ task, movementType = "", currentUser, purchaseRequests = [], requests = [], onReviewRequest, onCompleteRequest, onWithdrawRequest, onExportRequests, viewScope = "mine", onViewScopeChange, rows, batches, attachments = [], isAdmin = false, onDeleteRecord, isManager, canSubmit, onAdd, onDownloadAttachment, onExport }) {
   const movementTypes = ["入库", "出库", "退库"];
   const selectedRows = movementType ? rows.filter(row => row.transaction_type === movementType) : rows;
   const otherRows = selectedRows.filter(row => !movementTypes.includes(row.transaction_type));
   const historyProps = { attachments, isAdmin, onDeleteRecord, onDownloadAttachment };
   return <main>
     <Toolbar title={isManager ? "出入退库" : "出/退库"} description={isManager ? "按学生、日期和出入退库类型筛选，分别查看入库、出库、退库。" : "登记出库和退库，查看库存流水及证明。"} onExport={task ? () => onExportRequests(requests) : undefined} scope={!task && canSubmit && <RequestViewScope scope={viewScope} onChange={onViewScopeChange} label="出退库查看范围" moduleName="出库/退库" recordLabel="记录" />} />
-    {canSubmit && !task && <StockForm currentUser={currentUser} purchaseRequests={purchaseRequests} teacherAccounts={teacherAccounts} materialCatalog={materialCatalog} batches={batches} isManager={isManager} onSubmit={onAdd} />}
+    {canSubmit && !task && <StockForm currentUser={currentUser} purchaseRequests={purchaseRequests} batches={batches} onSubmit={onAdd} />}
     {!task && <MovementMetrics rows={selectedRows} actions={<ExportButton onExport={() => onExport(selectedRows)} />} />}
     {(!movementType || movementType === '出库') && <StockOutRequests defaultExpanded={Boolean(task)} rows={requests} currentUser={currentUser} batches={batches} purchaseRequests={purchaseRequests} attachments={attachments} onReview={onReviewRequest} onComplete={onCompleteRequest} onWithdraw={onWithdrawRequest} onDownload={onDownloadAttachment} onExport={onExportRequests} styles={styles} formatDate={formatDate} Badge={Badge} />}
     {!task && <>
@@ -68,34 +66,44 @@ function StockHistorySection({ title, rows, attachments, isAdmin, onDeleteRecord
       {extra}
     </section>;
 }
-function StockForm({ currentUser, purchaseRequests = [], materialCatalog = [], batches, onSubmit }) {
-  const [materialName,setMaterialName] = useState(''), [show,setShow] = useState(false), [photo,setPhoto] = useState(null), [busy,setBusy] = useState(false);
+function StockForm({ currentUser, purchaseRequests = [], batches, onSubmit }) {
+  const [show,setShow] = useState(false), [photo,setPhoto] = useState(null), [busy,setBusy] = useState(false);
   const defaults = () => newStockDraft(crypto.randomUUID());
   const [form,setForm] = useState(defaults);
-  const selectedBatch = batches.find(batch => String(batch._id) === String(form.batch_id));
+  const selectedBatch = form.batch_id && batches.find(batch => !batch.deleted_at && String(batch._id) === form.batch_id);
+  const choices = useMemo(() => show ? stockBatchChoices(batches) : null, [batches, show]);
   const projectOut = form.transaction_type === '出库' && selectedBatch?.purchase_purpose === privateStockPurpose;
   const selfPurchase = projectOut && batchIsPurchaserSelf(selectedBatch, currentUser, purchaseRequests);
   const approvalRequired = projectOut && !selfPurchase;
   const purchaser = batchPurchaser(selectedBatch, purchaseRequests);
-  const materialNames = uniqueNonEmpty([...materialCatalog.map(item=>item.name),...batches.map(batch=>canonicalMaterialName(batch.material_name))]);
-  const materialTerms = materialSearchTerms(materialCatalog, batches);
-  const matchingBatches = materialName ? batches.filter(batch=>normalizeItemName(batch.material_name)===normalizeItemName(materialName)) : [];
-  const batchSearchTerms = new Map(matchingBatches.map(batch => [String(batch._id), [batch.batch_code, formatPublicNumber(batch.batch_code)]]));
   const set = (key,value) => setForm(prev=>({...prev,[key]:value}));
+  function selectBatch(id) {
+    const batch = id && batches.find(row => !row.deleted_at && String(row._id) === id);
+    setForm(prev => ({
+      ...prev, batch_id: batch ? id : '', unit: batch?.unit || '', storage_room: batch?.storage_room || '',
+      storage_detail: batch?.storage_detail || '', storage_location: batch?.storage_location || '', entry_key: crypto.randomUUID(),
+    }));
+    setPhoto(null);
+  }
   return <section className="platform-section-create" style={styles.card}>
     <div className="platform-create-heading is-movement" style={styles.cardHeader}><div><h2 style={styles.h2}>新增出/退库记录</h2><p className="platform-create-description" style={styles.muted}><PhraseText>出库：领用库存；退库：归还剩余材料。到货入库在采购工单完成。</PhraseText></p>{show && form.transaction_type === '出库' && <p className="platform-create-notice" role="note" style={{ color: "var(--danger-ink)", fontSize: 15, fontWeight: 700, lineHeight: 1.6, margin: "8px 0 0" }}><PhraseText>私用/项目用物品：采购人本人可直接登记；其他人须经采购人审批，通过后方可使用！</PhraseText></p>}</div><button type="button" style={styles.primaryButton} onClick={()=>setShow(!show)}>{show ? '收起表单' : '新增记录'}</button></div>
     {show && <><p style={styles.requiredHint}><span style={styles.requiredStar}>*</span> 为必填项</p><form style={styles.formGrid} onSubmit={async event=>{
       event.preventDefault(); if(busy)return;
+      if(!selectedBatch) return showAlert('请选择有效的材料批次号。');
       if(!form.storage_detail.trim()) return showAlert('请填写具体位置简述。');
       try { validatePhotoFile(photo); } catch(error) { return showAlert(error.message || error); }
       if(form.unit.trim()!==String(selectedBatch?.unit || '').trim()) return showAlert(`请使用当前批次的库存单位：${selectedBatch?.unit || '未设置'}。`);
-      setBusy(true); try { const ok=await onSubmit(form,photo); if(ok!==false){setMaterialName('');setForm(defaults());setPhoto(null);setShow(false);} } finally {setBusy(false);}
+      setBusy(true); try { const ok=await onSubmit(form,photo); if(ok!==false){setForm(defaults());setPhoto(null);setShow(false);} } finally {setBusy(false);}
     }}>
 
         <Field required label="类型"><SearchableSelect searchable={false} required value={form.transaction_type} onChange={value=>{set('transaction_type',value);setPhoto(null);set('entry_key',crypto.randomUUID());}} options={['出库','退库']} placeholder="选择出/退库类型" /></Field>
-      <Field required label="材料名称"><SearchableSelect required value={materialName} onChange={name=>{setMaterialName(name);setForm(prev=>({...prev,batch_id:'',unit:'',storage_room:'',storage_detail:'',storage_location:'',entry_key:crypto.randomUUID()}));setPhoto(null);}} options={materialNames} searchTerms={materialTerms} placeholder="搜索或选择采购材料" /></Field>
-      <Field required label="材料批次"><SearchableSelect required disabled={!materialName} value={form.batch_id} onChange={value=>{const batch=batches.find(row=>String(row._id)===value);setForm(prev=>({...prev,batch_id:value,unit:batch?.unit || '',storage_room:batch?.storage_room || '',storage_detail:batch?.storage_detail || '',storage_location:batch?.storage_location || '',entry_key:crypto.randomUUID()}));setPhoto(null);}} options={matchingBatches.map(batch=>({value:batch._id,label:`${formatPublicNumber(batch.batch_code)} · ${batch.material_name} · 规格 ${batch.spec || '无'} · ${batch.storage_room || '房间未登记'} · ${batch.purchase_purpose || '未标注'} · 当前 ${batch.current_qty} ${batch.unit}`}))} searchTerms={batchSearchTerms} placeholder={materialName ? '搜索或选择批次' : '请先选择材料'} /></Field>
-      {materialName && !matchingBatches.length && <p role="note" style={{...styles.fullWidth,...styles.muted}}>该材料暂无库存批次。采购到货请在采购工单入库；现存材料可先建库。</p>}
+      <div className="platform-stock-batch-field">
+        <Field required label="材料批次号"><SearchableSelect required value={selectedBatch ? form.batch_id : ''} onChange={selectBatch}
+          options={choices.options} searchTerms={choices.searchTerms} resolveInput={choices.resolveInput} pageSize={40}
+          placeholder="输入或选择材料批次号" emptyText="暂无库存批次" /></Field>
+        {selectedBatch && <p className="platform-stock-batch-detail" role="status"><strong>{selectedBatch.material_name}</strong>
+          {selectedBatch.spec && ` · ${selectedBatch.spec}`} · 当前库存 {selectedBatch.current_qty} {selectedBatch.unit}</p>}
+      </div>
       <Field required label="数量"><input required type="number" min="0" step="any" style={styles.input} value={form.quantity} onChange={event=>set('quantity',event.target.value)} /></Field>
       <Field required label="单位"><input required style={styles.input} value={form.unit} onChange={event=>set('unit',event.target.value)} placeholder="选择批次后自动带出单位" /></Field>
 
