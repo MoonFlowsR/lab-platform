@@ -62,11 +62,14 @@ async function newWork(page, type) {
   await page.getByRole('button', { name: `新建${type}`, exact: true }).click();
   return page.locator('.platform-section-create form');
 }
-async function stockForm(page, materialName) {
+async function stockForm(page, batch) {
   await module(page, '出/退库');
   await page.getByRole('button', { name: '新增记录', exact: true }).click();
   const form = page.locator('.platform-section-create form');
-  await pick(page, form.getByPlaceholder('搜索或选择采购材料', { exact: true }), materialName);
+  const number = form.getByRole('combobox', { name: /材料批次号/ });
+  await number.fill(batch.batch_code);
+  await number.press('Enter');
+  await form.getByRole('status').getByText(batch.material_name, { exact: true }).waitFor();
   return form;
 }
 async function initialization(page) {
@@ -203,7 +206,7 @@ export async function checkCustomOptions(browser, origin, out, snapshot, users) 
       await options(readerPage, readerForm.getByPlaceholder('选择渠道或搜索“其它”'), [values.supplier], [values.draft + '渠道']);
       await result('catalog-shared-after-manual-sync-drafts-isolated', readerPage, { users: 2, documentReloaded: false });
 
-      readerForm = await stockForm(readerPage, readerBatch.material_name);
+      readerForm = await stockForm(readerPage, readerBatch);
       await options(readerPage, readerForm.getByRole('combobox', { name: /存放房间/ }), [...configuredRooms, 'C301', 'D401'], [values.room, '删除房间', '旧整串位置 · 不得当房间']);
       await module(writerPage, '采购/入库');
       await writerPage.getByRole('button', { name: '确认到货并入库', exact: true }).filter({ visible: true }).click();
@@ -248,7 +251,7 @@ export async function checkCustomOptions(browser, origin, out, snapshot, users) 
       await editor.getByRole('button', { name: '确认修改', exact: true }).click(); await editor.waitFor({ state: 'hidden' });
       assert.equal(writes.filter(row => row.action === 'updateMaterialBatchInformation').length, 1);
       assert.equal(readerBatch.storage_room, values.editedRoom);
-      const writerStock = await stockForm(writerPage, readerBatch.material_name); await sync(writerPage, writer);
+      const writerStock = await stockForm(writerPage, readerBatch); await sync(writerPage, writer);
       await options(writerPage, writerStock.getByRole('combobox', { name: /存放房间/ }), [values.room, values.editedRoom]);
       writerForm = await newPurchase(writerPage);
       await options(writerPage, writerForm.getByPlaceholder('选择渠道或搜索“其它”'), [values.editedSupplier, values.master]);
