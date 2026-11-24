@@ -36,6 +36,7 @@ export async function checkSettlementFilters(browser,origin,out,snapshot,users){
   await page.route('**/*',route=>{
    const url=new URL(route.request().url());if(url.origin!==origin)return route.abort();if(!url.pathname.startsWith('/api/'))return route.continue();
    if(url.pathname==='/api/auth/me')return route.fulfill({json:{ok:true,account,teachers:[teacher]}});
+   if(url.pathname==='/api/inventory-reminder/history'&&role!=='student')return route.fulfill({json:{ok:true,rows:[],total:0,has_more:false}});
    if(url.pathname==='/api/ops/listAll')return route.fulfill({json:{ok:true,revision:'settlement-1',data:{...snapshot,current_account:account,lab_work_requests:rows.filter(r=>r.request_type),lab_purchase_requests:rows.filter(r=>!r.request_type),lab_student_accounts:[student],lab_registered_teacher_accounts:[teacher],lab_accounts:[teacher],lab_user_hidden_records:[]}}});
    if(url.pathname==='/api/events')return route.fulfill({contentType:'text/event-stream',body:': fixture\n\n'});
    if(url.pathname==='/api/help-comments/session')return route.fulfill({json:{ok:true,account,student_name_labels:[]}});

@@ -34,6 +34,7 @@ export async function checkSemanticColors(browser, origin, out, snapshot, users)
       if (url.origin !== origin) return route.abort();
       if (!url.pathname.startsWith('/api/')) return route.continue();
       if (url.pathname === '/api/auth/me') return route.fulfill({ json: { ok: true, account, teachers: snapshot.lab_teacher_accounts } });
+      if (url.pathname === '/api/inventory-reminder/history' && account.account_type !== 'student') return route.fulfill({ json: { ok: true, rows: [], total: 0, has_more: false } });
       if (url.pathname === '/api/events') return route.fulfill({ contentType: 'text/event-stream', body: ': isolated semantic-color fixture\n\n' });
       if (url.pathname === '/api/ops/listAll') return route.fulfill({ json: { ok: true, revision: 'semantic-fixture', data: { ...snapshot, current_account: account, accounts: rows, lab_work_requests: [work], lab_purchase_requests: [], lab_stock_out_requests: [], lab_attachments: [], lab_user_hidden_records: [] } } });
       if (url.pathname === '/api/ops/listAudit') return route.fulfill({ json: { ok: true, rows: [], total: 0 } });
