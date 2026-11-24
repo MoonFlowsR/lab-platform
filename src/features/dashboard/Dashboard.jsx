@@ -2,14 +2,16 @@ import { containsQuery } from '../../app/formatters.js';
 import { TaskCenter, TaskLink } from '../tasks/TaskCenter.jsx';
 import { WORK_DEFINITIONS } from '../work/work-types.js';
 import Icon from '../../shared/components/Icon.jsx';
+import InventoryReminderHistory from '../inventory/InventoryReminderHistory.jsx';
 
-export function Dashboard({ currentUser, center, query, onOpenTask, setActiveTab, batchCount }) {
+export function Dashboard({ currentUser, center, query, onOpenTask, setActiveTab, batchCount, students }) {
   const matches = group => !query.trim() || containsQuery({ title: group.title }, query) || group.rows.some(row => containsQuery(row, query));
   const tracking = center.groups.filter(group => group.kind === 'tracking' && group.count && matches(group));
   const warnings = center.groups.filter(group => group.kind === 'warning' && matches(group));
   const reports = currentUser.account_type !== 'student';
   return <main className="platform-overview">
     <TaskCenter center={center} query={query} currentUser={currentUser} onOpen={onOpenTask} onReports={reports ? () => setActiveTab('reports') : null} />
+    {reports && <InventoryReminderHistory key={currentUser.session_token + ':' + query.trim()} token={currentUser.session_token} query={query.trim()} students={students} />}
     <div className="platform-overview-columns">
       <section className="platform-overview-section" aria-label="进度与入口">
         <h2>{currentUser.account_type === 'admin' ? '团队待处理进度' : currentUser.account_type === 'finance' ? '需跟进的信息' : '申请进度'}</h2>

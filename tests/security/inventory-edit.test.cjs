@@ -33,13 +33,14 @@ test('HTTP correction enforces owner and expiry, retains admin/teacher permissio
   fs.cpSync(path.join(root,'server'),path.join(temporary,'server'),{recursive:true,filter:source=>!['data','uploads','logs','backups'].includes(path.relative(path.join(root,'server'),source).split(path.sep)[0])});
   fs.cpSync(path.join(root,'src'),path.join(temporary,'src'),{recursive:true});
   runtime=require(path.join(temporary,'server/runtime.cjs'))();runtime.nowISO=()=>new Date(now).toISOString();
-  for(const file of ['ops','attachments'])require(path.join(temporary,'server/routes/'+file+'.cjs'))(runtime);
+  for(const file of ['auth','ops','attachments'])require(path.join(temporary,'server/routes/'+file+'.cjs'))(runtime);
   server=await new Promise(resolve=>{const listener=runtime.app.listen(0,'127.0.0.1',()=>resolve(listener));});
   const create=(username,role)=>{runtime.db.prepare('INSERT INTO accounts(username,display_name,account_type,status,password_hash,created_at,updated_at) VALUES(?,?,?,?,?,?,?)').run(username,username,role,'active','unused',runtime.nowISO(),runtime.nowISO());return runtime.db.prepare('SELECT * FROM accounts WHERE username=?').get(username);};
   const admin=create('example-admin','admin'),teacher=create('example-teacher','teacher'),finance=create('example-finance','finance'),owner=create(student.username,'student'),other=create('example-other','student');
   for(const account of [owner,other])runtime.studentProfiles.save({headers:{},ip:'test'},account,{responsible_teacher_username:teacher.username,guiding_teacher_username:teacher.username,graduation_year:2028});
   const tokens=new Map([admin,teacher,finance,owner,other].map(a=>[a.username,runtime.signToken(a)]));
   const call=async(action,payload,who=owner)=>{const response=await fetch('http://127.0.0.1:'+server.address().port+'/api/'+action,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tokens.get(who.username)},body:JSON.stringify(payload)});return {status:response.status,json:await response.json()};};
+  for (const student of [owner, other]) assert.equal((await call('inventory-reminder/ack', {}, student)).status, 200);
   const material=runtime.insertRecord('lab_materials',{name:'示例材料',name_cn:'示例材料'});
   const order=runtime.insertRecord('lab_purchase_requests',{...purchase,_id:undefined,inbound_batch_id:undefined,preferred_supplier:'示例渠道'});
   const photo=runtime.insertRecord('lab_attachments',{target_collection:'lab_purchase_requests',target_id:order._id,uploaded_by_username:owner.username,attachment_state:'bound'});

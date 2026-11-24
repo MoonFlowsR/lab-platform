@@ -1,7 +1,18 @@
 module.exports = function installAuth(context) {
+const { inventoryReminder } = context;
+const { canViewReceipts } = require('../features/inventory/login-reminder.cjs');
+const reminderClient = require('../security/client-version.cjs')({ minimum: '2.8.0' });
 const { authAttempts, clientVersion, ADMIN_INVITE_CODE, FINANCE_INVITE_CODE, STUDENT_INVITE_CODE, TEACHER_INVITE_CODE, addAudit, app, asyncHandler, authMiddleware, bcrypt, db, getInitialAccountStatus, getRegisteredTeacherAccountsForDropdown, graduationExpiry, isValidLoginId, nowISO, publicAccount, recordChanges, signToken, studentProfiles } = context;
 // Unknown accounts perform the same password check without revealing their existence.
 const missingAccountHash = bcrypt.hashSync(require('node:crypto').randomBytes(32).toString('hex'), 12);
+function needsStudentPageRefresh(req, role) {
+  const version = clientVersion.requestVersion(req);
+  return role === 'student' && version && !reminderClient.accepts(version);
+}
+function sendSession(req, res, account, safeAccount) {
+  if (account.account_type === 'student') safeAccount.inventory_reminder_required = true;
+  res.json({ ok: true, account: safeAccount, session_token: signToken(account, clientVersion.requestVersion(req)) });
+}
 app.post("/api/auth/register", authAttempts.byAccount, asyncHandler(async (req, res) => {
   const username = String(req.body.username || "").trim();
   const password = String(req.body.password || "").trim();
@@ -38,6 +49,7 @@ app.post("/api/auth/register", authAttempts.byAccount, asyncHandler(async (req, 
 
   const existed = db.prepare("SELECT id FROM accounts WHERE username = ?").get(username);
   if (existed) throw new Error("该登录账号已存在，请直接登录或联系管理员。");
+  if (needsStudentPageRefresh(req, accountType)) return reminderClient.requireCurrent(req, res);
 
   const passwordHash = bcrypt.hashSync(password, 12);
   const createdAt = nowISO();
@@ -57,7 +69,7 @@ app.post("/api/auth/register", authAttempts.byAccount, asyncHandler(async (req, 
     return res.json({ ok: true, account: safeAccount, pending: true, message: "账号已提交注册，待管理员审核通过后才能登录。" });
   }
 
-  res.json({ ok: true, account: safeAccount, session_token: signToken(account, clientVersion.requestVersion(req)) });
+  sendSession(req, res, account, safeAccount);
 }));
 
 app.post("/api/auth/login", authAttempts.byAccount, asyncHandler(async (req, res) => {
@@ -73,14 +85,31 @@ app.post("/api/auth/login", authAttempts.byAccount, asyncHandler(async (req, res
   account = graduationExpiry.enforceAccount(account);
   if (account.status === "disabled") throw new Error("账号已停用，请联系管理员。");
   if (account.status === "pending") throw new Error("账号待管理员审核，通过后才能登录。");
+  if (needsStudentPageRefresh(req, account.account_type)) return reminderClient.requireCurrent(req, res);
 
   const safeAccount = publicAccount(account);
   addAudit(req, safeAccount, "login", "accounts", safeAccount._id, null, safeAccount);
-  res.json({ ok: true, account: safeAccount, session_token: signToken(account, clientVersion.requestVersion(req)) });
+  sendSession(req, res, account, safeAccount);
 }));
 
 app.post("/api/auth/me", authMiddleware, asyncHandler(async (req, res) => {
   res.json({ ok: true, account: req.account, teachers: getRegisteredTeacherAccountsForDropdown() });
+}));
+
+app.post('/api/inventory-reminder/ack', authMiddleware, asyncHandler(async (req, res) => {
+  if (req.account.account_type !== 'student' || !req.studentLoginId) {
+    return res.status(403).json({ ok: false, message: '此操作仅用于学生本次登录的出入库提醒。' });
+  }
+  const { created, acknowledged_at } = inventoryReminder.acknowledge(req, req.studentLoginId);
+  if (created) recordChanges.notifyReminderRead();
+  res.set('Cache-Control', 'private, no-store').json({ ok: true, acknowledged_at });
+}));
+
+app.post('/api/inventory-reminder/history', authMiddleware, asyncHandler(async (req, res) => {
+  if (!canViewReceipts(req.account.account_type)) {
+    return res.status(403).json({ ok: false, message: '仅教师、财务和管理员可查看学生已读记录。' });
+  }
+  res.set('Cache-Control', 'private, no-store').json({ ok: true, ...inventoryReminder.history(req.body || {}) });
 }));
 
 app.post("/api/profile/get", authMiddleware, asyncHandler(async (req, res) => {

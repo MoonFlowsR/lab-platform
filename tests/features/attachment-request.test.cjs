@@ -52,6 +52,9 @@ async function fixture() {
       if (sendBody) req.end(bytes); else req.flushHeaders();
     });
   }
+  for (const user of ['owner', 'other']) {
+    assert.equal((await request('/api/inventory-reminder/ack', { token: tokens[user] })).status, 200);
+  }
   function attachment(username = 'owner', patch = {}) {
     const record = runtime.insertRecord('lab_attachments', {
       target_collection: 'draft_attachments', target_id: 'draft-test', attachment_state: 'draft',

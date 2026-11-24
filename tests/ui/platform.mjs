@@ -31,6 +31,7 @@ import { checkCompactLayout } from './compact-layout.mjs';
 import { checkTitles } from './titles.mjs';
 import { checkUpdates } from './updates.mjs';
 import { checkLowStock } from './low-stock.mjs';
+import { checkInventoryReminder } from './inventory-reminder.mjs';
 import fs from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
@@ -111,7 +112,8 @@ async function checkOperations() {
  ];
 }
 try {
- if (process.env.UI_SUITE === 'themes') { results.push(...await checkThemes(browser,origin,out,snapshot,[admin,teachers[0],studentA])); }
+ if (process.env.UI_SUITE === 'inventory-reminder') { results.push(...await checkInventoryReminder(browser,out)); }
+ else if (process.env.UI_SUITE === 'themes') { results.push(...await checkThemes(browser,origin,out,snapshot,[admin,teachers[0],studentA])); }
  else if (process.env.UI_SUITE === 'low-stock') { results.push(...await checkLowStock(browser,origin,out,snapshot,[admin,teachers[0],studentA])); }
  else if (process.env.UI_SUITE === 'dropdowns') { results.push(...await checkDropdownModes(browser,origin,snapshot,[admin,teachers[0],studentA])); }
  else if (process.env.UI_SUITE === 'custom-options') { results.push(...await checkCustomOptions(browser,origin,out,snapshot,[admin,teachers[0],studentA])); }
@@ -240,6 +242,7 @@ try {
  results.push(...await checkCustomOptions(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkCompactLayout(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkLowStock(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
+ results.push(...await checkInventoryReminder(browser,out));
  results.push(...await checkTitles(browser,origin,out,snapshot,[admin,teachers[0],studentA]));
  results.push(...await checkUpdates(browser,origin,out));
  results.push(...await checkThemes(browser,origin,out,snapshot,[admin,teachers[0],studentA]));

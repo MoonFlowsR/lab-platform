@@ -108,8 +108,9 @@ test('real authentication rejects legacy requests and tokens without touching ac
     assert.equal(result.status, 200); assert.equal(jwt.decode(result.json.session_token).client_version, '2.6.0');
     assert.equal((await call('auth/me', {}, result.json.session_token)).status, 200);
     assert.equal((await call('test-mutation', {}, result.json.session_token)).status, 200); assert.equal(mutations(), 1);
-    const registered = await call('auth/register', registration, null, '2.6.0');
-    assert.equal(registered.status, 200); assert.equal(jwt.decode(registered.json.session_token).client_version, '2.6.0');
+    assert.equal((await call('auth/register', registration, null, '2.6.0')).status, 409);
+    const registered = await call('auth/register', registration, null, '2.8.0');
+    assert.equal(registered.status, 200); assert.equal(jwt.decode(registered.json.session_token).client_version, '2.8.0');
     assert.equal(runtime.db.prepare('SELECT session_version FROM accounts WHERE id=?').get(account.id).session_version, account.session_version);
   });
 });
